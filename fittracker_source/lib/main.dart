@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'Screens/initial_screen/Page1.dart'; // Đảm bảo bạn đã tạo file này trong lib/
+import 'Screens/initial_screen/Page2.dart'; // Đảm bảo bạn đã tạo file này trong lib/
 
 void main() {
   runApp(const MyApp());
@@ -13,10 +13,7 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       title: 'FitTracker',
       debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        primarySwatch: Colors.green,
-        useMaterial3: true,
-      ),
+      theme: ThemeData(primarySwatch: Colors.green, useMaterial3: true),
       home: const WelcomeScreen(), // Gọi màn hình bạn vừa tạo
     );
   }

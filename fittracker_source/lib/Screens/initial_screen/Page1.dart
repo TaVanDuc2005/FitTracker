@@ -11,10 +11,26 @@ class WelcomeScreen extends StatelessWidget {
         child: Stack(
           children: [
             // 🌿 Icon trang trí bốn góc
-            const Positioned(top: 90, left: 80, child: Icon(Icons.eco, color: Colors.greenAccent, size: 40)),
-            const Positioned(top: 90, right: 0, child: Icon(Icons.local_florist, color: Colors.orange, size: 40)),
-            const Positioned(bottom: 320, left: 0, child: Icon(Icons.star, color: Colors.redAccent, size: 40)),
-            const Positioned(bottom: 330, right: 60, child: Icon(Icons.sunny, color: Colors.amber, size: 40)),
+            const Positioned(
+              top: 90,
+              left: 80,
+              child: Icon(Icons.eco, color: Colors.greenAccent, size: 40),
+            ),
+            const Positioned(
+              top: 90,
+              right: 0,
+              child: Icon(Icons.local_florist, color: Colors.orange, size: 40),
+            ),
+            const Positioned(
+              bottom: 320,
+              left: 0,
+              child: Icon(Icons.star, color: Colors.redAccent, size: 40),
+            ),
+            const Positioned(
+              bottom: 330,
+              right: 60,
+              child: Icon(Icons.sunny, color: Colors.amber, size: 40),
+            ),
 
             // 📝 Tiêu đề và mô tả (trên cùng, lệch trái 20)
             Positioned(
@@ -48,22 +64,25 @@ class WelcomeScreen extends StatelessWidget {
             ),
 
             // 🚀 Nút Start ở gần cuối màn hình
-              Align(
-                alignment: const Alignment(0, 0.75),
-                child: ElevatedButton(
-                  onPressed: () {
-                    // TODO: Thêm điều hướng sang màn hình tiếp theo
-                  },
-                  style: ElevatedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(horizontal: 60, vertical: 14),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(30),
-                    ),
-                    backgroundColor: Colors.black87,
+            Align(
+              alignment: const Alignment(0, 0.75),
+              child: ElevatedButton(
+                onPressed: () {
+                  // TODO: Thêm điều hướng sang màn hình tiếp theo
+                },
+                style: ElevatedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 60,
+                    vertical: 14,
                   ),
-                  child: const Text("Start", style: TextStyle(fontSize: 18)),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(30),
+                  ),
+                  backgroundColor: Colors.black87,
                 ),
+                child: const Text("Start", style: TextStyle(fontSize: 18)),
               ),
+            ),
           ],
         ),
       ),
