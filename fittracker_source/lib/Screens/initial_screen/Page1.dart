@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'Page2.dart';
 
 class WelcomeScreen extends StatelessWidget {
   const WelcomeScreen({super.key});
@@ -68,7 +69,12 @@ class WelcomeScreen extends StatelessWidget {
               alignment: const Alignment(0, 0.75),
               child: ElevatedButton(
                 onPressed: () {
-                  // TODO: Thêm điều hướng sang màn hình tiếp theo
+                  Navigator.pushReplacement(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const OnboardingScreen(),
+                    ),
+                  );
                 },
                 style: ElevatedButton.styleFrom(
                   padding: const EdgeInsets.symmetric(

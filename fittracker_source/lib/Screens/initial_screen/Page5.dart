@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'Page6.dart';
 
 class LifestyleScreen extends StatefulWidget {
   const LifestyleScreen({super.key});
@@ -22,6 +23,17 @@ class _LifestyleScreenState extends State<LifestyleScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
+      appBar: AppBar(
+        // ✅ Thêm AppBar với nút Back
+        backgroundColor: Colors.white,
+        elevation: 0,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back, color: Colors.black),
+          onPressed: () {
+            Navigator.pop(context); // ✅ Quay về page 2
+          },
+        ),
+      ),
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.fromLTRB(24, 24, 24, 0),
@@ -30,19 +42,12 @@ class _LifestyleScreenState extends State<LifestyleScreen> {
             children: [
               const Text(
                 "Your daily life affects your weight.",
-                style: TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.w600,
-                ),
+                style: TextStyle(fontSize: 20, fontWeight: FontWeight.w600),
               ),
               const SizedBox(height: 20),
-
               const Text(
                 "How would you describe your lifestyle?",
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w500,
-                ),
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.w500),
               ),
               const SizedBox(height: 24),
 
@@ -59,7 +64,10 @@ class _LifestyleScreenState extends State<LifestyleScreen> {
                     child: Container(
                       width: double.infinity,
                       margin: const EdgeInsets.only(bottom: 16),
-                      padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
+                      padding: const EdgeInsets.symmetric(
+                        vertical: 16,
+                        horizontal: 20,
+                      ),
                       decoration: BoxDecoration(
                         color: isSelected
                             ? const Color(0xFFFFF0D9)
@@ -77,18 +85,35 @@ class _LifestyleScreenState extends State<LifestyleScreen> {
                   );
                 }).toList(),
               ),
+
+              const SizedBox(height: 30),
+
+              // Nút Next
+              ElevatedButton(
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const DietaryRestrictionsScreen(),
+                    ),
+                  );
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.black,
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(24),
+                  ),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 40,
+                    vertical: 14,
+                  ),
+                ),
+                child: const Text("Next"),
+              ),
             ],
           ),
         ),
-      ),
-      // Nút quay lại
-      floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          Navigator.pop(context);
-        },
-        backgroundColor: Colors.white,
-        elevation: 2,
-        child: const Icon(Icons.arrow_back, color: Colors.black),
       ),
     );
   }

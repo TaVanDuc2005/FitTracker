@@ -1,13 +1,14 @@
 import 'package:flutter/material.dart';
+import 'Page5.dart';
 
-class WelcomeScreen extends StatefulWidget {
-  const WelcomeScreen({super.key});
+class UserInfoScreen extends StatefulWidget {
+  const UserInfoScreen({super.key});
 
   @override
-  State<WelcomeScreen> createState() => _WelcomeScreenState();
+  State<UserInfoScreen> createState() => _UserInfoScreenState();
 }
 
-class _WelcomeScreenState extends State<WelcomeScreen> {
+class _UserInfoScreenState extends State<UserInfoScreen> {
   String gender = 'Male';
   final ageController = TextEditingController();
   final heightController = TextEditingController();
@@ -24,6 +25,16 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      appBar: AppBar(
+        backgroundColor: Colors.white,
+        elevation: 0,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back, color: Colors.black),
+          onPressed: () {
+            Navigator.pop(context); // Quay lại page trước (page3)
+          },
+        ),
+      ),
       body: Stack(
         children: [
           SingleChildScrollView(
@@ -65,12 +76,18 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                 _customInputField(controller: ageController),
 
                 const SizedBox(height: 20),
-                const Text("What is your height?", style: TextStyle(fontSize: 18)),
+                const Text(
+                  "What is your height?",
+                  style: TextStyle(fontSize: 18),
+                ),
                 const SizedBox(height: 8),
                 _customInputField(controller: heightController),
 
                 const SizedBox(height: 20),
-                const Text("What is your current weight?", style: TextStyle(fontSize: 18)),
+                const Text(
+                  "What is your current weight?",
+                  style: TextStyle(fontSize: 18),
+                ),
                 const SizedBox(height: 8),
                 _customInputField(controller: weightController),
               ],
@@ -83,7 +100,12 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
             right: 24,
             child: ElevatedButton(
               onPressed: () {
-                // TODO: Chuyển sang màn hình tiếp theo hoặc xử lý logic
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const LifestyleScreen(),
+                  ),
+                );
               },
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.black87,
@@ -94,22 +116,23 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
               ),
               child: const Text("Next", style: TextStyle(fontSize: 18)),
             ),
-          )
+          ),
         ],
       ),
     );
   }
 
-  Widget _customInputField({
-    required TextEditingController controller,
-  }) {
+  Widget _customInputField({required TextEditingController controller}) {
     return TextFormField(
       controller: controller,
       keyboardType: TextInputType.number,
       decoration: InputDecoration(
         filled: true,
         fillColor: const Color(0xFFFFF0D9),
-        contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 20,
+          vertical: 14,
+        ),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(18),
           borderSide: BorderSide.none,

@@ -1,13 +1,16 @@
-import 'package:flutter/material.dart';
+// file: enter_name_screen.dart
 
-class WelcomeScreen extends StatefulWidget {
-  const WelcomeScreen({super.key});
+import 'package:flutter/material.dart';
+import 'Page4.dart';
+
+class EnterNameScreen extends StatefulWidget {
+  const EnterNameScreen({super.key});
 
   @override
-  State<WelcomeScreen> createState() => _WelcomeScreenState();
+  State<EnterNameScreen> createState() => _EnterNameScreenState();
 }
 
-class _WelcomeScreenState extends State<WelcomeScreen> {
+class _EnterNameScreenState extends State<EnterNameScreen> {
   final TextEditingController _nameController = TextEditingController();
   bool _isButtonVisible = false;
 
@@ -36,11 +39,10 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
       body: SafeArea(
         child: Stack(
           children: [
-            // 🌿 Icon trang trí bốn góc
             const Positioned(
               top: 20,
               left: 0,
-              right: 0, // thêm vào để dùng toàn bộ chiều ngang
+              right: 0,
               child: Center(
                 child: Icon(
                   Icons.local_florist,
@@ -50,7 +52,7 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
               ),
             ),
 
-            // 📝 Tiêu đề và mô tả (trên cùng, lệch trái 20)
+            // Tiêu đề
             Positioned(
               top: 100,
               left: 30,
@@ -59,9 +61,8 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: const [
                   Center(
-                    // bọc lại để chắc chắn Text nằm giữa
                     child: Text(
-                      "Welcome",
+                      "Enter your name",
                       style: TextStyle(
                         fontSize: 40,
                         fontWeight: FontWeight.bold,
@@ -81,21 +82,13 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
               ),
             ),
 
+            // TextField
             Positioned(
               top: 240,
               left: 30,
               right: 30,
               child: TextField(
                 controller: _nameController,
-                keyboardType: TextInputType.text,
-                textInputAction: TextInputAction.done,
-                textCapitalization: TextCapitalization.words,
-                autocorrect: true,
-                enableSuggestions: true,
-                enableIMEPersonalizedLearning: true,
-                smartDashesType: SmartDashesType.enabled,
-                smartQuotesType: SmartQuotesType.enabled,
-                style: const TextStyle(fontSize: 16, color: Colors.black),
                 decoration: const InputDecoration(
                   hintText: 'First Name',
                   filled: true,
@@ -120,13 +113,18 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
               ),
             ),
 
-            // 🚀 Nút Start ở gần cuối màn hình
+            // Nút Next
             if (_isButtonVisible)
               Align(
                 alignment: const Alignment(0, 0.75),
                 child: ElevatedButton(
                   onPressed: () {
-                    // TODO: Thêm điều hướng sang màn hình tiếp theo
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const UserInfoScreen(),
+                      ),
+                    );
                   },
                   style: ElevatedButton.styleFrom(
                     padding: const EdgeInsets.symmetric(

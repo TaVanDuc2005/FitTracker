@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'Page3.dart';
 
 class OnboardingScreen extends StatefulWidget {
   const OnboardingScreen({super.key});
@@ -14,24 +15,30 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   final List<Map<String, String>> _pages = [
     {
       'image': 'Assets/Images/imagePage2_1.jpg',
-      'text': 'When it comes to nutrition,\nfinding what works for you\nmakes all the difference.'
+      'text':
+          'When it comes to nutrition,\nfinding what works for you\nmakes all the difference.',
     },
     {
       'image': 'Assets/Images/imagePage2_2.jpg',
-      'text': 'You are unique,\nso is our program.'
+      'text': 'You are unique,\nso is our program.',
     },
     {
       'image': 'Assets/Images/imagePage2_3.jpg',
-      'text': 'Let\'s start your journey\ntowards better health!'
+      'text': 'Let\'s start your journey\ntowards better health!',
     },
   ];
 
   void _nextPage() {
     if (_currentIndex < _pages.length - 1) {
-      _controller.nextPage(duration: const Duration(milliseconds: 300), curve: Curves.easeInOut);
+      _controller.nextPage(
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.easeInOut,
+      );
     } else {
-      // Đến trang chính (Home/Login)
-      // Navigator.pushReplacement(...);
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => const EnterNameScreen()),
+      );
     }
   }
 
@@ -49,7 +56,10 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
               itemBuilder: (context, index) {
                 final page = _pages[index];
                 return Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 40),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 24,
+                    vertical: 40,
+                  ),
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [

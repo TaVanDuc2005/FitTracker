@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'Page7.dart';
 
 class DietaryRestrictionsScreen extends StatefulWidget {
   const DietaryRestrictionsScreen({super.key});
@@ -95,16 +96,63 @@ class _DietaryRestrictionsScreenState extends State<DietaryRestrictionsScreen> {
                 }).toList(),
               ),
             ),
+            // Back & Next buttons
+            Positioned(
+              bottom: 30,
+              left: 24,
+              right: 24,
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  ElevatedButton(
+                    onPressed: () {
+                      Navigator.pop(context); // Quay về Page 5
+                    },
+                    style: ElevatedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 32,
+                        vertical: 14,
+                      ),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(30),
+                      ),
+                      backgroundColor: Colors.grey[200],
+                    ),
+                    child: const Text(
+                      "Back",
+                      style: TextStyle(color: Colors.black),
+                    ),
+                  ),
+                  ElevatedButton(
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) =>
+                              const DietaryRestrictionsScreen(),
+                        ),
+                      );
+                    },
+                    style: ElevatedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 32,
+                        vertical: 14,
+                      ),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(30),
+                      ),
+                      backgroundColor: Colors.black87,
+                    ),
+                    child: const Text(
+                      "Next",
+                      style: TextStyle(color: Colors.white),
+                    ),
+                  ),
+                ],
+              ),
+            ),
           ],
         ),
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          Navigator.pop(context);
-        },
-        backgroundColor: Colors.white,
-        elevation: 2,
-        child: const Icon(Icons.arrow_back, color: Colors.black),
       ),
     );
   }
