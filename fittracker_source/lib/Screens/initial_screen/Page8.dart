@@ -1,14 +1,14 @@
 import 'package:flutter/material.dart';
 
-class DietaryRestrictionsScreen extends StatefulWidget {
-  const DietaryRestrictionsScreen({super.key});
+class DietaryRestrictionsScreen8 extends StatefulWidget {
+  const DietaryRestrictionsScreen8({super.key});
 
   @override
-  State<DietaryRestrictionsScreen> createState() =>
+  State<DietaryRestrictionsScreen8> createState() =>
       _DietaryRestrictionsScreenState();
 }
 
-class _DietaryRestrictionsScreenState extends State<DietaryRestrictionsScreen> {
+class _DietaryRestrictionsScreenState extends State<DietaryRestrictionsScreen8> {
   List<String> selectedRestrictions = [];
 
   final List<String> options = [

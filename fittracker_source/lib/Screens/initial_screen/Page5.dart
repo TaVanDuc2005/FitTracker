@@ -94,7 +94,7 @@ class _LifestyleScreenState extends State<LifestyleScreen> {
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (context) => const DietaryRestrictionsScreen(),
+                      builder: (context) => const DietaryRestrictionsScreen6(),
                     ),
                   );
                 },
