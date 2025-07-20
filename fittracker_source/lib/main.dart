@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'Screens/active_screen/journal/search_breakfast.dart';
+import 'Screens/active_screen/profile/profile.dart';
 
 void main() {
   runApp(const MyApp());
@@ -14,7 +14,7 @@ class MyApp extends StatelessWidget {
       title: 'FitTracker',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(primarySwatch: Colors.green, useMaterial3: true),
-      home: const SearchFoodScreen(),
+      home: const ProfileScreen(),
     );
   }
 }
