@@ -1,6 +1,10 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
+import 'package:image_picker/image_picker.dart';
 
+// ========== PROFILE SCREEN ==========
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({Key? key}) : super(key: key);
 
@@ -8,25 +12,32 @@ class ProfileScreen extends StatefulWidget {
   State<ProfileScreen> createState() => _ProfileScreenState();
 }
 
-class _ProfileScreenState extends State<ProfileScreen>
-    with SingleTickerProviderStateMixin {
-  int _selectedTabIndex = 0;
-  int _selectedBottomIndex = 2; // Profile
-  int _selectedDayRange = 0; // 0: 7, 1: 30, 2: 90
+class _ProfileScreenState extends State<ProfileScreen> {
+  int _selectedTabIndex = 0; // Weight | Nutrition
+  int _selectedBottomIndex = 2; // Notification | Journal | Profile
+  int _selectedDayRange = 0; // 0: 7 ngày, 1: 30 ngày, 2: 90 ngày
 
-  // Bạn gắn dữ liệu động vào các biến này
-  final String userName = "Minh";
-  final String goal = "Gain muscle";
-  final int caloriesPerDay = 3518;
-  final double startWeight = 228.0;
-  final double currentWeight = 228.0;
-  final double goalWeight = 229.0;
+  // Thông tin cá nhân (có thể load từ backend sau này)
+  String userName = "Minh";
+  String goal = "Gain muscle";
+  int caloriesPerDay = 3518;
+  double startWeight = 228.0;
+  double currentWeight = 228.0;
+  double goalWeight = 229.0;
 
-  // Dữ liệu mẫu chart (sau này thay bằng dữ liệu động)
-  final List<double> weightHistory = [228.0];
-  final List<String> weightDates = ["15/07"];
-  final List<double> calHistory = [3518, 3518, 3518, 3518, 3518, 3518, 3518];
-  final List<String> calDates = [
+  File? _avatarFile;
+
+  // Lịch sử cân nặng giả lập
+  List<double> weightHistory7 = [
+    228.0,
+    227.8,
+    227.5,
+    227.0,
+    227.3,
+    227.0,
+    228.0,
+  ];
+  List<String> weightDates7 = [
     "12/07",
     "13/07",
     "14/07",
@@ -35,6 +46,15 @@ class _ProfileScreenState extends State<ProfileScreen>
     "17/07",
     "18/07",
   ];
+  List<double> weightHistory30 = List.generate(30, (i) => 228 - i * 0.1);
+  List<String> weightDates30 = List.generate(30, (i) => "${i + 1}/07");
+  List<double> weightHistory90 = List.generate(90, (i) => 228 - i * 0.05);
+  List<String> weightDates90 = List.generate(90, (i) => "${i + 1}/05");
+
+  // Lịch sử calo giả lập
+  List<double> calHistory7 = [3200, 3350, 3500, 3518, 3600, 3400, 3518];
+  List<double> calHistory30 = List.generate(30, (i) => 3200 + (i % 7) * 50.0);
+  List<double> calHistory90 = List.generate(90, (i) => 3300 + (i % 14) * 25.0);
 
   @override
   Widget build(BuildContext context) {
@@ -58,26 +78,29 @@ class _ProfileScreenState extends State<ProfileScreen>
                         children: [
                           Stack(
                             children: [
-                              CircleAvatar(
-                                radius: 36,
-                                backgroundColor: Colors.teal[400],
-                                child: Text(
-                                  userName.isNotEmpty
-                                      ? userName[0].toUpperCase()
-                                      : "",
-                                  style: const TextStyle(
-                                    fontSize: 38,
-                                    color: Colors.white,
-                                  ),
-                                ),
-                              ),
+                              _avatarFile == null
+                                  ? CircleAvatar(
+                                      radius: 36,
+                                      backgroundColor: Colors.teal[400],
+                                      child: Text(
+                                        userName.isNotEmpty
+                                            ? userName[0].toUpperCase()
+                                            : "",
+                                        style: const TextStyle(
+                                          fontSize: 38,
+                                          color: Colors.white,
+                                        ),
+                                      ),
+                                    )
+                                  : CircleAvatar(
+                                      radius: 36,
+                                      backgroundImage: FileImage(_avatarFile!),
+                                    ),
                               Positioned(
                                 bottom: 0,
                                 right: 0,
                                 child: InkWell(
-                                  onTap: () {
-                                    // TODO: Edit avatar
-                                  },
+                                  onTap: _pickAvatar,
                                   child: CircleAvatar(
                                     radius: 13,
                                     backgroundColor: Colors.white,
@@ -106,8 +129,40 @@ class _ProfileScreenState extends State<ProfileScreen>
                                   ),
                                   const SizedBox(width: 6),
                                   InkWell(
-                                    onTap: () {
-                                      // TODO: Edit profile info
+                                    onTap: () async {
+                                      // Chuyển sang màn hình chỉnh sửa profile
+                                      final result = await Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                          builder: (context) =>
+                                              EditProfileScreen(
+                                                name: userName,
+                                                goal: goal,
+                                                calories: caloriesPerDay,
+                                                startWeight: startWeight,
+                                                currentWeight: currentWeight,
+                                                goalWeight: goalWeight,
+                                              ),
+                                        ),
+                                      );
+                                      if (result != null) {
+                                        setState(() {
+                                          userName = result['name'] ?? userName;
+                                          goal = result['goal'] ?? goal;
+                                          caloriesPerDay =
+                                              result['calories'] ??
+                                              caloriesPerDay;
+                                          startWeight =
+                                              result['startWeight'] ??
+                                              startWeight;
+                                          currentWeight =
+                                              result['currentWeight'] ??
+                                              currentWeight;
+                                          goalWeight =
+                                              result['goalWeight'] ??
+                                              goalWeight;
+                                        });
+                                      }
                                     },
                                     child: const Icon(Icons.edit, size: 18),
                                   ),
@@ -127,7 +182,12 @@ class _ProfileScreenState extends State<ProfileScreen>
                       IconButton(
                         icon: const Icon(Icons.settings, size: 28),
                         onPressed: () {
-                          // TODO: Setting
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => const SettingsScreen(),
+                            ),
+                          );
                         },
                       ),
                     ],
@@ -262,8 +322,19 @@ class _ProfileScreenState extends State<ProfileScreen>
     );
   }
 
-  // Tab Weight
+  // ----- WEIGHT TAB -----
   Widget _buildWeightTab() {
+    final weightHistory = _selectedDayRange == 0
+        ? weightHistory7
+        : _selectedDayRange == 1
+        ? weightHistory30
+        : weightHistory90;
+    final weightDates = _selectedDayRange == 0
+        ? weightDates7
+        : _selectedDayRange == 1
+        ? weightDates30
+        : weightDates90;
+
     return SingleChildScrollView(
       child: Column(
         children: [
@@ -290,9 +361,7 @@ class _ProfileScreenState extends State<ProfileScreen>
                   borderRadius: BorderRadius.circular(30),
                 ),
               ),
-              onPressed: () {
-                // TODO: Thêm entry cân nặng
-              },
+              onPressed: _showAddWeightDialog,
               child: const Text(
                 "Add a weight entry",
                 style: TextStyle(fontSize: 17),
@@ -300,13 +369,26 @@ class _ProfileScreenState extends State<ProfileScreen>
             ),
           ),
           const SizedBox(height: 14),
+          // Switch day range
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 10),
+            child: Row(
+              children: [
+                _dayRangeButton("7 days", 0),
+                const SizedBox(width: 10),
+                _dayRangeButton("30 days", 1),
+                const SizedBox(width: 10),
+                _dayRangeButton("90 days", 2),
+              ],
+            ),
+          ),
           // Biểu đồ cân nặng
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
             child: Align(
               alignment: Alignment.centerLeft,
               child: const Text(
-                "Weight",
+                "Weight History",
                 style: TextStyle(fontSize: 20, fontWeight: FontWeight.w700),
               ),
             ),
@@ -317,10 +399,12 @@ class _ProfileScreenState extends State<ProfileScreen>
             child: LineChart(
               LineChartData(
                 minY: (weightHistory.isNotEmpty)
-                    ? weightHistory.reduce((a, b) => a < b ? a : b) - 2
+                    ? (weightHistory.reduce((a, b) => a < b ? a : b) - 2)
+                          .floorToDouble()
                     : 0,
                 maxY: (weightHistory.isNotEmpty)
-                    ? weightHistory.reduce((a, b) => a > b ? a : b) + 2
+                    ? (weightHistory.reduce((a, b) => a > b ? a : b) + 2)
+                          .ceilToDouble()
                     : 10,
                 lineBarsData: [
                   LineChartBarData(
@@ -332,6 +416,10 @@ class _ProfileScreenState extends State<ProfileScreen>
                     barWidth: 3,
                     color: Colors.teal[700],
                     dotData: FlDotData(show: true),
+                    belowBarData: BarAreaData(
+                      show: true,
+                      color: Colors.teal.withOpacity(0.12),
+                    ),
                   ),
                 ],
                 titlesData: FlTitlesData(
@@ -341,10 +429,19 @@ class _ProfileScreenState extends State<ProfileScreen>
                   bottomTitles: AxisTitles(
                     sideTitles: SideTitles(
                       showTitles: true,
+                      reservedSize: 36,
                       getTitlesWidget: (value, meta) {
                         if (value < 0 || value >= weightDates.length)
                           return Container();
-                        return Text(weightDates[value.toInt()]);
+                        // Giãn mốc trục hoành nếu quá nhiều label
+                        if (weightDates.length > 15 && value % 5 != 0)
+                          return Container();
+                        if (weightDates.length > 30 && value % 10 != 0)
+                          return Container();
+                        return Text(
+                          weightDates[value.toInt()],
+                          style: const TextStyle(fontSize: 12),
+                        );
                       },
                     ),
                   ),
@@ -359,8 +456,19 @@ class _ProfileScreenState extends State<ProfileScreen>
     );
   }
 
-  // Tab Nutrition
+  // ----- NUTRITION TAB -----
   Widget _buildNutritionTab() {
+    final calHistory = _selectedDayRange == 0
+        ? calHistory7
+        : _selectedDayRange == 1
+        ? calHistory30
+        : calHistory90;
+    final List<String> calDates = _selectedDayRange == 0
+        ? weightDates7
+        : _selectedDayRange == 1
+        ? weightDates30
+        : weightDates90;
+
     return SingleChildScrollView(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -382,7 +490,7 @@ class _ProfileScreenState extends State<ProfileScreen>
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 4),
             child: const Text(
-              "Goal (Cal)",
+              "Calories History",
               style: TextStyle(fontSize: 20, fontWeight: FontWeight.w700),
             ),
           ),
@@ -392,7 +500,10 @@ class _ProfileScreenState extends State<ProfileScreen>
             child: LineChart(
               LineChartData(
                 minY: 0,
-                maxY: caloriesPerDay + 500,
+                maxY: (calHistory.isNotEmpty)
+                    ? (calHistory.reduce((a, b) => a > b ? a : b) + 500)
+                          .ceilToDouble()
+                    : 4000,
                 lineBarsData: [
                   LineChartBarData(
                     spots: List.generate(
@@ -403,24 +514,36 @@ class _ProfileScreenState extends State<ProfileScreen>
                     barWidth: 3,
                     color: Colors.teal[600],
                     dotData: FlDotData(show: true),
+                    belowBarData: BarAreaData(
+                      show: true,
+                      color: Colors.teal.withOpacity(0.12),
+                    ),
                   ),
                 ],
                 titlesData: FlTitlesData(
                   leftTitles: AxisTitles(
-                    sideTitles: SideTitles(showTitles: true, interval: 1000),
+                    sideTitles: SideTitles(showTitles: true, interval: 500),
                   ),
                   bottomTitles: AxisTitles(
                     sideTitles: SideTitles(
                       showTitles: true,
+                      reservedSize: 36,
                       getTitlesWidget: (value, meta) {
                         if (value < 0 || value >= calDates.length)
                           return Container();
-                        return Text(calDates[value.toInt()]);
+                        if (calDates.length > 15 && value % 5 != 0)
+                          return Container();
+                        if (calDates.length > 30 && value % 10 != 0)
+                          return Container();
+                        return Text(
+                          calDates[value.toInt()],
+                          style: const TextStyle(fontSize: 12),
+                        );
                       },
                     ),
                   ),
                 ),
-                gridData: FlGridData(show: true, horizontalInterval: 1000),
+                gridData: FlGridData(show: true, horizontalInterval: 500),
                 borderData: FlBorderData(show: false),
               ),
             ),
@@ -492,6 +615,210 @@ class _ProfileScreenState extends State<ProfileScreen>
         const SizedBox(height: 6),
         Text(label, style: const TextStyle(fontSize: 14, color: Colors.grey)),
       ],
+    );
+  }
+
+  // ======= Xử lý chọn ảnh avatar =======
+  Future<void> _pickAvatar() async {
+    final picker = ImagePicker();
+    final XFile? image = await picker.pickImage(source: ImageSource.gallery);
+    if (image != null) {
+      setState(() {
+        _avatarFile = File(image.path);
+      });
+    }
+  }
+
+  // ======= Dialog nhập cân nặng mới =======
+  void _showAddWeightDialog() {
+    double tempWeight = currentWeight;
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('Add a new weight entry'),
+          content: TextField(
+            keyboardType: const TextInputType.numberWithOptions(decimal: true),
+            decoration: const InputDecoration(labelText: 'Weight (lbs)'),
+            onChanged: (value) {
+              tempWeight = double.tryParse(value) ?? currentWeight;
+            },
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.pop(context);
+              },
+              child: const Text('Cancel'),
+            ),
+            TextButton(
+              onPressed: () {
+                setState(() {
+                  currentWeight = tempWeight;
+                  // Thêm vào lịch sử 7 ngày (giả lập thêm ở cuối)
+                  weightHistory7.removeAt(0);
+                  weightHistory7.add(tempWeight);
+                  // Update cho chart các mốc dài hơn nếu cần
+                  weightHistory30.removeAt(0);
+                  weightHistory30.add(tempWeight);
+                  weightHistory90.removeAt(0);
+                  weightHistory90.add(tempWeight);
+                });
+                Navigator.pop(context);
+              },
+              child: const Text('Add'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+}
+
+// ========== EDIT PROFILE SCREEN ==========
+class EditProfileScreen extends StatefulWidget {
+  final String name;
+  final String goal;
+  final int calories;
+  final double startWeight;
+  final double currentWeight;
+  final double goalWeight;
+
+  const EditProfileScreen({
+    super.key,
+    required this.name,
+    required this.goal,
+    required this.calories,
+    required this.startWeight,
+    required this.currentWeight,
+    required this.goalWeight,
+  });
+
+  @override
+  State<EditProfileScreen> createState() => _EditProfileScreenState();
+}
+
+class _EditProfileScreenState extends State<EditProfileScreen> {
+  late TextEditingController nameCtrl;
+  late TextEditingController goalCtrl;
+  late TextEditingController caloriesCtrl;
+  late TextEditingController startWeightCtrl;
+  late TextEditingController currentWeightCtrl;
+  late TextEditingController goalWeightCtrl;
+
+  @override
+  void initState() {
+    super.initState();
+    nameCtrl = TextEditingController(text: widget.name);
+    goalCtrl = TextEditingController(text: widget.goal);
+    caloriesCtrl = TextEditingController(text: widget.calories.toString());
+    startWeightCtrl = TextEditingController(
+      text: widget.startWeight.toString(),
+    );
+    currentWeightCtrl = TextEditingController(
+      text: widget.currentWeight.toString(),
+    );
+    goalWeightCtrl = TextEditingController(text: widget.goalWeight.toString());
+  }
+
+  @override
+  void dispose() {
+    nameCtrl.dispose();
+    goalCtrl.dispose();
+    caloriesCtrl.dispose();
+    startWeightCtrl.dispose();
+    currentWeightCtrl.dispose();
+    goalWeightCtrl.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text("Edit Profile"),
+        backgroundColor: Colors.teal[300],
+      ),
+      body: Padding(
+        padding: const EdgeInsets.all(24.0),
+        child: ListView(
+          children: [
+            TextField(
+              controller: nameCtrl,
+              decoration: const InputDecoration(labelText: "Name"),
+            ),
+            TextField(
+              controller: goalCtrl,
+              decoration: const InputDecoration(
+                labelText: "Goal (e.g. Gain muscle)",
+              ),
+            ),
+            TextField(
+              controller: caloriesCtrl,
+              decoration: const InputDecoration(labelText: "Calories per day"),
+              keyboardType: TextInputType.number,
+            ),
+            TextField(
+              controller: startWeightCtrl,
+              decoration: const InputDecoration(
+                labelText: "Start Weight (lbs)",
+              ),
+              keyboardType: TextInputType.number,
+            ),
+            TextField(
+              controller: currentWeightCtrl,
+              decoration: const InputDecoration(
+                labelText: "Current Weight (lbs)",
+              ),
+              keyboardType: TextInputType.number,
+            ),
+            TextField(
+              controller: goalWeightCtrl,
+              decoration: const InputDecoration(labelText: "Goal Weight (lbs)"),
+              keyboardType: TextInputType.number,
+            ),
+            const SizedBox(height: 22),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.teal[700],
+                minimumSize: const Size.fromHeight(50),
+              ),
+              onPressed: () {
+                Navigator.pop(context, {
+                  'name': nameCtrl.text,
+                  'goal': goalCtrl.text,
+                  'calories': int.tryParse(caloriesCtrl.text),
+                  'startWeight': double.tryParse(startWeightCtrl.text),
+                  'currentWeight': double.tryParse(currentWeightCtrl.text),
+                  'goalWeight': double.tryParse(goalWeightCtrl.text),
+                });
+              },
+              child: const Text("Save", style: TextStyle(fontSize: 18)),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// ========== SETTINGS SCREEN ==========
+class SettingsScreen extends StatelessWidget {
+  const SettingsScreen({super.key});
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text("Settings"),
+        backgroundColor: Colors.teal[300],
+      ),
+      body: const Center(
+        child: Text(
+          "Settings Content Demo",
+          style: TextStyle(fontSize: 20, color: Colors.teal),
+          textAlign: TextAlign.center,
+        ),
+      ),
     );
   }
 }
