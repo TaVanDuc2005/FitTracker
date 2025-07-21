@@ -14,7 +14,11 @@ class MyApp extends StatelessWidget {
       title: 'FitTracker',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(primarySwatch: Colors.green, useMaterial3: true),
+<<<<<<< HEAD
       home: const JournalScreen(), 
+=======
+      home: const WelcomeScreen(),
+>>>>>>> fbdd74d725f08efff293ca556fa2f841ebdb886d
     );
   }
 }
