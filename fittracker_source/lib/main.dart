@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'Screens/active_screen/profile/profile.dart';
+import 'Screens/initial_screen/Page9.dart';
 
 void main() {
   runApp(const MyApp());
@@ -14,7 +14,7 @@ class MyApp extends StatelessWidget {
       title: 'FitTracker',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(primarySwatch: Colors.green, useMaterial3: true),
-      home: const ProfileScreen(),
+      home: const FoodvisorIntro(),
     );
   }
 }
