@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'Page9.dart';
 
 class DietaryRestrictionsScreen8 extends StatefulWidget {
   const DietaryRestrictionsScreen8({super.key});
@@ -8,7 +9,8 @@ class DietaryRestrictionsScreen8 extends StatefulWidget {
       _DietaryRestrictionsScreenState();
 }
 
-class _DietaryRestrictionsScreenState extends State<DietaryRestrictionsScreen8> {
+class _DietaryRestrictionsScreenState
+    extends State<DietaryRestrictionsScreen8> {
   List<String> selectedRestrictions = [];
 
   final List<String> options = [
@@ -140,8 +142,12 @@ class _DietaryRestrictionsScreenState extends State<DietaryRestrictionsScreen8> 
                   if (selectedRestrictions.isNotEmpty)
                     ElevatedButton(
                       onPressed: () {
-                        // TODO: Navigate to next screen
-                        print('Selected: $selectedRestrictions');
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const FoodvisorIntro(),
+                          ),
+                        );
                       },
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.black87,
