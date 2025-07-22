@@ -1,8 +1,16 @@
 import 'package:flutter/material.dart';
 import 'food_search_screen.dart';
+import '../profile/profile.dart';
 
-class JournalScreen extends StatelessWidget {
+class JournalScreen extends StatefulWidget {
   const JournalScreen({super.key});
+
+  @override
+  State<JournalScreen> createState() => _JournalScreenState();
+}
+
+class _JournalScreenState extends State<JournalScreen> {
+  int _selectedBottomIndex = 0; // 0: Journal, 1: Profile
 
   @override
   Widget build(BuildContext context) {
@@ -238,6 +246,32 @@ class JournalScreen extends StatelessWidget {
             ],
           ),
         ),
+      ),
+      // Bottom Navigation Bar
+      bottomNavigationBar: BottomNavigationBar(
+        currentIndex: _selectedBottomIndex,
+        selectedItemColor: Colors.teal[800],
+        unselectedItemColor: Colors.grey,
+        backgroundColor: Colors.white,
+        onTap: (index) {
+          setState(() {
+            _selectedBottomIndex = index;
+          });
+
+          // Điều hướng sang màn khác
+          if (index == 1) {
+            // Chuyển sang Profile
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(builder: (context) => const ProfileScreen()),
+            );
+          }
+          // index == 0 là Journal (màn hình hiện tại), không cần làm gì
+        },
+        items: const [
+          BottomNavigationBarItem(icon: Icon(Icons.article), label: "Journal"),
+          BottomNavigationBarItem(icon: Icon(Icons.person), label: "Profile"),
+        ],
       ),
     );
   }

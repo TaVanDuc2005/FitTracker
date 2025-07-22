@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:fittracker_source/Screens/active_screen/journal/journal.dart';
 
 // ========== PROFILE SCREEN ==========
 class ProfileScreen extends StatefulWidget {
@@ -307,8 +308,16 @@ class _ProfileScreenState extends State<ProfileScreen> {
         onTap: (index) {
           setState(() {
             _selectedBottomIndex = index;
-            // TODO: Điều hướng sang màn khác nếu cần
           });
+          // Điều hướng sang màn khác
+          if (index == 0) {
+            // Chuyển sang Journal
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(builder: (context) => const JournalScreen()),
+            );
+          }
+          // index == 1 là Profile (màn hình hiện tại), không cần làm gì
         },
         items: const [
           BottomNavigationBarItem(icon: Icon(Icons.article), label: "Journal"),
