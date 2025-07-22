@@ -28,11 +28,11 @@ class _SearchFoodScreenState extends State<SearchFoodScreen> {
   String get _mealImage {
     switch (widget.mealType) {
       case MealType.breakfast:
-        return 'Assets/Images/imagePageSearch_1.png';
+        return 'Assets/Images/breakfast.png';
       case MealType.lunch:
-        return 'Assets/Images/imagePageSearch_3.png';
+        return 'Assets/Images/lunch.png';
       case MealType.dinner:
-        return 'Assets/Images/imagePageSearch_4.png';
+        return 'Assets/Images/dinner.png';
     }
   }
 
