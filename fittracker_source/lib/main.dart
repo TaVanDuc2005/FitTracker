@@ -1,4 +1,4 @@
-import 'package:fittracker_source/Screens/initial_screen/Page1.dart';
+import 'package:fittracker_source/Screens/active_screen/journal/journal.dart';
 import 'package:flutter/material.dart';
 
 void main() {
@@ -14,7 +14,7 @@ class MyApp extends StatelessWidget {
       title: 'FitTracker',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(primarySwatch: Colors.green, useMaterial3: true),
-      home: const WelcomeScreen(),
+      home: const JournalScreen(),
     );
   }
 }

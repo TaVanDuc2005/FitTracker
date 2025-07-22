@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'food_search_screen.dart';
 
 class JournalScreen extends StatelessWidget {
   const JournalScreen({super.key});
@@ -6,9 +7,24 @@ class JournalScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final List<Meal> mealList = [
-      Meal(icon: Icons.free_breakfast, name: 'Breakfast', calories: '0 / 608 Cal'),
-      Meal(icon: Icons.lunch_dining, name: 'Lunch', calories: '0 / 608 Cal'),
-      Meal(icon: Icons.dinner_dining, name: 'Dinner', calories: '0 / 608 Cal'),
+      Meal(
+        icon: Icons.free_breakfast,
+        name: 'Breakfast',
+        calories: '0 / 608 Cal',
+        mealType: MealType.breakfast,
+      ),
+      Meal(
+        icon: Icons.lunch_dining,
+        name: 'Lunch',
+        calories: '0 / 608 Cal',
+        mealType: MealType.lunch,
+      ),
+      Meal(
+        icon: Icons.dinner_dining,
+        name: 'Dinner',
+        calories: '0 / 608 Cal',
+        mealType: MealType.dinner,
+      ),
     ];
 
     return Scaffold(
@@ -28,14 +44,19 @@ class JournalScreen extends StatelessWidget {
                   // Calories Eaten
                   Column(
                     children: const [
-                      Text("0",
-                          style: TextStyle(
-                              fontSize: 20,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.white)),
+                      Text(
+                        "0",
+                        style: TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                        ),
+                      ),
                       SizedBox(height: 4),
-                      Text("Eaten",
-                          style: TextStyle(fontSize: 16, color: Colors.black54)),
+                      Text(
+                        "Eaten",
+                        style: TextStyle(fontSize: 16, color: Colors.black54),
+                      ),
                     ],
                   ),
 
@@ -48,19 +69,29 @@ class JournalScreen extends StatelessWidget {
                         child: Column(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            Text("2025",
-                                style: TextStyle(
-                                    fontSize: 24,
-                                    fontWeight: FontWeight.bold,
-                                    color: Colors.white)),
-                            Text("Cal",
-                                style: TextStyle(
-                                    fontSize: 18,
-                                    fontWeight: FontWeight.bold,
-                                    color: Colors.black87)),
-                            Text("left",
-                                style:
-                                    TextStyle(fontSize: 14, color: Colors.black54)),
+                            Text(
+                              "2025",
+                              style: TextStyle(
+                                fontSize: 24,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.white,
+                              ),
+                            ),
+                            Text(
+                              "Cal",
+                              style: TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.black87,
+                              ),
+                            ),
+                            Text(
+                              "left",
+                              style: TextStyle(
+                                fontSize: 14,
+                                color: Colors.black54,
+                              ),
+                            ),
                           ],
                         ),
                       ),
@@ -73,13 +104,21 @@ class JournalScreen extends StatelessWidget {
                     children: [
                       Column(
                         children: const [
-                          Text("0",
-                              style:
-                                  TextStyle(fontSize: 16, color: Colors.black87)),
+                          Text(
+                            "0",
+                            style: TextStyle(
+                              fontSize: 16,
+                              color: Colors.black87,
+                            ),
+                          ),
                           SizedBox(height: 4),
-                          Text("Burned",
-                              style:
-                                  TextStyle(fontSize: 16, color: Colors.black54)),
+                          Text(
+                            "Burned",
+                            style: TextStyle(
+                              fontSize: 16,
+                              color: Colors.black54,
+                            ),
+                          ),
                         ],
                       ),
                       const Positioned(
@@ -90,21 +129,31 @@ class JournalScreen extends StatelessWidget {
                             color: Colors.white,
                             borderRadius: BorderRadius.all(Radius.circular(30)),
                             border: Border.fromBorderSide(
-                                BorderSide(color: Color(0xFFDDDDDD), width: 1)),
+                              BorderSide(color: Color(0xFFDDDDDD), width: 1),
+                            ),
                           ),
                           child: Padding(
-                            padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                            padding: EdgeInsets.symmetric(
+                              horizontal: 12,
+                              vertical: 6,
+                            ),
                             child: Row(
                               mainAxisSize: MainAxisSize.min,
                               children: [
-                                Icon(Icons.local_fire_department,
-                                    color: Colors.redAccent, size: 20),
+                                Icon(
+                                  Icons.local_fire_department,
+                                  color: Colors.redAccent,
+                                  size: 20,
+                                ),
                                 SizedBox(width: 6),
-                                Text("0",
-                                    style: TextStyle(
-                                        fontSize: 16,
-                                        color: Colors.black87,
-                                        fontWeight: FontWeight.w500)),
+                                Text(
+                                  "0",
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    color: Colors.black87,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
                               ],
                             ),
                           ),
@@ -129,8 +178,11 @@ class JournalScreen extends StatelessWidget {
               ),
 
               const SizedBox(height: 12),
-              const Icon(Icons.keyboard_arrow_down_rounded,
-                  size: 32, color: Colors.black45),
+              const Icon(
+                Icons.keyboard_arrow_down_rounded,
+                size: 32,
+                color: Colors.black45,
+              ),
 
               const SizedBox(height: 24),
 
@@ -140,7 +192,10 @@ class JournalScreen extends StatelessWidget {
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(20),
                 ),
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 20,
+                ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
@@ -165,11 +220,14 @@ class JournalScreen extends StatelessWidget {
                     // Meal items
                     Column(
                       children: mealList
-                          .map((meal) => MealItem(
-                                imageAsset: meal.icon,
-                                mealName: meal.name,
-                                calories: meal.calories,
-                              ))
+                          .map(
+                            (meal) => MealItem(
+                              imageAsset: meal.icon,
+                              mealName: meal.name,
+                              calories: meal.calories,
+                              mealType: meal.mealType,
+                            ),
+                          )
                           .toList(),
                     ),
                   ],
@@ -218,11 +276,13 @@ class Meal {
   final IconData icon;
   final String name;
   final String calories;
+  final MealType mealType;
 
   Meal({
     required this.icon,
     required this.name,
     required this.calories,
+    required this.mealType,
   });
 }
 
@@ -231,12 +291,14 @@ class MealItem extends StatelessWidget {
   final IconData imageAsset;
   final String mealName;
   final String calories;
+  final MealType mealType;
 
   const MealItem({
     super.key,
     required this.imageAsset,
     required this.mealName,
     required this.calories,
+    required this.mealType,
   });
 
   @override
@@ -263,7 +325,10 @@ class MealItem extends StatelessWidget {
                 children: [
                   Text(
                     mealName,
-                    style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                   const SizedBox(height: 4),
                   Text(
@@ -274,10 +339,20 @@ class MealItem extends StatelessWidget {
               ),
             ],
           ),
-          const CircleAvatar(
-            radius: 16,
-            backgroundColor: Colors.black87,
-            child: Icon(Icons.add, color: Colors.white, size: 18),
+          GestureDetector(
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => SearchFoodScreen(mealType: mealType),
+                ),
+              );
+            },
+            child: const CircleAvatar(
+              radius: 16,
+              backgroundColor: Colors.black87,
+              child: Icon(Icons.add, color: Colors.white, size: 18),
+            ),
           ),
         ],
       ),
@@ -299,7 +374,7 @@ class WaterChallengeCard extends StatelessWidget {
           decoration: BoxDecoration(
             color: Colors.white,
             borderRadius: BorderRadius.circular(20),
-            boxShadow: [
+            boxShadow: const [
               BoxShadow(
                 color: Colors.black12,
                 blurRadius: 8,
@@ -325,7 +400,7 @@ class WaterChallengeCard extends StatelessWidget {
                   Icon(Icons.more_horiz),
                 ],
               ),
-              SizedBox(height: 8),
+              const SizedBox(height: 8),
 
               // Subtitles
               Row(
@@ -334,26 +409,23 @@ class WaterChallengeCard extends StatelessWidget {
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text("Water",
-                          style: TextStyle(
-                            fontSize: 14,
-                            color: Colors.black87,
-                          )),
-                      Text("Goal : 1,50 L",
-                          style: TextStyle(
-                            fontSize: 13,
-                            color: Colors.grey,
-                          )),
+                      Text(
+                        "Water",
+                        style: TextStyle(fontSize: 14, color: Colors.black87),
+                      ),
+                      Text(
+                        "Goal : 1,50 L",
+                        style: TextStyle(fontSize: 13, color: Colors.grey),
+                      ),
                     ],
                   ),
-                  Text("0,00 L",
-                      style: TextStyle(
-                        fontSize: 14,
-                        color: Colors.black87,
-                      )),
+                  Text(
+                    "0,00 L",
+                    style: TextStyle(fontSize: 14, color: Colors.black87),
+                  ),
                 ],
               ),
-              SizedBox(height: 16),
+              const SizedBox(height: 16),
 
               // Water cups row
               Row(
