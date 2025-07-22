@@ -11,6 +11,7 @@ class JournalScreen extends StatefulWidget {
 
 class _JournalScreenState extends State<JournalScreen> {
   int _selectedBottomIndex = 0; // 0: Journal, 1: Profile
+  bool _isMacroExpanded = false; // Thêm biến này
 
   @override
   Widget build(BuildContext context) {
@@ -176,23 +177,91 @@ class _JournalScreenState extends State<JournalScreen> {
 
               // Macronutrients
               Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: const [
-                  _MacroNutrientBar(label: "Protein"),
-                  _MacroNutrientBar(label: "Fat"),
-                  _MacroNutrientBar(label: "Carbs"),
-                  _MacroNutrientBar(label: "Fiber"),
+                  _SimpleMacroItem(label: "Fat"),
+                  _SimpleMacroItem(label: "Protein"),
+                  _SimpleMacroItem(label: "Carbs"),
+                  _SimpleMacroItem(label: "Fiber"),
                 ],
               ),
 
               const SizedBox(height: 12),
-              const Icon(
-                Icons.keyboard_arrow_down_rounded,
-                size: 32,
-                color: Colors.black45,
+              GestureDetector(
+                onTap: () {
+                  setState(() {
+                    _isMacroExpanded = !_isMacroExpanded;
+                  });
+                },
+                child: Icon(
+                  _isMacroExpanded
+                      ? Icons.keyboard_arrow_up_rounded
+                      : Icons.keyboard_arrow_down_rounded,
+                  size: 32,
+                  color: Colors.black45,
+                ),
               ),
 
-              const SizedBox(height: 24),
+              // Thêm phần này ngay sau icon:
+              AnimatedContainer(
+                duration: const Duration(milliseconds: 300),
+                height: _isMacroExpanded ? null : 0,
+                child: _isMacroExpanded
+                    ? Container(
+                        margin: const EdgeInsets.symmetric(
+                          horizontal: 20,
+                          vertical: 20,
+                        ),
+                        padding: const EdgeInsets.all(20),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        child: Column(
+                          children: [
+                            const Text(
+                              "Macronutrients",
+                              style: TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.black87,
+                              ),
+                            ),
+                            const SizedBox(height: 20),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                              children: const [
+                                _MacroNutrientBar(
+                                  label: "Fat",
+                                  current: "0",
+                                  target: "78g",
+                                  color: Color(0xFFFFC107),
+                                ),
+                                _MacroNutrientBar(
+                                  label: "Protein",
+                                  current: "0",
+                                  target: "246g",
+                                  color: Color(0xFF8FD5C7),
+                                ),
+                                _MacroNutrientBar(
+                                  label: "Carbs",
+                                  current: "0",
+                                  target: "440g",
+                                  color: Color(0xFF9C27B0),
+                                ),
+                                _MacroNutrientBar(
+                                  label: "Fiber",
+                                  current: "0",
+                                  target: "35g",
+                                  color: Color(0xFFFF9800),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      )
+                    : const SizedBox.shrink(),
+              ),
 
               // White container with rounded corners
               Container(
@@ -277,11 +346,11 @@ class _JournalScreenState extends State<JournalScreen> {
   }
 }
 
-// Macro nutrient bar
-class _MacroNutrientBar extends StatelessWidget {
+// Thêm class mới cho simple macro view
+class _SimpleMacroItem extends StatelessWidget {
   final String label;
 
-  const _MacroNutrientBar({required this.label});
+  const _SimpleMacroItem({required this.label});
 
   @override
   Widget build(BuildContext context) {
@@ -298,7 +367,72 @@ class _MacroNutrientBar extends StatelessWidget {
         const SizedBox(height: 6),
         Text(
           label,
-          style: const TextStyle(fontSize: 14, color: Colors.black54),
+          style: const TextStyle(
+            fontSize: 14,
+            color: Colors.black54,
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+// Macro nutrient bar
+class _MacroNutrientBar extends StatelessWidget {
+  final String label;
+  final String current;
+  final String target;
+  final Color color;
+
+  const _MacroNutrientBar({
+    required this.label,
+    this.current = "0",
+    this.target = "0g",
+    this.color = Colors.grey,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        // Circle với border màu
+        Container(
+          width: 60,
+          height: 60,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            border: Border.all(color: color.withOpacity(0.3), width: 4),
+            color: Colors.white,
+          ),
+          child: Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text(
+                  current,
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black87,
+                  ),
+                ),
+                Text(
+                  "/$target",
+                  style: TextStyle(fontSize: 10, color: Colors.grey[600]),
+                ),
+              ],
+            ),
+          ),
+        ),
+        const SizedBox(height: 8),
+        Text(
+          label,
+          style: const TextStyle(
+            fontSize: 14,
+            color: Colors.black54,
+            fontWeight: FontWeight.w500,
+          ),
         ),
       ],
     );
