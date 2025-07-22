@@ -14,7 +14,7 @@ class ProfileScreen extends StatefulWidget {
 
 class _ProfileScreenState extends State<ProfileScreen> {
   int _selectedTabIndex = 0; // Weight | Nutrition
-  int _selectedBottomIndex = 2; // Notification | Journal | Profile
+  int _selectedBottomIndex = 1; // Journal | Profile (Profile là mặc định)
   int _selectedDayRange = 0; // 0: 7 ngày, 1: 30 ngày, 2: 90 ngày
 
   // Thông tin cá nhân (có thể load từ backend sau này)
@@ -311,10 +311,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
           });
         },
         items: const [
-          BottomNavigationBarItem(
-            icon: Icon(Icons.notifications),
-            label: "Notification",
-          ),
           BottomNavigationBarItem(icon: Icon(Icons.article), label: "Journal"),
           BottomNavigationBarItem(icon: Icon(Icons.person), label: "Profile"),
         ],
@@ -424,7 +420,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 ],
                 titlesData: FlTitlesData(
                   leftTitles: AxisTitles(
-                    sideTitles: SideTitles(showTitles: true, interval: 2),
+                    sideTitles: SideTitles(
+                      showTitles: true,
+                      interval: 2,
+                      reservedSize: 48, // Đã tăng size tránh đè số
+                    ),
                   ),
                   bottomTitles: AxisTitles(
                     sideTitles: SideTitles(
@@ -522,7 +522,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 ],
                 titlesData: FlTitlesData(
                   leftTitles: AxisTitles(
-                    sideTitles: SideTitles(showTitles: true, interval: 500),
+                    sideTitles: SideTitles(
+                      showTitles: true,
+                      interval: 500,
+                      reservedSize: 54, // Đã tăng size tránh đè số
+                    ),
                   ),
                   bottomTitles: AxisTitles(
                     sideTitles: SideTitles(
