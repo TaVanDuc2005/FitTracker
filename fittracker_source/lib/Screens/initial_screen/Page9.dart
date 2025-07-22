@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:fittracker_source/Screens/active_screen/journal/journal.dart';
 
 void main() {
   runApp(const MyApp());
@@ -22,72 +23,76 @@ class FoodvisorIntro extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFE5F5F1), // màu nền xanh nhạt
+      backgroundColor: const Color(0xFFE5F5F1),
       body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(20),
-          child: Column(
-            children: [
-              const SizedBox(height: 30),
-              const Text(
-                'There is no 1-size-fits-all diet.',
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w600,
-                  color: Colors.black87,
-                ),
-              ),
-              const SizedBox(height: 30),
-              // Chart placeholder
-              Container(
-                height: 200,
-                width: double.infinity,
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: CustomPaint(painter: _ChartPainter()),
-              ),
-              const SizedBox(height: 20),
-              const Text(
-                'Foodvisor finds what works for you to reach your personal goals.',
-                textAlign: TextAlign.center,
-                style: TextStyle(fontSize: 15, color: Colors.black87),
-              ),
-              const SizedBox(height: 40),
-              // Chart placeholder - replaced with image
-              Container(
-                height: 200,
-                width: double.infinity,
-                decoration: BoxDecoration(
-                  color: const Color(0xFFE5F5F1), // Cùng màu với background
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(20),
-                  child: Image.asset(
-                    'Assets/Images/imagePage9.jpg',
-                    width: double.infinity,
-                    height: 200,
-                    fit: BoxFit.contain,
+        child: SingleChildScrollView(
+          child: Padding(
+            padding: const EdgeInsets.all(20),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                const SizedBox(height: 30),
+                const Text(
+                  'There is no 1-size-fits-all diet.',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.black87,
                   ),
                 ),
-              ),
-              const Spacer(),
-              ElevatedButton(
-                onPressed: () {},
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.black,
-                  minimumSize: const Size(double.infinity, 50),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(25),
+                const SizedBox(height: 30),
+                Container(
+                  height: 200,
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: CustomPaint(painter: _ChartPainter()),
+                ),
+                const SizedBox(height: 20),
+                const Text(
+                  'Foodvisor finds what works for you to reach your personal goals.',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(fontSize: 15, color: Colors.black87),
+                ),
+                const SizedBox(height: 40),
+                Container(
+                  height: 200,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFE5F5F1),
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(20),
+                    child: Image.asset(
+                      'Assets/Images/imagePage9.jpg',
+                      fit: BoxFit.contain,
+                    ),
                   ),
                 ),
-                child: const Text('Next', style: TextStyle(fontSize: 18)),
-              ),
-              const SizedBox(height: 20),
-            ],
+                const SizedBox(height: 40),
+                ElevatedButton(
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const JournalScreen(),
+                      ),
+                    );
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.black,
+                    minimumSize: const Size(double.infinity, 50),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(25),
+                    ),
+                  ),
+                  child: const Text('Next', style: TextStyle(fontSize: 18)),
+                ),
+                const SizedBox(height: 20),
+              ],
+            ),
           ),
         ),
       ),
