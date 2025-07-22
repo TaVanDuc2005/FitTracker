@@ -18,7 +18,9 @@
 ```bash
 lib/
 ├── models/
-│   ├── food.dart              # Mô tả dữ liệu một món ăn/thức uống (id, tên, calo, v.v).
+|   ├── food_base.dart     # Lớp cha chung (abstract class)
+│   ├── food.dart          # Đồ ăn - kế thừa từ lớp cha
+|   ├── drink.dart         # Đồ uống - kế thừa từ lớp cha
 │   ├── meal.dart              # Mô tả dữ liệu một bữa ăn gồm danh sách các món ăn.
 │   └── user.dart              # (Tuỳ chọn) Dữ liệu người dùng như tên, tuổi, chiều cao, cân nặng.
 
