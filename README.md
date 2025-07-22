@@ -22,11 +22,17 @@
 │   └── user.dart        # (Tuỳ chọn) Dữ liệu người dùng như tên, chiều cao, cân nặng.
 │
 ├── screens      # Các màn hình giao diện chính mà người dùng sẽ tương tác.
-│   ├── journal_screen.dart              # Màn hình chính hiển thị các bữa ăn trong ngày.
-│   └── food/
-│       ├── food_search_screen.dart      # Giao diện tìm kiếm món ăn (giống Shopee Food).
-│       └── meal_summary_screen.dart     # Giao diện xác nhận các món đã chọn cho bữa ăn.
-│
+│   ├── initial_screen/
+|   |   ├──page1 -> page8 # thong tin nguoi dung
+|   |   └──page9 #load thong tin
+|   |             
+│   └── active_screen/
+|           journal/
+|               ├── food_search_screen.dart      # Giao diện tìm kiếm món ăn (giống Shopee Food).
+|               ├── meal_summary_screen.dart     # Giao diện xác nhận các món đã chọn cho bữa ăn.
+ |              └── journal_screen.dart                 # Màn hình chính hiển thị các bữa ăn trong ngày.
+            profile/
+                    proffile.dart
 ├── services     # Xử lý logic nghiệp vụ, quản lý dữ liệu và trạng thái.
 │   ├── food_service.dart       # Quản lý danh sách các món ăn có sẵn (từ local hoặc API).
 │   ├── meal_service.dart       # Quản lý danh sách món ăn theo từng bữa (CRUD cho bữa ăn).

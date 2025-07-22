@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'food_search_screen.dart';
-import '../profile/profile.dart';
+import '../profile/profile_screen.dart';
 
 class JournalScreen extends StatefulWidget {
   const JournalScreen({super.key});
