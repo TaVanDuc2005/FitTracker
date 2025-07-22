@@ -2,6 +2,28 @@ import 'package:flutter/material.dart';
 import 'food_search_screen.dart';
 import '../profile/profile.dart';
 
+// Tạo class MacroData để quản lý dữ liệu
+class MacroData {
+  final String label;
+  final double currentValue;
+  final double targetValue;
+  final String unit;
+  final Color color;
+
+  MacroData({
+    required this.label,
+    required this.currentValue,
+    required this.targetValue,
+    required this.unit,
+    required this.color,
+  });
+
+  String get currentString => currentValue.toStringAsFixed(0);
+  String get targetString => "${targetValue.toStringAsFixed(0)}$unit";
+  double get progress =>
+      targetValue > 0 ? (currentValue / targetValue).clamp(0.0, 1.0) : 0.0;
+}
+
 class JournalScreen extends StatefulWidget {
   const JournalScreen({super.key});
 
@@ -11,7 +33,39 @@ class JournalScreen extends StatefulWidget {
 
 class _JournalScreenState extends State<JournalScreen> {
   int _selectedBottomIndex = 0; // 0: Journal, 1: Profile
-  bool _isMacroExpanded = false; // Thêm biến này
+  bool _isMacroExpanded = false;
+
+  // Dữ liệu macro chung
+  List<MacroData> macroData = [
+    MacroData(
+      label: "Fat",
+      currentValue: 20.0, // Dữ liệu ví dụ
+      targetValue: 78,
+      unit: "g",
+      color: Color(0xFFFFC107),
+    ),
+    MacroData(
+      label: "Protein",
+      currentValue: 32.0, // Dữ liệu ví dụ
+      targetValue: 246,
+      unit: "g",
+      color: Color(0xFF8FD5C7),
+    ),
+    MacroData(
+      label: "Carbs",
+      currentValue: 24.0, // Dữ liệu ví dụ
+      targetValue: 440,
+      unit: "g",
+      color: Color(0xFF9C27B0),
+    ),
+    MacroData(
+      label: "Fiber",
+      currentValue: 13.0, // Dữ liệu ví dụ
+      targetValue: 35,
+      unit: "g",
+      color: Color(0xFFFF9800),
+    ),
+  ];
 
   @override
   Widget build(BuildContext context) {
@@ -175,15 +229,18 @@ class _JournalScreenState extends State<JournalScreen> {
 
               const SizedBox(height: 32),
 
-              // Macronutrients
+              // Macronutrients - Simple view (sử dụng dữ liệu chung)
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                children: const [
-                  _SimpleMacroItem(label: "Fat"),
-                  _SimpleMacroItem(label: "Protein"),
-                  _SimpleMacroItem(label: "Carbs"),
-                  _SimpleMacroItem(label: "Fiber"),
-                ],
+                children: macroData
+                    .map(
+                      (macro) => _SimpleMacroItem(
+                        label: macro.label,
+                        currentValue: macro.currentValue,
+                        targetValue: macro.targetValue,
+                      ),
+                    )
+                    .toList(),
               ),
 
               const SizedBox(height: 12),
@@ -202,7 +259,7 @@ class _JournalScreenState extends State<JournalScreen> {
                 ),
               ),
 
-              // Thêm phần này ngay sau icon:
+              // Detailed view (sử dụng dữ liệu chung)
               AnimatedContainer(
                 duration: const Duration(milliseconds: 300),
                 height: _isMacroExpanded ? null : 0,
@@ -230,38 +287,25 @@ class _JournalScreenState extends State<JournalScreen> {
                             const SizedBox(height: 20),
                             Row(
                               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                              children: const [
-                                _MacroNutrientBar(
-                                  label: "Fat",
-                                  current: "0",
-                                  target: "78g",
-                                  color: Color(0xFFFFC107),
-                                ),
-                                _MacroNutrientBar(
-                                  label: "Protein",
-                                  current: "0",
-                                  target: "246g",
-                                  color: Color(0xFF8FD5C7),
-                                ),
-                                _MacroNutrientBar(
-                                  label: "Carbs",
-                                  current: "0",
-                                  target: "440g",
-                                  color: Color(0xFF9C27B0),
-                                ),
-                                _MacroNutrientBar(
-                                  label: "Fiber",
-                                  current: "0",
-                                  target: "35g",
-                                  color: Color(0xFFFF9800),
-                                ),
-                              ],
+                              children: macroData
+                                  .map(
+                                    (macro) => _MacroNutrientBar(
+                                      label: macro.label,
+                                      current: macro.currentString,
+                                      target: macro.targetString,
+                                      color: macro.color,
+                                      progress: macro.progress,
+                                    ),
+                                  )
+                                  .toList(),
                             ),
                           ],
                         ),
                       )
                     : const SizedBox.shrink(),
               ),
+
+              const SizedBox(height: 24),
 
               // White container with rounded corners
               Container(
@@ -346,95 +390,148 @@ class _JournalScreenState extends State<JournalScreen> {
   }
 }
 
-// Thêm class mới cho simple macro view
+// Cập nhật _SimpleMacroItem
 class _SimpleMacroItem extends StatelessWidget {
   final String label;
+  final double currentValue;
+  final double targetValue;
 
-  const _SimpleMacroItem({required this.label});
+  const _SimpleMacroItem({
+    required this.label,
+    required this.currentValue,
+    required this.targetValue,
+  });
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      children: [
-        Container(
-          width: 60,
-          height: 6,
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(10),
+    double progress = targetValue > 0
+        ? (currentValue / targetValue).clamp(0.0, 1.0)
+        : 0.0;
+
+    return SizedBox(
+      width: 70, // Fixed width giống detailed view
+      child: Column(
+        children: [
+          Container(
+            width: 60,
+            height: 6,
+            decoration: BoxDecoration(
+              color: Colors.grey[300],
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Stack(
+              children: [
+                Container(
+                  width: 60 * progress,
+                  height: 6,
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                ),
+              ],
+            ),
           ),
-        ),
-        const SizedBox(height: 6),
-        Text(
-          label,
-          style: const TextStyle(
-            fontSize: 14,
-            color: Colors.black54,
-            fontWeight: FontWeight.w500,
+          const SizedBox(height: 6),
+          Text(
+            label,
+            style: const TextStyle(
+              fontSize: 14,
+              color: Colors.black54,
+              fontWeight: FontWeight.w500,
+            ),
+            textAlign: TextAlign.center, // Center align text
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 }
 
-// Macro nutrient bar
+// Cập nhật _MacroNutrientBar
 class _MacroNutrientBar extends StatelessWidget {
   final String label;
   final String current;
   final String target;
   final Color color;
+  final double progress;
 
   const _MacroNutrientBar({
     required this.label,
-    this.current = "0",
-    this.target = "0g",
-    this.color = Colors.grey,
+    required this.current,
+    required this.target,
+    required this.color,
+    required this.progress,
   });
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      children: [
-        // Circle với border màu
-        Container(
-          width: 60,
-          height: 60,
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            border: Border.all(color: color.withOpacity(0.3), width: 4),
-            color: Colors.white,
-          ),
-          child: Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
+    return SizedBox(
+      width: 70,
+      child: Column(
+        children: [
+          SizedBox(
+            width: 60,
+            height: 60,
+            child: Stack(
               children: [
-                Text(
-                  current,
-                  style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.black87,
+                // Background circle (vòng tròn nhạt)
+                Container(
+                  width: 60,
+                  height: 60,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    border: Border.all(
+                      color: color.withOpacity(0.2), // Màu nhạt hơn
+                      width: 4,
+                    ),
+                    color: Colors.white,
                   ),
                 ),
-                Text(
-                  "/$target",
-                  style: TextStyle(fontSize: 10, color: Colors.grey[600]),
+                // Progress circle - đặt chính xác trên background
+                Positioned.fill(
+                  child: CircularProgressIndicator(
+                    value: progress,
+                    backgroundColor: Colors.transparent,
+                    valueColor: AlwaysStoppedAnimation<Color>(color),
+                    strokeWidth: 4, // Cùng độ dày với border
+                  ),
+                ),
+                // Center text
+                Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(
+                        current,
+                        style: const TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.black87,
+                        ),
+                      ),
+                      Text(
+                        "/$target",
+                        style: TextStyle(fontSize: 9, color: Colors.grey[600]),
+                      ),
+                    ],
+                  ),
                 ),
               ],
             ),
           ),
-        ),
-        const SizedBox(height: 8),
-        Text(
-          label,
-          style: const TextStyle(
-            fontSize: 14,
-            color: Colors.black54,
-            fontWeight: FontWeight.w500,
+          const SizedBox(height: 8),
+          Text(
+            label,
+            style: const TextStyle(
+              fontSize: 14,
+              color: Colors.black54,
+              fontWeight: FontWeight.w500,
+            ),
+            textAlign: TextAlign.center,
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 }
