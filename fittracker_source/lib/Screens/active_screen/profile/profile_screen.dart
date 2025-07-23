@@ -17,9 +17,7 @@ List<String> generateDateLabels(int days) {
 }
 
 // ====== Dữ liệu giả lập ======
-List<double> weightHistory7 = [
-  228.0, 227.8, 227.5, 227.0, 227.3, 227.0, 228.0
-];
+List<double> weightHistory7 = [228.0, 227.8, 227.5, 227.0, 227.3, 227.0, 228.0];
 List<double> weightHistory30 = List.generate(30, (i) => 228 - i * 0.1);
 List<double> weightHistory90 = List.generate(90, (i) => 228 - i * 0.05);
 
@@ -62,6 +60,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     weightDates30 = generateDateLabels(30);
     weightDates90 = generateDateLabels(90);
   }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -337,13 +336,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
     final weightHistory = _selectedDayRange == 0
         ? weightHistory7
         : _selectedDayRange == 1
-            ? weightHistory30
-            : weightHistory90;
+        ? weightHistory30
+        : weightHistory90;
     final weightDates = _selectedDayRange == 0
         ? weightDates7
         : _selectedDayRange == 1
-            ? weightDates30
-            : weightDates90;
+        ? weightDates30
+        : weightDates90;
 
     double maxWeight = (weightHistory.isNotEmpty)
         ? weightHistory.reduce((a, b) => a > b ? a : b)
@@ -380,8 +379,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 "Add a weight entry",
                 style: TextStyle(
                   fontSize: 17,
-                  color:Color.fromARGB(255, 253, 251, 251),
-                  ),
+                  color: Color.fromARGB(255, 253, 251, 251),
+                ),
               ),
             ),
           ),
@@ -418,21 +417,26 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 minY: 0,
                 maxY: maxWeight,
                 lineTouchData: LineTouchData(
-  touchTooltipData: LineTouchTooltipData(
-    getTooltipItems: (touchedSpots) {
-      return touchedSpots.map((touchedSpot) {
-        return LineTooltipItem(
-          touchedSpot.y.toStringAsFixed(2),
-          const TextStyle(
-            color: Color.fromARGB(255, 247, 248, 248), // ĐỔI MÀU CHỮ Ở ĐÂY
-            fontWeight: FontWeight.bold,
-            fontSize: 16,
-          ),
-        );
-      }).toList();
-    },
-  ),
-),
+                  touchTooltipData: LineTouchTooltipData(
+                    getTooltipItems: (touchedSpots) {
+                      return touchedSpots.map((touchedSpot) {
+                        return LineTooltipItem(
+                          touchedSpot.y.toStringAsFixed(2),
+                          const TextStyle(
+                            color: Color.fromARGB(
+                              255,
+                              247,
+                              248,
+                              248,
+                            ), // ĐỔI MÀU CHỮ Ở ĐÂY
+                            fontWeight: FontWeight.bold,
+                            fontSize: 16,
+                          ),
+                        );
+                      }).toList();
+                    },
+                  ),
+                ),
 
                 lineBarsData: [
                   LineChartBarData(
@@ -457,13 +461,16 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       reservedSize: 48,
                       getTitlesWidget: (value, meta) {
                         if ((value - 0).abs() < 0.1) {
-                          return Text("0",
-                              style: const TextStyle(fontSize: 13));
+                          return Text(
+                            "0",
+                            style: const TextStyle(fontSize: 13),
+                          );
                         }
                         if ((value - maxWeight).abs() < 0.1) {
                           return Text(
-                              maxWeight.toStringAsFixed(1),
-                              style: const TextStyle(fontSize: 13));
+                            maxWeight.toStringAsFixed(1),
+                            style: const TextStyle(fontSize: 13),
+                          );
                         }
                         return Container();
                       },
@@ -485,22 +492,34 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         if (value % 1 != 0 || value < 0) return Container();
                         if (_selectedDayRange == 0) {
                           // 7 ngày: hiện đủ 7 mốc
-                          if (value < 0 ||
-                              value >= weightDates.length) return Container();
-                          return Text(weightDates[value.toInt()],
-                              style: const TextStyle(fontSize: 12));
+                          if (value < 0 || value >= weightDates.length)
+                            return Container();
+                          return Text(
+                            weightDates[value.toInt()],
+                            style: const TextStyle(fontSize: 12),
+                          );
                         } else if (_selectedDayRange == 1) {
                           // 30 ngày: 4 mốc 0, 9, 19, 29
-                          if (value == 0 || value == 9 || value == 19 || value == 29) {
-                            return Text(weightDates[value.toInt()],
-                                style: const TextStyle(fontSize: 12));
+                          if (value == 0 ||
+                              value == 9 ||
+                              value == 19 ||
+                              value == 29) {
+                            return Text(
+                              weightDates[value.toInt()],
+                              style: const TextStyle(fontSize: 12),
+                            );
                           }
                           return Container();
                         } else {
                           // 90 ngày: 4 mốc 0, 29, 59, 89
-                          if (value == 0 || value == 29 || value == 59 || value == 89) {
-                            return Text(weightDates[value.toInt()],
-                                style: const TextStyle(fontSize: 12));
+                          if (value == 0 ||
+                              value == 29 ||
+                              value == 59 ||
+                              value == 89) {
+                            return Text(
+                              weightDates[value.toInt()],
+                              style: const TextStyle(fontSize: 12),
+                            );
                           }
                           return Container();
                         }
@@ -523,13 +542,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
     final calHistory = _selectedDayRange == 0
         ? calHistory7
         : _selectedDayRange == 1
-            ? calHistory30
-            : calHistory90;
+        ? calHistory30
+        : calHistory90;
     final calDates = _selectedDayRange == 0
         ? weightDates7
         : _selectedDayRange == 1
-            ? weightDates30
-            : weightDates90;
+        ? weightDates30
+        : weightDates90;
 
     double maxCal = (calHistory.isNotEmpty)
         ? calHistory.reduce((a, b) => a > b ? a : b)
@@ -590,13 +609,16 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       reservedSize: 54,
                       getTitlesWidget: (value, meta) {
                         if ((value - 0).abs() < 0.1) {
-                          return Text("0",
-                              style: const TextStyle(fontSize: 13));
+                          return Text(
+                            "0",
+                            style: const TextStyle(fontSize: 13),
+                          );
                         }
                         if ((value - maxCal).abs() < 0.1) {
                           return Text(
-                              maxCal.toStringAsFixed(0),
-                              style: const TextStyle(fontSize: 13));
+                            maxCal.toStringAsFixed(0),
+                            style: const TextStyle(fontSize: 13),
+                          );
                         }
                         return Container();
                       },
@@ -617,20 +639,32 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       getTitlesWidget: (value, meta) {
                         if (value % 1 != 0 || value < 0) return Container();
                         if (_selectedDayRange == 0) {
-                          if (value < 0 ||
-                              value >= calDates.length) return Container();
-                          return Text(calDates[value.toInt()],
-                              style: const TextStyle(fontSize: 12));
+                          if (value < 0 || value >= calDates.length)
+                            return Container();
+                          return Text(
+                            calDates[value.toInt()],
+                            style: const TextStyle(fontSize: 12),
+                          );
                         } else if (_selectedDayRange == 1) {
-                          if (value == 0 || value == 9 || value == 19 || value == 29) {
-                            return Text(calDates[value.toInt()],
-                                style: const TextStyle(fontSize: 12));
+                          if (value == 0 ||
+                              value == 9 ||
+                              value == 19 ||
+                              value == 29) {
+                            return Text(
+                              calDates[value.toInt()],
+                              style: const TextStyle(fontSize: 12),
+                            );
                           }
                           return Container();
                         } else {
-                          if (value == 0 || value == 29 || value == 59 || value == 89) {
-                            return Text(calDates[value.toInt()],
-                                style: const TextStyle(fontSize: 12));
+                          if (value == 0 ||
+                              value == 29 ||
+                              value == 59 ||
+                              value == 89) {
+                            return Text(
+                              calDates[value.toInt()],
+                              style: const TextStyle(fontSize: 12),
+                            );
                           }
                           return Container();
                         }
@@ -769,6 +803,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 }
+
 // ========== EDIT PROFILE SCREEN ==========
 class EditProfileScreen extends StatefulWidget {
   final String name;
@@ -887,11 +922,13 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                   'goalWeight': double.tryParse(goalWeightCtrl.text),
                 });
               },
-              child: const Text("Save", style: TextStyle(
-                fontSize: 18,
-                color:Color.fromARGB(255, 251, 251, 251),
+              child: const Text(
+                "Save",
+                style: TextStyle(
+                  fontSize: 18,
+                  color: Color.fromARGB(255, 251, 251, 251),
                 ),
-                ),
+              ),
             ),
           ],
         ),
