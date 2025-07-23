@@ -39,7 +39,7 @@ class _JournalScreenState extends State<JournalScreen> {
   List<MacroData> macroData = [
     MacroData(
       label: "Fat",
-      currentValue: 20.0, // Dữ liệu ví dụ
+      currentValue: 20.8, // Dữ liệu ví dụ
       targetValue: 78,
       unit: "g",
       color: Color(0xFFFFC107),
