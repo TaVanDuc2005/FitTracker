@@ -5,6 +5,28 @@ import 'package:fl_chart/fl_chart.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:fittracker_source/Screens/active_screen/journal/journal_screen.dart';
 
+// ====== Hàm sinh ngày "chuẩn lịch" ======
+List<String> generateDateLabels(int days) {
+  DateTime now = DateTime.now();
+  return List.generate(days, (i) {
+    DateTime date = now.subtract(Duration(days: days - 1 - i));
+    String day = date.day.toString().padLeft(2, '0');
+    String month = date.month.toString().padLeft(2, '0');
+    return "$day/$month";
+  });
+}
+
+// ====== Dữ liệu giả lập ======
+List<double> weightHistory7 = [
+  228.0, 227.8, 227.5, 227.0, 227.3, 227.0, 228.0
+];
+List<double> weightHistory30 = List.generate(30, (i) => 228 - i * 0.1);
+List<double> weightHistory90 = List.generate(90, (i) => 228 - i * 0.05);
+
+List<double> calHistory7 = [3200, 3350, 3500, 3518, 3600, 3400, 3518];
+List<double> calHistory30 = List.generate(30, (i) => 3200 + (i % 7) * 50.0);
+List<double> calHistory90 = List.generate(90, (i) => 3300 + (i % 14) * 25.0);
+
 // ========== PROFILE SCREEN ==========
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({Key? key}) : super(key: key);
@@ -28,35 +50,18 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   File? _avatarFile;
 
-  // Lịch sử cân nặng giả lập
-  List<double> weightHistory7 = [
-    228.0,
-    227.8,
-    227.5,
-    227.0,
-    227.3,
-    227.0,
-    228.0,
-  ];
-  List<String> weightDates7 = [
-    "12/07",
-    "13/07",
-    "14/07",
-    "15/07",
-    "16/07",
-    "17/07",
-    "18/07",
-  ];
-  List<double> weightHistory30 = List.generate(30, (i) => 228 - i * 0.1);
-  List<String> weightDates30 = List.generate(30, (i) => "${i + 1}/07");
-  List<double> weightHistory90 = List.generate(90, (i) => 228 - i * 0.05);
-  List<String> weightDates90 = List.generate(90, (i) => "${i + 1}/05");
+  // ====== Lịch sử ngày dùng biến late, cập nhật realtime ======
+  late List<String> weightDates7;
+  late List<String> weightDates30;
+  late List<String> weightDates90;
 
-  // Lịch sử calo giả lập
-  List<double> calHistory7 = [3200, 3350, 3500, 3518, 3600, 3400, 3518];
-  List<double> calHistory30 = List.generate(30, (i) => 3200 + (i % 7) * 50.0);
-  List<double> calHistory90 = List.generate(90, (i) => 3300 + (i % 14) * 25.0);
-
+  @override
+  void initState() {
+    super.initState();
+    weightDates7 = generateDateLabels(7);
+    weightDates30 = generateDateLabels(30);
+    weightDates90 = generateDateLabels(90);
+  }
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -332,13 +337,17 @@ class _ProfileScreenState extends State<ProfileScreen> {
     final weightHistory = _selectedDayRange == 0
         ? weightHistory7
         : _selectedDayRange == 1
-        ? weightHistory30
-        : weightHistory90;
+            ? weightHistory30
+            : weightHistory90;
     final weightDates = _selectedDayRange == 0
         ? weightDates7
         : _selectedDayRange == 1
-        ? weightDates30
-        : weightDates90;
+            ? weightDates30
+            : weightDates90;
+
+    double maxWeight = (weightHistory.isNotEmpty)
+        ? weightHistory.reduce((a, b) => a > b ? a : b)
+        : 1;
 
     return SingleChildScrollView(
       child: Column(
@@ -371,9 +380,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 "Add a weight entry",
                 style: TextStyle(
                   fontSize: 17,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white,
-                ),
+                  color:Color.fromARGB(255, 253, 251, 251),
+                  ),
               ),
             ),
           ),
@@ -403,18 +411,29 @@ class _ProfileScreenState extends State<ProfileScreen> {
             ),
           ),
           Container(
-            height: 210,
+            height: 300,
             padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
             child: LineChart(
               LineChartData(
-                minY: (weightHistory.isNotEmpty)
-                    ? (weightHistory.reduce((a, b) => a < b ? a : b) - 2)
-                          .floorToDouble()
-                    : 0,
-                maxY: (weightHistory.isNotEmpty)
-                    ? (weightHistory.reduce((a, b) => a > b ? a : b) + 2)
-                          .ceilToDouble()
-                    : 10,
+                minY: 0,
+                maxY: maxWeight,
+                lineTouchData: LineTouchData(
+  touchTooltipData: LineTouchTooltipData(
+    getTooltipItems: (touchedSpots) {
+      return touchedSpots.map((touchedSpot) {
+        return LineTooltipItem(
+          touchedSpot.y.toStringAsFixed(2),
+          const TextStyle(
+            color: Color.fromARGB(255, 247, 248, 248), // ĐỔI MÀU CHỮ Ở ĐÂY
+            fontWeight: FontWeight.bold,
+            fontSize: 16,
+          ),
+        );
+      }).toList();
+    },
+  ),
+),
+
                 lineBarsData: [
                   LineChartBarData(
                     spots: List.generate(
@@ -435,31 +454,61 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   leftTitles: AxisTitles(
                     sideTitles: SideTitles(
                       showTitles: true,
-                      interval: 2,
-                      reservedSize: 48, // Đã tăng size tránh đè số
+                      reservedSize: 48,
+                      getTitlesWidget: (value, meta) {
+                        if ((value - 0).abs() < 0.1) {
+                          return Text("0",
+                              style: const TextStyle(fontSize: 13));
+                        }
+                        if ((value - maxWeight).abs() < 0.1) {
+                          return Text(
+                              maxWeight.toStringAsFixed(1),
+                              style: const TextStyle(fontSize: 13));
+                        }
+                        return Container();
+                      },
+                      interval: maxWeight,
                     ),
+                  ),
+                  rightTitles: AxisTitles(
+                    sideTitles: SideTitles(showTitles: false),
+                  ),
+                  topTitles: AxisTitles(
+                    sideTitles: SideTitles(showTitles: false),
                   ),
                   bottomTitles: AxisTitles(
                     sideTitles: SideTitles(
                       showTitles: true,
                       reservedSize: 36,
+                      interval: 1,
                       getTitlesWidget: (value, meta) {
-                        if (value < 0 || value >= weightDates.length)
+                        if (value % 1 != 0 || value < 0) return Container();
+                        if (_selectedDayRange == 0) {
+                          // 7 ngày: hiện đủ 7 mốc
+                          if (value < 0 ||
+                              value >= weightDates.length) return Container();
+                          return Text(weightDates[value.toInt()],
+                              style: const TextStyle(fontSize: 12));
+                        } else if (_selectedDayRange == 1) {
+                          // 30 ngày: 4 mốc 0, 9, 19, 29
+                          if (value == 0 || value == 9 || value == 19 || value == 29) {
+                            return Text(weightDates[value.toInt()],
+                                style: const TextStyle(fontSize: 12));
+                          }
                           return Container();
-                        // Giãn mốc trục hoành nếu quá nhiều label
-                        if (weightDates.length > 15 && value % 5 != 0)
+                        } else {
+                          // 90 ngày: 4 mốc 0, 29, 59, 89
+                          if (value == 0 || value == 29 || value == 59 || value == 89) {
+                            return Text(weightDates[value.toInt()],
+                                style: const TextStyle(fontSize: 12));
+                          }
                           return Container();
-                        if (weightDates.length > 30 && value % 10 != 0)
-                          return Container();
-                        return Text(
-                          weightDates[value.toInt()],
-                          style: const TextStyle(fontSize: 12),
-                        );
+                        }
                       },
                     ),
                   ),
                 ),
-                gridData: FlGridData(show: true, horizontalInterval: 2),
+                gridData: FlGridData(show: true, verticalInterval: 1),
                 borderData: FlBorderData(show: false),
               ),
             ),
@@ -474,13 +523,17 @@ class _ProfileScreenState extends State<ProfileScreen> {
     final calHistory = _selectedDayRange == 0
         ? calHistory7
         : _selectedDayRange == 1
-        ? calHistory30
-        : calHistory90;
-    final List<String> calDates = _selectedDayRange == 0
+            ? calHistory30
+            : calHistory90;
+    final calDates = _selectedDayRange == 0
         ? weightDates7
         : _selectedDayRange == 1
-        ? weightDates30
-        : weightDates90;
+            ? weightDates30
+            : weightDates90;
+
+    double maxCal = (calHistory.isNotEmpty)
+        ? calHistory.reduce((a, b) => a > b ? a : b)
+        : 1;
 
     return SingleChildScrollView(
       child: Column(
@@ -508,15 +561,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
             ),
           ),
           Container(
-            height: 210,
+            height: 300,
             padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
             child: LineChart(
               LineChartData(
                 minY: 0,
-                maxY: (calHistory.isNotEmpty)
-                    ? (calHistory.reduce((a, b) => a > b ? a : b) + 500)
-                          .ceilToDouble()
-                    : 4000,
+                maxY: maxCal,
                 lineBarsData: [
                   LineChartBarData(
                     spots: List.generate(
@@ -537,30 +587,58 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   leftTitles: AxisTitles(
                     sideTitles: SideTitles(
                       showTitles: true,
-                      interval: 500,
-                      reservedSize: 54, // Đã tăng size tránh đè số
+                      reservedSize: 54,
+                      getTitlesWidget: (value, meta) {
+                        if ((value - 0).abs() < 0.1) {
+                          return Text("0",
+                              style: const TextStyle(fontSize: 13));
+                        }
+                        if ((value - maxCal).abs() < 0.1) {
+                          return Text(
+                              maxCal.toStringAsFixed(0),
+                              style: const TextStyle(fontSize: 13));
+                        }
+                        return Container();
+                      },
+                      interval: maxCal,
                     ),
+                  ),
+                  rightTitles: AxisTitles(
+                    sideTitles: SideTitles(showTitles: false),
+                  ),
+                  topTitles: AxisTitles(
+                    sideTitles: SideTitles(showTitles: false),
                   ),
                   bottomTitles: AxisTitles(
                     sideTitles: SideTitles(
                       showTitles: true,
                       reservedSize: 36,
+                      interval: 1,
                       getTitlesWidget: (value, meta) {
-                        if (value < 0 || value >= calDates.length)
+                        if (value % 1 != 0 || value < 0) return Container();
+                        if (_selectedDayRange == 0) {
+                          if (value < 0 ||
+                              value >= calDates.length) return Container();
+                          return Text(calDates[value.toInt()],
+                              style: const TextStyle(fontSize: 12));
+                        } else if (_selectedDayRange == 1) {
+                          if (value == 0 || value == 9 || value == 19 || value == 29) {
+                            return Text(calDates[value.toInt()],
+                                style: const TextStyle(fontSize: 12));
+                          }
                           return Container();
-                        if (calDates.length > 15 && value % 5 != 0)
+                        } else {
+                          if (value == 0 || value == 29 || value == 59 || value == 89) {
+                            return Text(calDates[value.toInt()],
+                                style: const TextStyle(fontSize: 12));
+                          }
                           return Container();
-                        if (calDates.length > 30 && value % 10 != 0)
-                          return Container();
-                        return Text(
-                          calDates[value.toInt()],
-                          style: const TextStyle(fontSize: 12),
-                        );
+                        }
                       },
                     ),
                   ),
                 ),
-                gridData: FlGridData(show: true, horizontalInterval: 500),
+                gridData: FlGridData(show: true, verticalInterval: 1),
                 borderData: FlBorderData(show: false),
               ),
             ),
@@ -691,7 +769,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 }
-
 // ========== EDIT PROFILE SCREEN ==========
 class EditProfileScreen extends StatefulWidget {
   final String name;
@@ -810,7 +887,11 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                   'goalWeight': double.tryParse(goalWeightCtrl.text),
                 });
               },
-              child: const Text("Save", style: TextStyle(fontSize: 18)),
+              child: const Text("Save", style: TextStyle(
+                fontSize: 18,
+                color:Color.fromARGB(255, 251, 251, 251),
+                ),
+                ),
             ),
           ],
         ),
