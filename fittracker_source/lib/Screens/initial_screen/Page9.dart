@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:fittracker_source/Screens/active_screen/journal/journal.dart';
+import 'package:fittracker_source/Screens/active_screen/journal/journal_screen.dart';
 
 void main() {
   runApp(const MyApp());

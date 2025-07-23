@@ -16,29 +16,38 @@
 ## 🧱 Cấu trúc thư mục
 
 ```bash
-├── models       # Định nghĩa các model dữ liệu dùng trong toàn bộ ứng dụng.
-│   ├── food.dart        # Mô tả dữ liệu một món ăn/thức uống (id, tên, calo, v.v).
-│   ├── meal.dart        # Mô tả dữ liệu một bữa ăn gồm danh sách các món ăn.
-│   └── user.dart        # (Tuỳ chọn) Dữ liệu người dùng như tên, chiều cao, cân nặng.
-│
-├── screens      # Các màn hình giao diện chính mà người dùng sẽ tương tác.
-│   ├── journal_screen.dart              # Màn hình chính hiển thị các bữa ăn trong ngày.
-│   └── food/
-│       ├── food_search_screen.dart      # Giao diện tìm kiếm món ăn (giống Shopee Food).
-│       └── meal_summary_screen.dart     # Giao diện xác nhận các món đã chọn cho bữa ăn.
-│
-├── services     # Xử lý logic nghiệp vụ, quản lý dữ liệu và trạng thái.
-│   ├── food_service.dart       # Quản lý danh sách các món ăn có sẵn (từ local hoặc API).
-│   ├── meal_service.dart       # Quản lý danh sách món ăn theo từng bữa (CRUD cho bữa ăn).
-│   └── storage_service.dart    # (Tuỳ chọn) Lưu/đọc dữ liệu người dùng từ local/Firebase.
-│
-├── utils        # Chứa các hằng số, hàm tiện ích dùng chung toàn ứng dụng.
-│   ├── constants.dart          # Các giá trị cố định như giới hạn calo, màu sắc, key, v.v.
-│   └── helpers.dart            # Các hàm hỗ trợ xử lý dữ liệu (tính calo, định dạng, v.v).
-│
-├── widgets      # Các widget tùy chỉnh và tái sử dụng được giữa nhiều màn hình.
+lib/
+├── models/
+|   ├── food_base.dart     # Lớp cha chung (abstract class)
+│   ├── food.dart          # Đồ ăn - kế thừa từ lớp cha
+|   ├── drink.dart         # Đồ uống - kế thừa từ lớp cha
+│   ├── meal.dart              # Mô tả dữ liệu một bữa ăn gồm danh sách các món ăn.
+│   └── user.dart              # (Tuỳ chọn) Dữ liệu người dùng như tên, tuổi, chiều cao, cân nặng.
+
+├── screens/
+│   ├── initial_screen/
+│   │   ├── page1.dart -> page8.dart   # Các bước nhập thông tin người dùng ban đầu.
+│   │   └── page9.dart                 # Màn hình tải và xử lý dữ liệu sau khi nhập.
+│   └── active_screen/
+│       ├── journal/
+│       │   ├── food_search_screen.dart     # Giao diện tìm món ăn (giống Shopee Food).
+│       │   ├── meal_summary_screen.dart    # Xác nhận món ăn đã chọn.
+│       │   └── journal_screen.dart         # Nhật ký ăn uống trong ngày.
+│       └── profile/
+│           └── profile.dart                # Màn hình hồ sơ người dùng.
+
+├── services/
+│   ├── food_service.dart       # Xử lý danh sách món ăn từ local hoặc API.
+│   ├── meal_service.dart       # Quản lý CRUD các bữa ăn và món ăn liên quan.
+│   └── storage_service.dart    # (Tuỳ chọn) Lưu/đọc dữ liệu người dùng từ local hoặc Firebase.
+
+├── utils/
+│   ├── constants.dart          # Các giá trị cố định như màu, giới hạn calo, key v.v.
+│   └── helpers.dart            # Hàm hỗ trợ: tính calo, định dạng, tính TDEE, BMI,...
+
+├── widgets/
 │   ├── food_item.dart          # Hiển thị một món ăn trong danh sách.
-│   └── meal_item.dart          # Hiển thị một bữa ăn với tổng calo và món đã chọn.
-│
-└── main.dart    # Điểm khởi đầu của ứng dụng Flutter, cấu hình theme, route và home screen.
+│   └── meal_item.dart          # Hiển thị thông tin bữa ăn: tổng calo, món đã chọn.
+
+└── main.dart                   # Điểm khởi đầu của ứng dụng: cấu hình theme, route, home screen.
 

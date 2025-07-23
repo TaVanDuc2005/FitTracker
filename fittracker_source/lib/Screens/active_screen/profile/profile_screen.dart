@@ -3,7 +3,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:fittracker_source/Screens/active_screen/journal/journal.dart';
+import 'package:fittracker_source/Screens/active_screen/journal/journal_screen.dart';
 
 // ========== PROFILE SCREEN ==========
 class ProfileScreen extends StatefulWidget {
@@ -369,7 +369,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
               onPressed: _showAddWeightDialog,
               child: const Text(
                 "Add a weight entry",
-                style: TextStyle(fontSize: 17),
+                style: TextStyle(
+                  fontSize: 17,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                ),
               ),
             ),
           ),

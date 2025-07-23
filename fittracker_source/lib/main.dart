@@ -1,4 +1,4 @@
-import 'package:fittracker_source/Screens/active_screen/journal/journal.dart';
+import 'package:fittracker_source/Screens/active_screen/journal/journal_screen.dart';
 import 'package:flutter/material.dart';
 
 void main() {
