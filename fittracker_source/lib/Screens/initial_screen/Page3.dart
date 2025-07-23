@@ -136,7 +136,10 @@ class _EnterNameScreenState extends State<EnterNameScreen> {
                     ),
                     backgroundColor: Colors.black87,
                   ),
-                  child: const Text("Next", style: TextStyle(fontSize: 18)),
+                  child: const Text(
+                    "Next",
+                    style: TextStyle(fontSize: 18, color: Colors.white),
+                  ),
                 ),
               ),
           ],

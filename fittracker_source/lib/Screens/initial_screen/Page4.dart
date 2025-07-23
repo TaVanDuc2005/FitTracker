@@ -9,10 +9,27 @@ class UserInfoScreen extends StatefulWidget {
 }
 
 class _UserInfoScreenState extends State<UserInfoScreen> {
-  String gender = 'Male';
+  String gender = '';
   final ageController = TextEditingController();
   final heightController = TextEditingController();
   final weightController = TextEditingController();
+
+  // Theo dõi trạng thái hoàn thành
+  bool get isGenderSelected => gender.isNotEmpty;
+  bool get isAgeEntered => ageController.text.isNotEmpty;
+  bool get isHeightEntered => heightController.text.isNotEmpty;
+  bool get isWeightEntered => weightController.text.isNotEmpty;
+  bool get isAllCompleted =>
+      isGenderSelected && isAgeEntered && isHeightEntered && isWeightEntered;
+
+  @override
+  void initState() {
+    super.initState();
+    // Lắng nghe thay đổi trong text fields
+    ageController.addListener(() => setState(() {}));
+    heightController.addListener(() => setState(() {}));
+    weightController.addListener(() => setState(() {}));
+  }
 
   @override
   void dispose() {
@@ -31,7 +48,7 @@ class _UserInfoScreenState extends State<UserInfoScreen> {
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Colors.black),
           onPressed: () {
-            Navigator.pop(context); // Quay lại page trước (page3)
+            Navigator.pop(context);
           },
         ),
       ),
@@ -42,6 +59,7 @@ class _UserInfoScreenState extends State<UserInfoScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                // Gender Selection - Luôn hiển thị
                 const Text(
                   "What is your gender?",
                   style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
@@ -69,54 +87,75 @@ class _UserInfoScreenState extends State<UserInfoScreen> {
                     );
                   }).toList(),
                 ),
-                const SizedBox(height: 24),
 
-                const Text("How old are you?", style: TextStyle(fontSize: 18)),
-                const SizedBox(height: 8),
-                _customInputField(controller: ageController),
+                // Age - Hiện sau khi chọn gender
+                if (isGenderSelected) ...[
+                  const SizedBox(height: 24),
+                  const Text(
+                    "How old are you?",
+                    style: TextStyle(fontSize: 18),
+                  ),
+                  const SizedBox(height: 8),
+                  _customInputField(controller: ageController),
+                ],
 
-                const SizedBox(height: 20),
-                const Text(
-                  "What is your height?",
-                  style: TextStyle(fontSize: 18),
-                ),
-                const SizedBox(height: 8),
-                _customInputField(controller: heightController),
+                // Height - Hiện sau khi nhập age
+                if (isGenderSelected && isAgeEntered) ...[
+                  const SizedBox(height: 20),
+                  const Text(
+                    "What is your height?",
+                    style: TextStyle(fontSize: 18),
+                  ),
+                  const SizedBox(height: 8),
+                  _customInputField(controller: heightController),
+                ],
 
-                const SizedBox(height: 20),
-                const Text(
-                  "What is your current weight?",
-                  style: TextStyle(fontSize: 18),
-                ),
-                const SizedBox(height: 8),
-                _customInputField(controller: weightController),
+                // Weight - Hiện sau khi nhập height
+                if (isGenderSelected && isAgeEntered && isHeightEntered) ...[
+                  const SizedBox(height: 20),
+                  const Text(
+                    "What is your current weight?",
+                    style: TextStyle(fontSize: 18),
+                  ),
+                  const SizedBox(height: 8),
+                  _customInputField(controller: weightController),
+                ],
               ],
             ),
           ),
 
-          Positioned(
-            bottom: 30,
-            left: 24,
-            right: 24,
-            child: ElevatedButton(
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => const LifestyleScreen(),
+          // Next Button - Chỉ hiện khi tất cả đã hoàn thành
+          if (isAllCompleted)
+            Positioned(
+              bottom: 30,
+              left: 24,
+              right: 24,
+              child: AnimatedOpacity(
+                opacity: isAllCompleted ? 1.0 : 0.0,
+                duration: const Duration(milliseconds: 300),
+                child: ElevatedButton(
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const LifestyleScreen(),
+                      ),
+                    );
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.black87,
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(30),
+                    ),
                   ),
-                );
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.black87,
-                padding: const EdgeInsets.symmetric(vertical: 14),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(30),
+                  child: const Text(
+                    "Next",
+                    style: TextStyle(fontSize: 18, color: Colors.white),
+                  ),
                 ),
               ),
-              child: const Text("Next", style: TextStyle(fontSize: 18)),
             ),
-          ),
         ],
       ),
     );
