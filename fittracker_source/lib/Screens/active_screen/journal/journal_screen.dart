@@ -39,7 +39,7 @@ class _JournalScreenState extends State<JournalScreen> {
   List<MacroData> macroData = [
     MacroData(
       label: "Fat",
-      currentValue: 20.0, // Dữ liệu ví dụ
+      currentValue: 20.8, // Dữ liệu ví dụ
       targetValue: 78,
       unit: "g",
       color: Color(0xFFFFC107),
@@ -91,7 +91,7 @@ class _JournalScreenState extends State<JournalScreen> {
     ];
 
     return Scaffold(
-      backgroundColor: const Color(0xFFE6EAF3),
+      backgroundColor: const Color.fromARGB(255, 193, 225, 218),
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.fromLTRB(24, 24, 24, 24),
@@ -118,7 +118,11 @@ class _JournalScreenState extends State<JournalScreen> {
                       SizedBox(height: 4),
                       Text(
                         "Eaten",
-                        style: TextStyle(fontSize: 16, color: Colors.black54),
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.black54,
+                        ),
                       ),
                     ],
                   ),
@@ -128,7 +132,7 @@ class _JournalScreenState extends State<JournalScreen> {
                     children: const [
                       CircleAvatar(
                         radius: 50,
-                        backgroundColor: Color(0xFFDDE3EC),
+                        backgroundColor: Color.fromARGB(255, 143, 178, 171),
                         child: Column(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
@@ -170,8 +174,9 @@ class _JournalScreenState extends State<JournalScreen> {
                           Text(
                             "0",
                             style: TextStyle(
-                              fontSize: 16,
-                              color: Colors.black87,
+                              fontSize: 20,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white,
                             ),
                           ),
                           SizedBox(height: 4),
@@ -179,6 +184,7 @@ class _JournalScreenState extends State<JournalScreen> {
                             "Burned",
                             style: TextStyle(
                               fontSize: 16,
+                              fontWeight: FontWeight.bold,
                               color: Colors.black54,
                             ),
                           ),
@@ -250,12 +256,14 @@ class _JournalScreenState extends State<JournalScreen> {
                     _isMacroExpanded = !_isMacroExpanded;
                   });
                 },
-                child: Icon(
-                  _isMacroExpanded
-                      ? Icons.keyboard_arrow_up_rounded
-                      : Icons.keyboard_arrow_down_rounded,
-                  size: 32,
-                  color: Colors.black45,
+                child: Center(
+                  child: Icon(
+                    _isMacroExpanded
+                        ? Icons.keyboard_arrow_up_rounded
+                        : Icons.keyboard_arrow_down_rounded,
+                    size: 32,
+                    color: Colors.black45,
+                  ),
                 ),
               ),
 
@@ -438,7 +446,7 @@ class _SimpleMacroItem extends StatelessWidget {
             style: const TextStyle(
               fontSize: 14,
               color: Colors.black54,
-              fontWeight: FontWeight.w500,
+              fontWeight: FontWeight.bold,
             ),
             textAlign: TextAlign.center, // Center align text
           ),

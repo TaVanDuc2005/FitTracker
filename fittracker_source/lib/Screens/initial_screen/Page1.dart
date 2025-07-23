@@ -86,7 +86,10 @@ class WelcomeScreen extends StatelessWidget {
                   ),
                   backgroundColor: Colors.black87,
                 ),
-                child: const Text("Start", style: TextStyle(fontSize: 18)),
+                child: const Text(
+                  "Start",
+                  style: TextStyle(fontSize: 18, color: Colors.white),
+                ),
               ),
             ),
           ],

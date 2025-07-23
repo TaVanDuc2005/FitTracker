@@ -88,7 +88,10 @@ class FoodvisorIntro extends StatelessWidget {
                       borderRadius: BorderRadius.circular(25),
                     ),
                   ),
-                  child: const Text('Next', style: TextStyle(fontSize: 18)),
+                  child: const Text(
+                    'Next',
+                    style: TextStyle(fontSize: 18, color: Colors.white),
+                  ),
                 ),
                 const SizedBox(height: 20),
               ],
