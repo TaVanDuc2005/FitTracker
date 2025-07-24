@@ -1,11 +1,38 @@
 import 'package:flutter/material.dart';
+import 'package:fittracker_source/models/food.dart';
+import 'package:fittracker_source/Screens/active_screen/journal/meal_summary_screen.dart';
+
+// Map macro chỉ số cho từng bữa
+final Map<String, Map<String, int>> mealMacroTarget = {
+  "Breakfast": {
+    "calories": 608,
+    "protein": 46,
+    "fat": 20,
+    "carbs": 58,
+    "fiber": 6,
+  },
+  "Lunch": {
+    "calories": 800,
+    "protein": 50,
+    "fat": 25,
+    "carbs": 100,
+    "fiber": 8,
+  },
+  "Dinner": {
+    "calories": 600,
+    "protein": 40,
+    "fat": 18,
+    "carbs": 80,
+    "fiber": 7,
+  },
+};
 
 enum MealType { breakfast, lunch, dinner }
 
 class SearchFoodScreen extends StatefulWidget {
   final MealType mealType;
 
-  const SearchFoodScreen({super.key, required this.mealType});
+  const SearchFoodScreen({Key? key, required this.mealType}) : super(key: key);
 
   @override
   State<SearchFoodScreen> createState() => _SearchFoodScreenState();
@@ -13,6 +40,7 @@ class SearchFoodScreen extends StatefulWidget {
 
 class _SearchFoodScreenState extends State<SearchFoodScreen> {
   bool isSearchSelected = true;
+  List<Food> selectedFoods = []; // Dùng để truyền qua màn tổng kết
 
   String get _mealTitle {
     switch (widget.mealType) {
@@ -43,12 +71,11 @@ class _SearchFoodScreenState extends State<SearchFoodScreen> {
       body: SafeArea(
         child: Column(
           children: [
-            // Header với meal info
+            // ===== HEADER =====
             Padding(
               padding: const EdgeInsets.all(20),
               child: Row(
                 children: [
-                  // Avatar meal
                   Container(
                     width: 60,
                     height: 60,
@@ -58,16 +85,10 @@ class _SearchFoodScreenState extends State<SearchFoodScreen> {
                     ),
                     child: ClipRRect(
                       borderRadius: BorderRadius.circular(30),
-                      child: Image.asset(
-                        _mealImage,
-                        width: 60,
-                        height: 60,
-                        fit: BoxFit.cover,
-                      ),
+                      child: Image.asset(_mealImage, fit: BoxFit.cover),
                     ),
                   ),
                   const SizedBox(width: 15),
-                  // Text info
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -87,7 +108,6 @@ class _SearchFoodScreenState extends State<SearchFoodScreen> {
                       ],
                     ),
                   ),
-                  // Close button
                   GestureDetector(
                     onTap: () => Navigator.pop(context),
                     child: const Icon(
@@ -100,7 +120,7 @@ class _SearchFoodScreenState extends State<SearchFoodScreen> {
               ),
             ),
 
-            // Progress bar
+            // ===== PROGRESS BAR =====
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 20),
               child: LinearProgressIndicator(
@@ -112,7 +132,7 @@ class _SearchFoodScreenState extends State<SearchFoodScreen> {
 
             const SizedBox(height: 20),
 
-            // White content area
+            // ===== WHITE CONTENT AREA =====
             Expanded(
               child: Container(
                 width: double.infinity,
@@ -126,6 +146,7 @@ class _SearchFoodScreenState extends State<SearchFoodScreen> {
                 child: Padding(
                   padding: const EdgeInsets.all(20),
                   child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
                       // Navigation buttons
                       Row(
@@ -135,108 +156,27 @@ class _SearchFoodScreenState extends State<SearchFoodScreen> {
                             "Search",
                             Icons.search,
                             isSearchSelected,
-                            () {
-                              setState(() {
-                                isSearchSelected = true;
-                              });
-                            },
+                            () => setState(() => isSearchSelected = true),
                           ),
                           _buildNavButton(
                             "Proposal",
                             Icons.stars,
                             !isSearchSelected,
-                            () {
-                              setState(() {
-                                isSearchSelected = false;
-                              });
-                            },
+                            () => setState(() => isSearchSelected = false),
                           ),
                         ],
                       ),
 
                       const SizedBox(height: 20),
 
-                      // Content based on selection
-                      if (isSearchSelected) ...[
-                        // Search bar
-                        TextField(
-                          decoration: InputDecoration(
-                            hintText: "Search for a food",
-                            hintStyle: const TextStyle(
-                              color: Colors.grey,
-                              fontSize: 16,
-                            ),
-                            prefixIcon: const Icon(
-                              Icons.search,
-                              color: Colors.grey,
-                            ),
-                            filled: true,
-                            fillColor: Colors.grey[100],
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(30),
-                              borderSide: BorderSide(color: Colors.grey[300]!),
-                            ),
-                            enabledBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(30),
-                              borderSide: BorderSide(color: Colors.grey[300]!),
-                            ),
-                            focusedBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(30),
-                              borderSide: const BorderSide(
-                                color: Color(0xFF8FD5C7),
-                              ),
-                            ),
-                            contentPadding: const EdgeInsets.symmetric(
-                              horizontal: 20,
-                              vertical: 15,
-                            ),
-                          ),
-                          onChanged: (value) {
-                            // TODO: Implement search functionality
-                          },
+                      // Phần nội dung có thể cuộn
+                      Expanded(
+                        child: SingleChildScrollView(
+                          child: isSearchSelected
+                              ? _buildSearchContent()
+                              : _buildProposalContent(),
                         ),
-
-                        const SizedBox(height: 30),
-
-                        // Avocado character
-                        Image.asset(
-                          'Assets/Images/imagePageSearch_2.png',
-                          width: 200,
-                          height: 300,
-                          fit: BoxFit.contain,
-                        ),
-                      ] else ...[
-                        // Proposal content
-                        const Center(
-                          child: Column(
-                            children: [
-                              SizedBox(height: 100),
-                              Icon(
-                                Icons.lightbulb_outline,
-                                size: 80,
-                                color: Colors.grey,
-                              ),
-                              SizedBox(height: 20),
-                              Text(
-                                "Food Proposals",
-                                style: TextStyle(
-                                  fontSize: 24,
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.grey,
-                                ),
-                              ),
-                              SizedBox(height: 10),
-                              Text(
-                                "Coming soon!",
-                                style: TextStyle(
-                                  fontSize: 16,
-                                  color: Colors.grey,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
+                      ),
                     ],
                   ),
                 ),
@@ -244,6 +184,111 @@ class _SearchFoodScreenState extends State<SearchFoodScreen> {
             ),
           ],
         ),
+      ),
+
+      // ===== NÚT CỐ ĐỊNH DƯỚI CÙNG =====
+      bottomNavigationBar: SafeArea(
+        minimum: const EdgeInsets.fromLTRB(20, 0, 20, 20),
+        child: ElevatedButton.icon(
+          icon: const Icon(Icons.summarize),
+          label: const Text(
+            'View Meal Summary',
+            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+          ),
+          style: ElevatedButton.styleFrom(
+            minimumSize: const Size(double.infinity, 50),
+            backgroundColor: const Color.fromARGB(255, 10, 131, 107),
+            foregroundColor: Colors.white,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+            ),
+          ),
+          onPressed: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) => MealSummaryScreen(
+                  mealName: _mealTitle,
+                  targetCalories: mealMacroTarget[_mealTitle]!["calories"]!,
+                  targetProtein: mealMacroTarget[_mealTitle]!["protein"]!,
+                  targetFat: mealMacroTarget[_mealTitle]!["fat"]!,
+                  targetCarbs: mealMacroTarget[_mealTitle]!["carbs"]!,
+                  targetFiber: mealMacroTarget[_mealTitle]!["fiber"]!,
+                  foods: selectedFoods,
+                  onAddMore: () => Navigator.pop(context),
+                  onExit: () => Navigator.popUntil(context, (r) => r.isFirst),
+                ),
+              ),
+            );
+          },
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSearchContent() {
+    return Column(
+      children: [
+        TextField(
+          decoration: InputDecoration(
+            hintText: "Search for a food",
+            hintStyle: const TextStyle(color: Colors.grey, fontSize: 16),
+            prefixIcon: const Icon(Icons.search, color: Colors.grey),
+            filled: true,
+            fillColor: Colors.grey[100],
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(30),
+              borderSide: BorderSide(color: Colors.grey[300]!),
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(30),
+              borderSide: BorderSide(color: Colors.grey[300]!),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(30),
+              borderSide: const BorderSide(color: Color(0xFF8FD5C7)),
+            ),
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 20,
+              vertical: 15,
+            ),
+          ),
+          onChanged: (value) {
+            // TODO: Implement search functionality
+          },
+        ),
+        const SizedBox(height: 30),
+        Image.asset(
+          'Assets/Images/imagePageSearch_2.png',
+          width: 200,
+          height: 300,
+          fit: BoxFit.contain,
+        ),
+      ],
+    );
+  }
+
+  Widget _buildProposalContent() {
+    return Center(
+      child: Column(
+        children: const [
+          SizedBox(height: 100),
+          Icon(Icons.lightbulb_outline, size: 80, color: Colors.grey),
+          SizedBox(height: 20),
+          Text(
+            "Food Proposals",
+            style: TextStyle(
+              fontSize: 24,
+              fontWeight: FontWeight.bold,
+              color: Colors.grey,
+            ),
+          ),
+          SizedBox(height: 10),
+          Text(
+            "Coming soon!",
+            style: TextStyle(fontSize: 16, color: Colors.grey),
+          ),
+        ],
       ),
     );
   }
