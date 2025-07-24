@@ -285,29 +285,4 @@ class _MealSummaryScreenState extends State<MealSummaryScreen> {
       ],
     );
   }
-
-  Widget _bottomNavItem(
-    IconData icon,
-    String label,
-    bool active,
-    VoidCallback onTap,
-  ) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, color: active ? Colors.black : Colors.grey),
-          Text(
-            label,
-            style: TextStyle(
-              color: active ? Colors.black : Colors.grey,
-              fontWeight: active ? FontWeight.bold : FontWeight.normal,
-              fontSize: 12,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
 }
