@@ -18,36 +18,39 @@
 ```bash
 lib/
 ├── models/
-|   ├── food_base.dart     # Lớp cha chung (abstract class)
-│   ├── food.dart          # Đồ ăn - kế thừa từ lớp cha
-|   ├── drink.dart         # Đồ uống - kế thừa từ lớp cha
-│   ├── meal.dart              # Mô tả dữ liệu một bữa ăn gồm danh sách các món ăn.
-│   └── user.dart              # (Tuỳ chọn) Dữ liệu người dùng như tên, tuổi, chiều cao, cân nặng.
+│   ├── food_base.dart          # Lớp trừu tượng chung cho Food/WaterLog.
+│   ├── food.dart               # Model món ăn, kế thừa từ FoodBase.
+│   ├── water_log.dart          # Model lượng nước uống, kế thừa từ FoodBase.
+│   ├── meal.dart               # Model cho một bữa ăn: thời gian, danh sách món.
+│   └── user.dart               # (Tuỳ chọn) Thông tin người dùng: tên, giới tính, tuổi, chiều cao, cân nặng.
 
 ├── screens/
 │   ├── initial_screen/
-│   │   ├── page1.dart -> page8.dart   # Các bước nhập thông tin người dùng ban đầu.
-│   │   └── page9.dart                 # Màn hình tải và xử lý dữ liệu sau khi nhập.
+│   │   ├── page1.dart → page8.dart   # Các bước nhập thông tin ban đầu.
+│   │   └── page9.dart                # Màn hình loading xử lý thông tin đầu vào.
 │   └── active_screen/
 │       ├── journal/
-│       │   ├── food_search_screen.dart     # Giao diện tìm món ăn (giống Shopee Food).
-│       │   ├── meal_summary_screen.dart    # Xác nhận món ăn đã chọn.
-│       │   └── journal_screen.dart         # Nhật ký ăn uống trong ngày.
+│       │   ├── food_search_screen.dart     # Tìm món ăn theo tên/loại.
+│       │   ├── meal_summary_screen.dart    # Xem lại món đã chọn, xác nhận bữa ăn.
+│       │   └── journal_screen.dart         # Hiển thị nhật ký ăn uống theo ngày.
 │       └── profile/
-│           └── profile.dart                # Màn hình hồ sơ người dùng.
+│           └── profile.dart                # Thông tin hồ sơ người dùng.
 
 ├── services/
-│   ├── food_service.dart       # Xử lý danh sách món ăn từ local hoặc API.
-│   ├── meal_service.dart       # Quản lý CRUD các bữa ăn và món ăn liên quan.
-│   └── storage_service.dart    # (Tuỳ chọn) Lưu/đọc dữ liệu người dùng từ local hoặc Firebase.
+│   ├── database_service.dart    # Khởi tạo và quản lý SQLite: tạo bảng, mở DB, truy vấn cơ bản.
+│   ├── food_service.dart        # Quản lý CRUD món ăn: thêm, xoá, tìm kiếm theo tên.
+│   ├── water_log_service.dart   # Quản lý CRUD lượng nước uống.
+│   ├── meal_service.dart        # Thêm món vào bữa ăn, thống kê calories, tìm kiếm theo món.
+│   ├── user_service.dart        # Lưu, cập nhật, lấy thông tin người dùng.
+│   └── storage_service.dart     # (Tuỳ chọn) Lưu thông tin vào local hoặc nền tảng đám mây.
 
 ├── utils/
-│   ├── constants.dart          # Các giá trị cố định như màu, giới hạn calo, key v.v.
-│   └── helpers.dart            # Hàm hỗ trợ: tính calo, định dạng, tính TDEE, BMI,...
+│   ├── constants.dart           # Các giá trị hằng số dùng toàn app: màu sắc, mức calo, ID mặc định,...
+│   └── helpers.dart             # Hàm tiện ích: tính toán BMI, TDEE, chuyển đổi đơn vị, định dạng ngày...
 
 ├── widgets/
-│   ├── food_item.dart          # Hiển thị một món ăn trong danh sách.
-│   └── meal_item.dart          # Hiển thị thông tin bữa ăn: tổng calo, món đã chọn.
+│   ├── food_item.dart           # Widget hiển thị 1 món ăn trong danh sách.
+│   └── meal_item.dart           # Widget hiển thị 1 bữa ăn: tên, tổng calo, các món đi kèm.
 
-└── main.dart                   # Điểm khởi đầu của ứng dụng: cấu hình theme, route, home screen.
+└── main.dart                    # Điểm khởi chạy app: cấu hình Theme, Routes, Home screen,...
 
