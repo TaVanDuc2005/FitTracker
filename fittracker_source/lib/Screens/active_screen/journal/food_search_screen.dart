@@ -108,6 +108,7 @@ class _SearchFoodScreenState extends State<SearchFoodScreen> {
                       ],
                     ),
                   ),
+                  // Nút X để quay lại màn hình trước đó Journal
                   GestureDetector(
                     onTap: () => Navigator.pop(context),
                     child: const Icon(

@@ -39,8 +39,7 @@ class _MealSummaryScreenState extends State<MealSummaryScreen> {
     foods = List.from(widget.foods);
   }
 
-  int get totalCalories =>
-      foods.fold(0, (sum, food) => sum + (food.calories ?? 0));
+  int get totalCalories => foods.fold(0, (sum, food) => sum + (food.calories));
   int get totalProtein => (totalCalories * 0.15 ~/ 4);
   int get totalFat => (totalCalories * 0.25 ~/ 9);
   int get totalCarbs => (totalCalories * 0.55 ~/ 4);
@@ -239,18 +238,6 @@ class _MealSummaryScreenState extends State<MealSummaryScreen> {
                         );
                       },
                     ),
-            ),
-            // Bottom bar: chỉ Search và Proposal
-            Container(
-              padding: const EdgeInsets.symmetric(vertical: 6),
-              color: Colors.white,
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                children: [
-                  _bottomNavItem(Icons.search, "Search", true, () {}),
-                  _bottomNavItem(Icons.stars, "Proposal", false, () {}),
-                ],
-              ),
             ),
           ],
         ),

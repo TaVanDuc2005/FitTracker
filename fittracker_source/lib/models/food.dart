@@ -1,12 +1,7 @@
 import 'food_bast.dart';
 
 /// Các loại món ăn
-enum CategoryType {
-  monNuoc,
-  monKho,
-  monXao,
-  monChien,
-}
+enum CategoryType { monNuoc, monKho, monXao, monChien }
 
 class Food extends FoodBase {
   final CategoryType category;
