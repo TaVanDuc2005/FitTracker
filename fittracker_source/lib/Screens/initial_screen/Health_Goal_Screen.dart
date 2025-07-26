@@ -1,28 +1,24 @@
 import 'package:flutter/material.dart';
-import 'Page8.dart';
+import 'Loading_Screen.dart';
 
-class DietaryRestrictionsScreen7 extends StatefulWidget {
-  const DietaryRestrictionsScreen7({super.key});
+class healthGoalsScreen extends StatefulWidget {
+  const healthGoalsScreen({super.key});
 
   @override
-  State<DietaryRestrictionsScreen7> createState() =>
+  State<healthGoalsScreen> createState() =>
       _DietaryRestrictionsScreenState();
 }
 
 class _DietaryRestrictionsScreenState
-    extends State<DietaryRestrictionsScreen7> {
+    extends State<healthGoalsScreen> {
   List<String> selectedRestrictions = [];
 
   final List<String> options = [
-    "Veganism",
-    "Vegetarianism",
-    "Pescetarianism",
-    "Gluten-Free",
-    "Lactose intolerant",
-    "Nut allergy",
-    "Seafood or Shellfish",
-    "Other",
-    "None",
+    "Weight loss",
+    "Weight gain",
+    "Muscle building",
+    "Maintain weight",
+    "Other"
   ];
 
   @override
@@ -36,7 +32,7 @@ class _DietaryRestrictionsScreenState
             Container(
               padding: const EdgeInsets.fromLTRB(30, 60, 30, 20),
               child: const Text(
-                "Which restrictions/allergies do you have?",
+                "What are your health goals?",
                 style: TextStyle(fontSize: 18, fontWeight: FontWeight.w500),
               ),
             ),
@@ -150,8 +146,7 @@ class _DietaryRestrictionsScreenState
                         Navigator.push(
                           context,
                           MaterialPageRoute(
-                            builder: (context) =>
-                                const DietaryRestrictionsScreen8(),
+                            builder: (context) => const LoadingScreen(),
                           ),
                         );
                       },

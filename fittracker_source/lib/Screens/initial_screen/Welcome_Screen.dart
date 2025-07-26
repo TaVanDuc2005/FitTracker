@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'Page2.dart';
+import 'On_boarding_Screen.dart';
 
 class WelcomeScreen extends StatelessWidget {
   const WelcomeScreen({super.key});

@@ -1,6 +1,6 @@
 import 'package:sqflite/sqflite.dart';
-import 'package:fittracker_source/models/water_log.dart';
-import 'database_service.dart';
+import 'package:fittracker_source/models/Water_Log.dart';
+import 'Database_Service.dart';
 
 class WaterLogService {
   final dbService = DatabaseService();

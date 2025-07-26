@@ -1,6 +1,6 @@
 import 'package:sqflite/sqflite.dart';
 import 'package:fittracker_source/models/food.dart';
-import 'database_service.dart';
+import 'Database_Service.dart';
 
 class FoodService {
   final DatabaseService _dbService = DatabaseService();

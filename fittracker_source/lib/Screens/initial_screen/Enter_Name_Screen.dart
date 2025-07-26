@@ -1,7 +1,7 @@
 // file: enter_name_screen.dart
 
 import 'package:flutter/material.dart';
-import 'Page4.dart';
+import 'User_Info_Screen.dart';
 
 class EnterNameScreen extends StatefulWidget {
   const EnterNameScreen({super.key});

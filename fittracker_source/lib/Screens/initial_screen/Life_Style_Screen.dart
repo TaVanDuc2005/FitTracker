@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'Page6.dart';
+import 'Dietary_Restrictions_Screen.dart';
 
 class LifestyleScreen extends StatefulWidget {
   const LifestyleScreen({super.key});
@@ -120,7 +120,7 @@ class _LifestyleScreenState extends State<LifestyleScreen> {
                       context,
                       MaterialPageRoute(
                         builder: (context) =>
-                            const DietaryRestrictionsScreen6(),
+                            const DietaryRestrictionsScreen(),
                       ),
                     );
                   },

@@ -1,4 +1,4 @@
-import 'package:fittracker_source/Screens/initial_screen/Page1.dart';
+import 'package:fittracker_source/Screens/initial_screen/Welcome_Screen.dart';
 import 'package:flutter/material.dart';
 
 void main() {

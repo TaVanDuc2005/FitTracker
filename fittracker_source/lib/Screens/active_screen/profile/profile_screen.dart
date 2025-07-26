@@ -3,7 +3,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:fittracker_source/Screens/active_screen/journal/journal_screen.dart';
+import 'package:fittracker_source/Screens/active_screen/journal/Journal_Screen.dart';
 
 // ====== Hàm sinh ngày "chuẩn lịch" ======
 List<String> generateDateLabels(int days) {

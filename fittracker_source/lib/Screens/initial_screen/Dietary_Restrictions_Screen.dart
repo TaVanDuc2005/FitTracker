@@ -1,16 +1,16 @@
 import 'package:flutter/material.dart';
-import 'Page7.dart';
+import 'List_Dietary_Restriction_Screen.dart';
 
-class DietaryRestrictionsScreen6 extends StatefulWidget {
-  const DietaryRestrictionsScreen6({super.key});
+class DietaryRestrictionsScreen extends StatefulWidget {
+  const DietaryRestrictionsScreen({super.key});
 
   @override
-  State<DietaryRestrictionsScreen6> createState() =>
+  State<DietaryRestrictionsScreen> createState() =>
       _DietaryRestrictionsScreenState();
 }
 
 class _DietaryRestrictionsScreenState
-    extends State<DietaryRestrictionsScreen6> {
+    extends State<DietaryRestrictionsScreen> {
   String selectedRestriction = ""; // Thay đổi từ "None" thành ""
 
   final List<String> options = ["Yes", "No"];
@@ -140,7 +140,7 @@ class _DietaryRestrictionsScreenState
                         context,
                         MaterialPageRoute(
                           builder: (context) =>
-                              const DietaryRestrictionsScreen7(),
+                              const listDietaryRestrictionsScreen(),
                         ),
                       );
                     },

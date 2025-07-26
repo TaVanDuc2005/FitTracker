@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'Page5.dart';
+import 'Life_style_Screen.dart';
 
 class UserInfoScreen extends StatefulWidget {
   const UserInfoScreen({super.key});

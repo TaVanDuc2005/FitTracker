@@ -12,13 +12,13 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      home: const FoodvisorIntro(),
+      home: const LoadingScreen(),
     );
   }
 }
 
-class FoodvisorIntro extends StatelessWidget {
-  const FoodvisorIntro({super.key});
+class LoadingScreen extends StatelessWidget {
+  const LoadingScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
