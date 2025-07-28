@@ -1,9 +1,10 @@
 import 'dart:io';
-
 import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:fittracker_source/Screens/active_screen/journal/Journal_Screen.dart';
+import 'package:fittracker_source/Screens/active_screen/journal/journal_screen.dart';
+import '../../../services/user_service.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 // ====== Hàm sinh ngày "chuẩn lịch" ======
 List<String> generateDateLabels(int days) {
@@ -15,15 +16,6 @@ List<String> generateDateLabels(int days) {
     return "$day/$month";
   });
 }
-
-// ====== Dữ liệu giả lập ======
-List<double> weightHistory7 = [228.0, 227.8, 227.5, 227.0, 227.3, 227.0, 228.0];
-List<double> weightHistory30 = List.generate(30, (i) => 228 - i * 0.1);
-List<double> weightHistory90 = List.generate(90, (i) => 228 - i * 0.05);
-
-List<double> calHistory7 = [3200, 3350, 3500, 3518, 3600, 3400, 3518];
-List<double> calHistory30 = List.generate(30, (i) => 3200 + (i % 7) * 50.0);
-List<double> calHistory90 = List.generate(90, (i) => 3300 + (i % 14) * 25.0);
 
 // ========== PROFILE SCREEN ==========
 class ProfileScreen extends StatefulWidget {
@@ -38,15 +30,27 @@ class _ProfileScreenState extends State<ProfileScreen> {
   int _selectedBottomIndex = 1; // Journal | Profile (Profile là mặc định)
   int _selectedDayRange = 0; // 0: 7 ngày, 1: 30 ngày, 2: 90 ngày
 
-  // Thông tin cá nhân (có thể load từ backend sau này)
-  String userName = "Minh";
-  String goal = "Gain muscle";
-  int caloriesPerDay = 3518;
-  double startWeight = 228.0;
-  double currentWeight = 228.0;
-  double goalWeight = 229.0;
+  // ✅ Thông tin từ UserService
+  String userName = "";
+  String goal = "";
+  int caloriesPerDay = 0;
+  double startWeight = 0.0;
+  double currentWeight = 0.0;
+  double goalWeight = 0.0;
+  double? currentBMI; // ✅ Thêm BMI
+  Map<String, dynamic>? userInfo;
+  bool _isLoading = true;
 
   File? _avatarFile;
+
+  // ✅ Dữ liệu history từ UserService - giữ nguyên format cũ
+  List<double> weightHistory7 = [];
+  List<double> weightHistory30 = [];
+  List<double> weightHistory90 = [];
+
+  List<double> calHistory7 = [];
+  List<double> calHistory30 = [];
+  List<double> calHistory90 = [];
 
   // ====== Lịch sử ngày dùng biến late, cập nhật realtime ======
   late List<String> weightDates7;
@@ -59,16 +63,362 @@ class _ProfileScreenState extends State<ProfileScreen> {
     weightDates7 = generateDateLabels(7);
     weightDates30 = generateDateLabels(30);
     weightDates90 = generateDateLabels(90);
+    _loadUserData();
+  }
+
+  // ✅ Load dữ liệu từ UserService
+  Future<void> _loadUserData() async {
+    try {
+      print('📊 Loading user data for Profile...');
+
+      // Lấy thông tin user cơ bản
+      userInfo = await UserService.getUserInfo();
+      if (userInfo == null) {
+        setState(() {
+          _isLoading = false;
+        });
+        return;
+      }
+
+      // Tính toán calories và BMI
+      final dailyCalories = await UserService.calculateDailyCalories();
+      final bmi = await UserService.calculateBMI(); // ✅ Thêm BMI
+
+      // ✅ Load persistent data từ SharedPreferences
+      final prefs = await SharedPreferences.getInstance();
+
+      setState(() {
+        // Basic info từ UserService
+        userName = userInfo!['name'] ?? 'User';
+        goal = _getGoalText(userInfo!['goal'] ?? 'maintain weight');
+        caloriesPerDay = dailyCalories?.toInt() ?? 2000;
+        currentBMI = bmi; // ✅ Set BMI
+
+        // Weight info - convert kg to lbs for display
+        double weightInKg = (userInfo!['weight'] ?? 70.0).toDouble();
+        currentWeight = _kgToLbs(weightInKg);
+
+        // ✅ FIXED: Load startWeight từ SharedPreferences
+        double? savedStartWeight = prefs.getDouble('profile_start_weight');
+        if (savedStartWeight == null) {
+          // Lần đầu tiên, set start weight = current weight
+          startWeight = currentWeight;
+          prefs.setDouble('profile_start_weight', startWeight);
+          print(
+            '🆕 First time: Set start weight = ${startWeight.toStringAsFixed(1)} lbs',
+          );
+        } else {
+          // Sử dụng giá trị đã lưu
+          startWeight = savedStartWeight;
+          print(
+            '🔄 Loaded persistent start weight = ${startWeight.toStringAsFixed(1)} lbs',
+          );
+        }
+
+        // ✅ FIXED: Load goalWeight từ SharedPreferences
+        double? savedGoalWeight = prefs.getDouble('profile_goal_weight');
+        if (savedGoalWeight == null) {
+          // Lần đầu tiên, tính goal weight dựa trên goal
+          String userGoal = userInfo!['goal'] ?? 'maintain weight';
+          goalWeight = _calculateGoalWeight(currentWeight, userGoal);
+          prefs.setDouble('profile_goal_weight', goalWeight);
+          print(
+            '🆕 First time: Calculated goal weight = ${goalWeight.toStringAsFixed(1)} lbs',
+          );
+        } else {
+          // Sử dụng giá trị đã lưu
+          goalWeight = savedGoalWeight;
+          print(
+            '🔄 Loaded persistent goal weight = ${goalWeight.toStringAsFixed(1)} lbs',
+          );
+        }
+
+        // Generate mock history data based on UserService data
+        _generateHistoryData();
+
+        _isLoading = false;
+      });
+
+      print('✅ Profile data loaded successfully:');
+      print('   Name: $userName');
+      print('   Goal: $goal');
+      print('   Calories: $caloriesPerDay');
+      print('   BMI: ${currentBMI?.toStringAsFixed(1) ?? 'N/A'}'); // ✅ Log BMI
+      print('   Current Weight: ${currentWeight.toStringAsFixed(1)} lbs');
+      print(
+        '   Start Weight: ${startWeight.toStringAsFixed(1)} lbs (persistent)',
+      );
+      print(
+        '   Goal Weight: ${goalWeight.toStringAsFixed(1)} lbs (persistent)',
+      );
+    } catch (e) {
+      print('❌ Error loading profile data: $e');
+      setState(() {
+        _isLoading = false;
+      });
+    }
+  }
+
+  // ✅ Thêm method để get BMI category
+  String _getBMICategory(double bmi) {
+    if (bmi < 18.5) return 'Underweight';
+    if (bmi < 25.0) return 'Normal';
+    if (bmi < 30.0) return 'Overweight';
+    return 'Obese';
+  }
+
+  // ✅ Convert kg to lbs
+  double _kgToLbs(double kg) {
+    return kg * 2.20462;
+  }
+
+  // ✅ Convert lbs to kg
+  double _lbsToKg(double lbs) {
+    return lbs / 2.20462;
+  }
+
+  // ✅ Get goal text in English
+  String _getGoalText(String goal) {
+    switch (goal.toLowerCase()) {
+      case 'lose weight':
+        return 'Lose weight';
+      case 'gain weight':
+        return 'Gain weight';
+      case 'maintain weight':
+      case 'maintain':
+      default:
+        return 'Maintain weight';
+    }
+  }
+
+  // ✅ Calculate goal weight based on current goal
+  double _calculateGoalWeight(double current, String goal) {
+    switch (goal.toLowerCase()) {
+      case 'lose weight':
+        return current - 10; // Target to lose 10 lbs
+      case 'gain weight':
+        return current + 10; // Target to gain 10 lbs
+      case 'maintain weight':
+      case 'maintain':
+      default:
+        return current; // Maintain current weight
+    }
+  }
+
+  // ✅ Generate history data based on UserService info
+  void _generateHistoryData() async {
+    String userGoal = userInfo!['goal'] ?? 'maintain weight';
+    final prefs = await SharedPreferences.getInstance();
+
+    // ✅ FIXED: Load weight history từ SharedPreferences
+    List<String>? saved7 = prefs.getStringList('weight_history_7');
+    List<String>? saved30 = prefs.getStringList('weight_history_30');
+    List<String>? saved90 = prefs.getStringList('weight_history_90');
+
+    if (saved7 == null || saved30 == null || saved90 == null) {
+      print('🆕 First time: Generating weight history data...');
+
+      // Generate weight history based on goal (chỉ lần đầu tiên)
+      weightHistory7 = List.generate(7, (i) {
+        double progress = i / 6.0;
+        switch (userGoal.toLowerCase()) {
+          case 'lose weight':
+            return currentWeight +
+                (2.0 * (1 - progress)) +
+                (i % 2 == 0 ? 0.2 : -0.2);
+          case 'gain weight':
+            return currentWeight -
+                (1.5 * (1 - progress)) +
+                (i % 2 == 0 ? 0.1 : -0.1);
+          default:
+            return currentWeight +
+                (i % 3 == 0
+                    ? 0.3
+                    : i % 3 == 1
+                    ? -0.2
+                    : 0.1);
+        }
+      });
+
+      weightHistory30 = List.generate(30, (i) {
+        double progress = i / 29.0;
+        switch (userGoal.toLowerCase()) {
+          case 'lose weight':
+            return currentWeight +
+                (6.0 * (1 - progress)) +
+                (i % 4 == 0 ? 0.4 : -0.3);
+          case 'gain weight':
+            return currentWeight -
+                (4.0 * (1 - progress)) +
+                (i % 4 == 0 ? 0.2 : -0.2);
+          default:
+            return currentWeight +
+                (i % 5 == 0
+                    ? 0.5
+                    : i % 5 == 1
+                    ? -0.4
+                    : 0.2);
+        }
+      });
+
+      weightHistory90 = List.generate(90, (i) {
+        double progress = i / 89.0;
+        switch (userGoal.toLowerCase()) {
+          case 'lose weight':
+            return currentWeight +
+                (15.0 * (1 - progress)) +
+                (i % 7 == 0 ? 0.8 : -0.6);
+          case 'gain weight':
+            return currentWeight -
+                (12.0 * (1 - progress)) +
+                (i % 7 == 0 ? 0.3 : -0.3);
+          default:
+            return currentWeight +
+                (i % 10 == 0
+                    ? 1.0
+                    : i % 10 == 1
+                    ? -0.8
+                    : 0.3);
+        }
+      });
+
+      // ✅ Save to SharedPreferences
+      await prefs.setStringList(
+        'weight_history_7',
+        weightHistory7.map((e) => e.toString()).toList(),
+      );
+      await prefs.setStringList(
+        'weight_history_30',
+        weightHistory30.map((e) => e.toString()).toList(),
+      );
+      await prefs.setStringList(
+        'weight_history_90',
+        weightHistory90.map((e) => e.toString()).toList(),
+      );
+
+      print('✅ Weight history generated and saved to SharedPreferences');
+    } else {
+      print('🔄 Loading weight history from SharedPreferences');
+
+      // ✅ Load từ SharedPreferences
+      weightHistory7 = saved7.map((e) => double.parse(e)).toList();
+      weightHistory30 = saved30.map((e) => double.parse(e)).toList();
+      weightHistory90 = saved90.map((e) => double.parse(e)).toList();
+    }
+
+    // ✅ Update điểm cuối cùng (ngày hôm nay) với current weight mới
+    if (weightHistory7.isNotEmpty) {
+      weightHistory7[weightHistory7.length - 1] = currentWeight;
+    }
+    if (weightHistory30.isNotEmpty) {
+      weightHistory30[weightHistory30.length - 1] = currentWeight;
+    }
+    if (weightHistory90.isNotEmpty) {
+      weightHistory90[weightHistory90.length - 1] = currentWeight;
+    }
+
+    // ✅ Save updated history
+    await prefs.setStringList(
+      'weight_history_7',
+      weightHistory7.map((e) => e.toString()).toList(),
+    );
+    await prefs.setStringList(
+      'weight_history_30',
+      weightHistory30.map((e) => e.toString()).toList(),
+    );
+    await prefs.setStringList(
+      'weight_history_90',
+      weightHistory90.map((e) => e.toString()).toList(),
+    );
+
+    // Generate calories history (có thể thay đổi mỗi lần vì không cần persistent)
+    double baseCalories = caloriesPerDay.toDouble();
+
+    calHistory7 = List.generate(7, (i) {
+      double variation = (i % 3 == 0
+          ? 100
+          : i % 3 == 1
+          ? -150
+          : 50);
+      return baseCalories + variation;
+    });
+
+    calHistory30 = List.generate(30, (i) {
+      double variation = (i % 5) * 80.0 - 160;
+      return baseCalories + variation;
+    });
+
+    calHistory90 = List.generate(90, (i) {
+      double variation = (i % 7) * 60.0 - 180;
+      return baseCalories + variation;
+    });
+
+    print(
+      '✅ History data loaded: 7d=${weightHistory7.length}, 30d=${weightHistory30.length}, 90d=${weightHistory90.length}',
+    );
   }
 
   @override
   Widget build(BuildContext context) {
+    // ✅ Show loading screen
+    if (_isLoading) {
+      return Scaffold(
+        backgroundColor: const Color(0xFFF5FBF8),
+        body: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              CircularProgressIndicator(color: Colors.teal[600]),
+              SizedBox(height: 16),
+              Text(
+                'Loading your profile...',
+                style: TextStyle(fontSize: 16, color: Colors.teal[700]),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    // ✅ Show error if no data
+    if (userInfo == null) {
+      return Scaffold(
+        backgroundColor: const Color(0xFFF5FBF8),
+        body: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(Icons.error_outline, size: 64, color: Colors.red[300]),
+              SizedBox(height: 16),
+              Text(
+                'Unable to load profile data',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.black87,
+                ),
+              ),
+              SizedBox(height: 24),
+              ElevatedButton(
+                onPressed: () => _loadUserData(),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.teal[600],
+                ),
+                child: Text('Retry', style: TextStyle(color: Colors.white)),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    // ✅ Giữ nguyên giao diện cũ, chỉ thay data source
     return Scaffold(
       backgroundColor: const Color(0xFFF5FBF8),
       body: SafeArea(
         child: Column(
           children: [
-            // Header profile
+            // Header profile - giữ nguyên
             Container(
               color: const Color(0xFFE5F6F4),
               padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
@@ -135,7 +485,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                   const SizedBox(width: 6),
                                   InkWell(
                                     onTap: () async {
-                                      // Chuyển sang màn hình chỉnh sửa profile
+                                      // ✅ Giữ nguyên edit profile functionality
                                       final result = await Navigator.push(
                                         context,
                                         MaterialPageRoute(
@@ -151,22 +501,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                         ),
                                       );
                                       if (result != null) {
-                                        setState(() {
-                                          userName = result['name'] ?? userName;
-                                          goal = result['goal'] ?? goal;
-                                          caloriesPerDay =
-                                              result['calories'] ??
-                                              caloriesPerDay;
-                                          startWeight =
-                                              result['startWeight'] ??
-                                              startWeight;
-                                          currentWeight =
-                                              result['currentWeight'] ??
-                                              currentWeight;
-                                          goalWeight =
-                                              result['goalWeight'] ??
-                                              goalWeight;
-                                        });
+                                        await _updateUserData(result);
                                       }
                                     },
                                     child: const Icon(Icons.edit, size: 18),
@@ -217,18 +552,34 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           ),
                         ),
                       ),
+                      const SizedBox(width: 12),
+                      // ✅ THÊM: BMI display
+                      if (currentBMI != null)
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 14,
+                            vertical: 5,
+                          ),
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(20),
+                            color: Colors.teal[50],
+                          ),
+                          child: Text(
+                            'BMI ${currentBMI!.toStringAsFixed(1)} (${_getBMICategory(currentBMI!)})',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w600,
+                              color: Colors.teal[700],
+                            ),
+                          ),
+                        ),
                     ],
                   ),
-                  const SizedBox(height: 10),
-                  // Tab Weight/Nutrition
+                  // Tab Weight/Nutrition - giữ nguyên
                   Row(
                     children: [
                       GestureDetector(
-                        onTap: () {
-                          setState(() {
-                            _selectedTabIndex = 0;
-                          });
-                        },
+                        onTap: () => setState(() => _selectedTabIndex = 0),
                         child: Container(
                           padding: const EdgeInsets.symmetric(
                             horizontal: 12,
@@ -258,11 +609,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       ),
                       const SizedBox(width: 25),
                       GestureDetector(
-                        onTap: () {
-                          setState(() {
-                            _selectedTabIndex = 1;
-                          });
-                        },
+                        onTap: () => setState(() => _selectedTabIndex = 1),
                         child: Container(
                           padding: const EdgeInsets.symmetric(
                             horizontal: 12,
@@ -295,7 +642,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 ],
               ),
             ),
-            // Nội dung từng tab
+            // Nội dung từng tab - giữ nguyên
             Expanded(
               child: _selectedTabIndex == 0
                   ? _buildWeightTab()
@@ -310,18 +657,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
         unselectedItemColor: Colors.grey,
         backgroundColor: Colors.white,
         onTap: (index) {
-          setState(() {
-            _selectedBottomIndex = index;
-          });
-          // Điều hướng sang màn khác
+          setState(() => _selectedBottomIndex = index);
           if (index == 0) {
-            // Chuyển sang Journal
             Navigator.pushReplacement(
               context,
               MaterialPageRoute(builder: (context) => const JournalScreen()),
             );
           }
-          // index == 1 là Profile (màn hình hiện tại), không cần làm gì
         },
         items: const [
           BottomNavigationBarItem(icon: Icon(Icons.article), label: "Journal"),
@@ -331,7 +673,96 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  // ----- WEIGHT TAB -----
+  // ✅ Update user data với UserService
+  Future<void> _updateUserData(Map<String, dynamic> newData) async {
+    try {
+      print('🔄 Updating user data...');
+      final prefs = await SharedPreferences.getInstance();
+
+      // Update name
+      if (newData['name'] != null && newData['name'] != userName) {
+        await UserService.updateName(newData['name']);
+        print('✅ Name updated: ${newData['name']}');
+      }
+
+      // Update goal
+      if (newData['goal'] != null && newData['goal'] != goal) {
+        String goalForService = _mapGoalToService(newData['goal']);
+        await UserService.updateGoal(goalForService);
+        print('✅ Goal updated: ${newData['goal']}');
+      }
+
+      // Update weight (convert lbs to kg) - chỉ update current weight
+      if (newData['currentWeight'] != null &&
+          newData['currentWeight'] != currentWeight) {
+        double weightInKg = _lbsToKg(newData['currentWeight']);
+        await UserService.updateWeight(weightInKg);
+        print(
+          '✅ Weight updated: ${newData['currentWeight']} lbs (${weightInKg.toStringAsFixed(1)} kg)',
+        );
+
+        // ✅ Update weight history arrays
+        setState(() {
+          currentWeight = newData['currentWeight'];
+
+          // Update only the last point (today) in weight history arrays
+          if (weightHistory7.isNotEmpty) {
+            weightHistory7[weightHistory7.length - 1] = currentWeight;
+          }
+          if (weightHistory30.isNotEmpty) {
+            weightHistory30[weightHistory30.length - 1] = currentWeight;
+          }
+          if (weightHistory90.isNotEmpty) {
+            weightHistory90[weightHistory90.length - 1] = currentWeight;
+          }
+        });
+      }
+
+      // ✅ State update - FIXED: Update SharedPreferences
+      setState(() {
+        userName = newData['name'] ?? userName;
+        goal = newData['goal'] ?? goal;
+        caloriesPerDay = newData['calories'] ?? caloriesPerDay;
+
+        // ✅ FIXED: Update SharedPreferences
+        if (newData['startWeight'] != null) {
+          startWeight = newData['startWeight'];
+          prefs.setDouble('profile_start_weight', startWeight);
+          print(
+            '💾 Updated persistent start weight = ${startWeight.toStringAsFixed(1)} lbs',
+          );
+        }
+        if (newData['currentWeight'] != null) {
+          currentWeight = newData['currentWeight'];
+        }
+        if (newData['goalWeight'] != null) {
+          goalWeight = newData['goalWeight'];
+          prefs.setDouble('profile_goal_weight', goalWeight);
+          print(
+            '💾 Updated persistent goal weight = ${goalWeight.toStringAsFixed(1)} lbs',
+          );
+        }
+      });
+
+      print('✅ User data updated successfully');
+    } catch (e) {
+      print('❌ Error updating user data: $e');
+    }
+  }
+
+  // ✅ Map goal text về format UserService
+  String _mapGoalToService(String displayGoal) {
+    switch (displayGoal.toLowerCase()) {
+      case 'lose weight':
+        return 'lose weight';
+      case 'gain weight':
+        return 'gain weight';
+      default:
+        return 'maintain weight';
+    }
+  }
+
+  // ----- WEIGHT TAB - giữ nguyên hoàn toàn -----
   Widget _buildWeightTab() {
     final weightHistory = _selectedDayRange == 0
         ? weightHistory7
@@ -398,7 +829,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               ],
             ),
           ),
-          // Biểu đồ cân nặng
+          // Biểu đồ cân nặng - giữ nguyên
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
             child: Align(
@@ -421,14 +852,16 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     getTooltipItems: (touchedSpots) {
                       return touchedSpots.map((touchedSpot) {
                         return LineTooltipItem(
-                          touchedSpot.y.toStringAsFixed(2),
+                          touchedSpot.y.toStringAsFixed(
+                            2,
+                          ), // ✅ Giữ nguyên format cũ
                           const TextStyle(
                             color: Color.fromARGB(
                               255,
                               247,
                               248,
                               248,
-                            ), // ĐỔI MÀU CHỮ Ở ĐÂY
+                            ), // ✅ Giữ nguyên màu cũ
                             fontWeight: FontWeight.bold,
                             fontSize: 16,
                           ),
@@ -437,7 +870,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     },
                   ),
                 ),
-
                 lineBarsData: [
                   LineChartBarData(
                     spots: List.generate(
@@ -491,7 +923,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       getTitlesWidget: (value, meta) {
                         if (value % 1 != 0 || value < 0) return Container();
                         if (_selectedDayRange == 0) {
-                          // 7 ngày: hiện đủ 7 mốc
                           if (value < 0 || value >= weightDates.length)
                             return Container();
                           return Text(
@@ -499,7 +930,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             style: const TextStyle(fontSize: 12),
                           );
                         } else if (_selectedDayRange == 1) {
-                          // 30 ngày: 4 mốc 0, 9, 19, 29
                           if (value == 0 ||
                               value == 9 ||
                               value == 19 ||
@@ -511,7 +941,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           }
                           return Container();
                         } else {
-                          // 90 ngày: 4 mốc 0, 29, 59, 89
                           if (value == 0 ||
                               value == 29 ||
                               value == 59 ||
@@ -537,7 +966,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  // ----- NUTRITION TAB -----
+  // ----- NUTRITION TAB - giữ nguyên hoàn toàn -----
   Widget _buildNutritionTab() {
     final calHistory = _selectedDayRange == 0
         ? calHistory7
@@ -677,7 +1106,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               ),
             ),
           ),
-          // Meal Grade (có thể gắn dữ liệu thật sau)
+          // Meal Grade
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 12),
             child: const Text(
@@ -706,14 +1135,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  // Widget nút chọn day range
+  // Widget nút chọn day range - giữ nguyên
   Widget _dayRangeButton(String label, int value) {
     return GestureDetector(
-      onTap: () {
-        setState(() {
-          _selectedDayRange = value;
-        });
-      },
+      onTap: () => setState(() => _selectedDayRange = value),
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
         decoration: BoxDecoration(
@@ -733,7 +1158,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  // Widget block info cân nặng
+  // Widget block info cân nặng - giữ nguyên
   Widget _weightInfoBlock(String label, double value) {
     return Column(
       children: [
@@ -747,7 +1172,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  // ======= Xử lý chọn ảnh avatar =======
+  // ======= Xử lý chọn ảnh avatar - giữ nguyên =======
   Future<void> _pickAvatar() async {
     final picker = ImagePicker();
     final XFile? image = await picker.pickImage(source: ImageSource.gallery);
@@ -758,7 +1183,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     }
   }
 
-  // ======= Dialog nhập cân nặng mới =======
+  // ======= Dialog nhập cân nặng mới - giữ nguyên logic + UserService =======
   void _showAddWeightDialog() {
     double tempWeight = currentWeight;
     showDialog(
@@ -775,25 +1200,92 @@ class _ProfileScreenState extends State<ProfileScreen> {
           ),
           actions: [
             TextButton(
-              onPressed: () {
-                Navigator.pop(context);
-              },
+              onPressed: () => Navigator.pop(context),
               child: const Text('Cancel'),
             ),
             TextButton(
-              onPressed: () {
-                setState(() {
-                  currentWeight = tempWeight;
-                  // Thêm vào lịch sử 7 ngày (giả lập thêm ở cuối)
-                  weightHistory7.removeAt(0);
-                  weightHistory7.add(tempWeight);
-                  // Update cho chart các mốc dài hơn nếu cần
-                  weightHistory30.removeAt(0);
-                  weightHistory30.add(tempWeight);
-                  weightHistory90.removeAt(0);
-                  weightHistory90.add(tempWeight);
-                });
-                Navigator.pop(context);
+              onPressed: () async {
+                try {
+                  final prefs = await SharedPreferences.getInstance();
+
+                  // ✅ Save to UserService TRƯỚC
+                  double weightInKg = _lbsToKg(tempWeight);
+                  await UserService.updateWeight(weightInKg);
+
+                  // ✅ FIXED: Recalculate calories và BMI dựa trên weight mới
+                  final updatedCalories =
+                      await UserService.calculateDailyCalories();
+                  final updatedBMI =
+                      await UserService.calculateBMI(); // ✅ Thêm BMI
+
+                  setState(() {
+                    currentWeight = tempWeight;
+
+                    // ✅ FIXED: Update calories và BMI với giá trị mới
+                    caloriesPerDay = updatedCalories?.toInt() ?? caloriesPerDay;
+                    currentBMI = updatedBMI; // ✅ Update BMI
+
+                    // ✅ Update weight history arrays
+                    if (weightHistory7.isNotEmpty) {
+                      weightHistory7[weightHistory7.length - 1] = tempWeight;
+                    }
+                    if (weightHistory30.isNotEmpty) {
+                      weightHistory30[weightHistory30.length - 1] = tempWeight;
+                    }
+                    if (weightHistory90.isNotEmpty) {
+                      weightHistory90[weightHistory90.length - 1] = tempWeight;
+                    }
+                  });
+
+                  // ✅ Save updated history to SharedPreferences
+                  await prefs.setStringList(
+                    'weight_history_7',
+                    weightHistory7.map((e) => e.toString()).toList(),
+                  );
+                  await prefs.setStringList(
+                    'weight_history_30',
+                    weightHistory30.map((e) => e.toString()).toList(),
+                  );
+                  await prefs.setStringList(
+                    'weight_history_90',
+                    weightHistory90.map((e) => e.toString()).toList(),
+                  );
+
+                  // ✅ FIXED: Regenerate calHistory với calories mới
+                  double baseCalories = caloriesPerDay.toDouble();
+
+                  calHistory7 = List.generate(7, (i) {
+                    double variation = (i % 3 == 0
+                        ? 100
+                        : i % 3 == 1
+                        ? -150
+                        : 50);
+                    return baseCalories + variation;
+                  });
+
+                  calHistory30 = List.generate(30, (i) {
+                    double variation = (i % 5) * 80.0 - 160;
+                    return baseCalories + variation;
+                  });
+
+                  calHistory90 = List.generate(90, (i) {
+                    double variation = (i % 7) * 60.0 - 180;
+                    return baseCalories + variation;
+                  });
+
+                  Navigator.pop(context);
+                  print(
+                    '✅ Weight updated: ${tempWeight.toStringAsFixed(1)} lbs',
+                  );
+                  print('✅ Calories recalculated: $caloriesPerDay cal/day');
+                  print(
+                    '✅ BMI recalculated: ${currentBMI?.toStringAsFixed(1) ?? 'N/A'}',
+                  ); // ✅ Log BMI
+                  print('   Previous days weight data unchanged');
+                } catch (e) {
+                  print('❌ Error updating weight: $e');
+                  Navigator.pop(context);
+                }
               },
               child: const Text('Add'),
             ),
@@ -804,7 +1296,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 }
 
-// ========== EDIT PROFILE SCREEN ==========
+// ========== EDIT PROFILE SCREEN - giữ nguyên hoàn toàn ==========
 class EditProfileScreen extends StatefulWidget {
   final String name;
   final String goal;
@@ -937,9 +1429,10 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   }
 }
 
-// ========== SETTINGS SCREEN ==========
+// ========== SETTINGS SCREEN - giữ nguyên hoàn toàn ==========
 class SettingsScreen extends StatelessWidget {
   const SettingsScreen({super.key});
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'List_Dietary_Restriction_Screen.dart';
+import '../../services/user_service.dart';
 
 class DietaryRestrictionsScreen extends StatefulWidget {
   const DietaryRestrictionsScreen({super.key});
@@ -9,14 +10,33 @@ class DietaryRestrictionsScreen extends StatefulWidget {
       _DietaryRestrictionsScreenState();
 }
 
-class _DietaryRestrictionsScreenState
-    extends State<DietaryRestrictionsScreen> {
+class _DietaryRestrictionsScreenState extends State<DietaryRestrictionsScreen> {
   String selectedRestriction = ""; // Thay đổi từ "None" thành ""
 
   final List<String> options = ["Yes", "No"];
 
   // Kiểm tra đã chọn Yes/No chưa
   bool get isOptionSelected => selectedRestriction.isNotEmpty;
+
+  @override
+  void initState() {
+    // THÊM initState
+    super.initState();
+    _loadSavedRestriction();
+  }
+
+  // THÊM: Load dietary restriction đã lưu
+  Future<void> _loadSavedRestriction() async {
+    final savedRestriction =
+        await UserService.getHasDietaryRestrictions(); // SỬA METHOD
+    if (savedRestriction != null && savedRestriction.isNotEmpty) {
+      if (mounted) {
+        setState(() {
+          selectedRestriction = savedRestriction;
+        });
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -135,7 +155,11 @@ class _DietaryRestrictionsScreenState
                   opacity: isOptionSelected ? 1.0 : 0.0,
                   duration: const Duration(milliseconds: 300),
                   child: ElevatedButton(
-                    onPressed: () {
+                    onPressed: () async {
+                      await UserService.updateHasDietaryRestrictions(
+                        selectedRestriction,
+                      );
+
                       Navigator.push(
                         context,
                         MaterialPageRoute(

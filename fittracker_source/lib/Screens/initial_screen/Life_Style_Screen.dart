@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'Dietary_Restrictions_Screen.dart';
+import '../../services/user_service.dart';
 
 class LifestyleScreen extends StatefulWidget {
   const LifestyleScreen({super.key});
@@ -21,6 +22,23 @@ class _LifestyleScreenState extends State<LifestyleScreen> {
 
   // Kiểm tra đã chọn lifestyle chưa
   bool get isLifestyleSelected => selectedLifestyle.isNotEmpty;
+
+  @override
+  void initState() {
+    // THÊM initState
+    super.initState();
+    _loadSavedLifestyle();
+  }
+
+  // THÊM: Load lifestyle đã lưu
+  Future<void> _loadSavedLifestyle() async {
+    final savedLifestyle = await UserService.getLifestyle();
+    if (savedLifestyle != null && savedLifestyle.isNotEmpty) {
+      setState(() {
+        selectedLifestyle = savedLifestyle;
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -115,12 +133,15 @@ class _LifestyleScreenState extends State<LifestyleScreen> {
                 opacity: isLifestyleSelected ? 1.0 : 0.0,
                 duration: const Duration(milliseconds: 300),
                 child: ElevatedButton(
-                  onPressed: () {
+                  onPressed: () async {
+                    // LƯU LIFESTYLE TRƯỚC KHI CHUYỂN TRANG
+                    await UserService.updateLifestyle(selectedLifestyle);
+                    print('✅ Lifestyle saved: $selectedLifestyle');
+
                     Navigator.push(
                       context,
                       MaterialPageRoute(
-                        builder: (context) =>
-                            const DietaryRestrictionsScreen(),
+                        builder: (context) => const DietaryRestrictionsScreen(),
                       ),
                     );
                   },

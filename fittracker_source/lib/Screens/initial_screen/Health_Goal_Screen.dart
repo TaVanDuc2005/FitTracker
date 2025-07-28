@@ -1,25 +1,63 @@
 import 'package:flutter/material.dart';
 import 'Loading_Screen.dart';
+import '../../services/user_service.dart'; // THÊM IMPORT
 
 class healthGoalsScreen extends StatefulWidget {
   const healthGoalsScreen({super.key});
 
   @override
-  State<healthGoalsScreen> createState() =>
-      _DietaryRestrictionsScreenState();
+  State<healthGoalsScreen> createState() => _HealthGoalsScreenState(); // SỬA TÊN CLASS
 }
 
-class _DietaryRestrictionsScreenState
-    extends State<healthGoalsScreen> {
-  List<String> selectedRestrictions = [];
+class _HealthGoalsScreenState extends State<healthGoalsScreen> {
+  // SỬA TÊN CLASS
+  List<String> selectedGoals = []; // SỬA TÊN BIẾN
 
   final List<String> options = [
     "Weight loss",
     "Weight gain",
     "Muscle building",
     "Maintain weight",
-    "Other"
+    "Other",
   ];
+
+  @override
+  void initState() {
+    // THÊM initState
+    super.initState();
+    _loadSavedGoals();
+  }
+
+  // THÊM: Load health goals đã lưu
+  Future<void> _loadSavedGoals() async {
+    final savedGoal = await UserService.getGoal();
+    if (savedGoal != null && savedGoal.isNotEmpty) {
+      if (mounted) {
+        setState(() {
+          // Chuyển từ string thành list (split by comma)
+          selectedGoals = savedGoal
+              .split(',')
+              .map((e) => e.trim())
+              .where((e) => e.isNotEmpty)
+              .toList();
+        });
+      }
+    }
+  }
+
+  // THÊM: Lưu health goals
+  Future<void> _saveGoals() async {
+    if (selectedGoals.isNotEmpty) {
+      // Chuyển từ list thành string (join by comma)
+      final goalsString = selectedGoals.join(', ');
+      final success = await UserService.updateGoal(goalsString);
+      if (success) {
+        print('✅ Health goals saved: $goalsString');
+      } else {
+        print('❌ Failed to save health goals');
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -43,14 +81,16 @@ class _DietaryRestrictionsScreenState
                 padding: const EdgeInsets.symmetric(horizontal: 24),
                 child: Column(
                   children: options.map((item) {
-                    final isSelected = selectedRestrictions.contains(item);
+                    final isSelected = selectedGoals.contains(
+                      item,
+                    ); // SỬA TÊN BIẾN
                     return GestureDetector(
                       onTap: () {
                         setState(() {
                           if (isSelected) {
-                            selectedRestrictions.remove(item);
+                            selectedGoals.remove(item); // SỬA TÊN BIẾN
                           } else {
-                            selectedRestrictions.add(item);
+                            selectedGoals.add(item); // SỬA TÊN BIẾN
                           }
                         });
                       },
@@ -139,10 +179,14 @@ class _DietaryRestrictionsScreenState
                     ),
                   ),
 
-                  // Next button - only show if something is selected
-                  if (selectedRestrictions.isNotEmpty)
+                  // Next button - SỬA ĐỂ LƯU DỮ LIỆU
+                  if (selectedGoals.isNotEmpty) // SỬA TÊN BIẾN
                     ElevatedButton(
-                      onPressed: () {
+                      onPressed: () async {
+                        // THÊM async
+                        // LƯU HEALTH GOALS TRƯỚC KHI CHUYỂN TRANG
+                        await _saveGoals();
+
                         Navigator.push(
                           context,
                           MaterialPageRoute(

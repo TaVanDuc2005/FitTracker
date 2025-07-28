@@ -2,6 +2,7 @@
 
 import 'package:flutter/material.dart';
 import 'User_Info_Screen.dart';
+import 'package:fittracker_source/services/user_service.dart'; // THÊM IMPORT
 
 class EnterNameScreen extends StatefulWidget {
   const EnterNameScreen({super.key});
@@ -18,6 +19,21 @@ class _EnterNameScreenState extends State<EnterNameScreen> {
   void initState() {
     super.initState();
     _nameController.addListener(_onTextChanged);
+
+    _loadSavedName();
+  }
+
+  // THÊM: Hàm load name đã lưu
+  Future<void> _loadSavedName() async {
+    final savedName = await UserService.getName();
+    if (savedName != null && savedName.isNotEmpty) {
+      if (mounted) {
+        setState(() {
+          _nameController.text = savedName; // TỰ ĐỘNG ĐIỀN NAME
+          _isButtonVisible = true; // HIỆN NÚT NEXT
+        });
+      }
+    }
   }
 
   void _onTextChanged() {
@@ -118,14 +134,22 @@ class _EnterNameScreenState extends State<EnterNameScreen> {
               Align(
                 alignment: const Alignment(0, 0.75),
                 child: ElevatedButton(
-                  onPressed: () {
+                  onPressed: () async {
+                    final name = _nameController.text.trim();
+
+                    if (name.isNotEmpty) {
+                      // LƯU NAME TẠM THỜI VÀO STORAGE
+                      await UserService.saveName(name);
+                      print('✅ Name saved: $name');
+                    }
+
                     Navigator.push(
                       context,
                       MaterialPageRoute(
                         builder: (context) => const UserInfoScreen(),
                       ),
                     );
-                  },
+                  }, // THÊM dấu ph
                   style: ElevatedButton.styleFrom(
                     padding: const EdgeInsets.symmetric(
                       horizontal: 60,

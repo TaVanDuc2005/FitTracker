@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'Life_style_Screen.dart';
+import '../../services/user_service.dart';
 
 class UserInfoScreen extends StatefulWidget {
   const UserInfoScreen({super.key});
@@ -29,6 +30,25 @@ class _UserInfoScreenState extends State<UserInfoScreen> {
     ageController.addListener(() => setState(() {}));
     heightController.addListener(() => setState(() {}));
     weightController.addListener(() => setState(() {}));
+
+    _loadSavedData();
+  }
+
+  // THÊM: Hàm load dữ liệu đã lưu
+  Future<void> _loadSavedData() async {
+    final savedGender = await UserService.getGender();
+    final savedAge = await UserService.getAge();
+    final savedHeight = await UserService.getHeight();
+    final savedWeight = await UserService.getWeight();
+
+    if (mounted) {
+      setState(() {
+        if (savedGender != null) gender = savedGender;
+        if (savedAge != null) ageController.text = savedAge.toString();
+        if (savedHeight != null) heightController.text = savedHeight.toString();
+        if (savedWeight != null) weightController.text = savedWeight.toString();
+      });
+    }
   }
 
   @override
@@ -92,7 +112,7 @@ class _UserInfoScreenState extends State<UserInfoScreen> {
                 if (isGenderSelected) ...[
                   const SizedBox(height: 24),
                   const Text(
-                    "How old are you?",
+                    "How old are you(years)?",
                     style: TextStyle(fontSize: 18),
                   ),
                   const SizedBox(height: 8),
@@ -103,7 +123,7 @@ class _UserInfoScreenState extends State<UserInfoScreen> {
                 if (isGenderSelected && isAgeEntered) ...[
                   const SizedBox(height: 20),
                   const Text(
-                    "What is your height?",
+                    "What is your height(cm)?",
                     style: TextStyle(fontSize: 18),
                   ),
                   const SizedBox(height: 8),
@@ -114,7 +134,7 @@ class _UserInfoScreenState extends State<UserInfoScreen> {
                 if (isGenderSelected && isAgeEntered && isHeightEntered) ...[
                   const SizedBox(height: 20),
                   const Text(
-                    "What is your current weight?",
+                    "What is your current weight(kg)?",
                     style: TextStyle(fontSize: 18),
                   ),
                   const SizedBox(height: 8),
@@ -134,14 +154,37 @@ class _UserInfoScreenState extends State<UserInfoScreen> {
                 opacity: isAllCompleted ? 1.0 : 0.0,
                 duration: const Duration(milliseconds: 300),
                 child: ElevatedButton(
-                  onPressed: () {
+                  onPressed: () async {
+                    // Validate input
+                    final age = int.tryParse(ageController.text);
+                    final height = double.tryParse(heightController.text);
+                    final weight = double.tryParse(weightController.text);
+
+                    if (age == null || height == null || weight == null) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('Please enter valid numbers!'),
+                          backgroundColor: Colors.red,
+                        ),
+                      );
+                      return;
+                    }
+
+                    // LƯU TẤT CẢ THÔNG TIN
+                    await Future.wait([
+                      UserService.updateGender(gender),
+                      UserService.updateAge(age),
+                      UserService.updateHeight(height),
+                      UserService.updateWeight(weight),
+                    ]);
+
                     Navigator.push(
                       context,
                       MaterialPageRoute(
                         builder: (context) => const LifestyleScreen(),
                       ),
                     );
-                  },
+                  }, // THÊM dấu phẩy
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.black87,
                     padding: const EdgeInsets.symmetric(vertical: 14),

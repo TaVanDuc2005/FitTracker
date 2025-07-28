@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'food_search_screen.dart';
-import '../profile/Profile_Screen.dart';
+import '../profile/profile_Screen.dart';
+import '../../../services/user_service.dart';
 
 // Tạo class MacroData để quản lý dữ liệu
 class MacroData {
@@ -32,60 +33,192 @@ class JournalScreen extends StatefulWidget {
 }
 
 class _JournalScreenState extends State<JournalScreen> {
-  int _selectedBottomIndex = 0; // 0: Journal, 1: Profile
+  int _selectedBottomIndex = 0;
   bool _isMacroExpanded = false;
 
-  // Dữ liệu macro chung
-  List<MacroData> macroData = [
-    MacroData(
-      label: "Fat",
-      currentValue: 20.8, // Dữ liệu ví dụ
-      targetValue: 78,
-      unit: "g",
-      color: Color(0xFFFFC107),
-    ),
-    MacroData(
-      label: "Protein",
-      currentValue: 32.0, // Dữ liệu ví dụ
-      targetValue: 246,
-      unit: "g",
-      color: Color(0xFF8FD5C7),
-    ),
-    MacroData(
-      label: "Carbs",
-      currentValue: 24.0, // Dữ liệu ví dụ
-      targetValue: 440,
-      unit: "g",
-      color: Color(0xFF9C27B0),
-    ),
-    MacroData(
-      label: "Fiber",
-      currentValue: 13.0, // Dữ liệu ví dụ
-      targetValue: 35,
-      unit: "g",
-      color: Color(0xFFFF9800),
-    ),
-  ];
+  // State variables từ user data
+  double _targetCalories = 0.0;
+  double _targetBreakfast = 0.0;
+  double _targetLunch = 0.0;
+  double _targetDinner = 0.0;
+  List<MacroData> macroData = [];
+  bool _isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadUserData();
+  }
+
+  Future<void> _loadUserData() async {
+    try {
+      print('📊 Loading user data for Journal...');
+
+      // Lấy thông tin user
+      final userInfo = await UserService.getUserInfo();
+      if (userInfo == null) {
+        print('❌ No user data found');
+        setState(() {
+          _isLoading = false;
+        });
+        return;
+      }
+
+      // Tính toán calories và macros từ UserService
+      final dailyCalories = await UserService.calculateDailyCalories();
+      final macroTargets = await UserService.calculateMacroTargets();
+
+      if (dailyCalories != null && macroTargets != null) {
+        setState(() {
+          _targetCalories = dailyCalories.toDouble();
+
+          // Chia calories cho các bữa ăn (30% breakfast, 40% lunch, 30% dinner)
+          _targetBreakfast = _targetCalories * 0.30;
+          _targetLunch = _targetCalories * 0.40;
+          _targetDinner = _targetCalories * 0.30;
+
+          // Tạo macro data từ calculated targets
+          macroData = [
+            MacroData(
+              label: "Fat",
+              currentValue: 0.0, // Sẽ được cập nhật từ food tracking
+              targetValue: macroTargets['fat']!.toDouble(),
+              unit: "g",
+              color: Color(0xFFFFC107),
+            ),
+            MacroData(
+              label: "Protein",
+              currentValue: 0.0,
+              targetValue: macroTargets['protein']!.toDouble(),
+              unit: "g",
+              color: Color(0xFF8FD5C7),
+            ),
+            MacroData(
+              label: "Carbs",
+              currentValue: 0.0,
+              targetValue: macroTargets['carbs']!.toDouble(),
+              unit: "g",
+              color: Color(0xFF9C27B0),
+            ),
+            MacroData(
+              label: "Fiber",
+              currentValue: 0.0,
+              targetValue: macroTargets['fiber']!.toDouble(),
+              unit: "g",
+              color: Color(0xFFFF9800),
+            ),
+          ];
+
+          _isLoading = false;
+        });
+
+        print('✅ User data loaded successfully:');
+        print('   Target Calories: ${_targetCalories.toInt()}');
+        print('   Breakfast: ${_targetBreakfast.toInt()} cal');
+        print('   Lunch: ${_targetLunch.toInt()} cal');
+        print('   Dinner: ${_targetDinner.toInt()} cal');
+        print('   Protein: ${macroTargets['protein']}g');
+        print('   Fat: ${macroTargets['fat']}g');
+        print('   Carbs: ${macroTargets['carbs']}g');
+        print('   Fiber: ${macroTargets['fiber']}g');
+      } else {
+        print('❌ Failed to calculate targets');
+        setState(() {
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      print('❌ Error loading user data: $e');
+      setState(() {
+        _isLoading = false;
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
+    // Show loading screen nếu đang load data
+    if (_isLoading) {
+      return Scaffold(
+        backgroundColor: const Color.fromARGB(255, 193, 225, 218),
+        body: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: const [
+              CircularProgressIndicator(
+                color: Color.fromARGB(255, 143, 178, 171),
+              ),
+              SizedBox(height: 16),
+              Text(
+                'Loading your profile...',
+                style: TextStyle(fontSize: 16, color: Colors.black54),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    // Show error nếu không có data
+    if (_targetCalories == 0.0 || macroData.isEmpty) {
+      return Scaffold(
+        backgroundColor: const Color.fromARGB(255, 193, 225, 218),
+        body: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(Icons.error_outline, size: 64, color: Colors.red[300]),
+              SizedBox(height: 16),
+              Text(
+                'Unable to load your profile data',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.black87,
+                ),
+              ),
+              SizedBox(height: 8),
+              Text(
+                'Please complete your profile setup',
+                style: TextStyle(fontSize: 14, color: Colors.black54),
+              ),
+              SizedBox(height: 24),
+              ElevatedButton(
+                onPressed: () {
+                  _loadUserData(); // Retry loading
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Color.fromARGB(255, 143, 178, 171),
+                  padding: EdgeInsets.symmetric(horizontal: 32, vertical: 12),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                ),
+                child: Text('Retry', style: TextStyle(color: Colors.white)),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
     final List<Meal> mealList = [
       Meal(
         icon: Icons.free_breakfast,
         name: 'Breakfast',
-        calories: '0 / 608 Cal',
+        calories: '0 / ${_targetBreakfast.toInt()} Cal',
         mealType: MealType.breakfast,
       ),
       Meal(
         icon: Icons.lunch_dining,
         name: 'Lunch',
-        calories: '0 / 608 Cal',
+        calories: '0 / ${_targetLunch.toInt()} Cal',
         mealType: MealType.lunch,
       ),
       Meal(
         icon: Icons.dinner_dining,
         name: 'Dinner',
-        calories: '0 / 608 Cal',
+        calories: '0 / ${_targetDinner.toInt()} Cal',
         mealType: MealType.dinner,
       ),
     ];
@@ -100,7 +233,7 @@ class _JournalScreenState extends State<JournalScreen> {
             children: [
               const SizedBox(height: 32),
 
-              // Calories Overview
+              // Calories Overview với dữ liệu từ UserService
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
@@ -127,9 +260,9 @@ class _JournalScreenState extends State<JournalScreen> {
                     ],
                   ),
 
-                  // Calories Left
+                  // Calories Left với target từ UserService
                   Column(
-                    children: const [
+                    children: [
                       CircleAvatar(
                         radius: 50,
                         backgroundColor: Color.fromARGB(255, 143, 178, 171),
@@ -137,7 +270,7 @@ class _JournalScreenState extends State<JournalScreen> {
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
                             Text(
-                              "2025",
+                              "${_targetCalories.toInt()}",
                               style: TextStyle(
                                 fontSize: 24,
                                 fontWeight: FontWeight.bold,
@@ -235,7 +368,7 @@ class _JournalScreenState extends State<JournalScreen> {
 
               const SizedBox(height: 32),
 
-              // Macronutrients - Simple view (sử dụng dữ liệu chung)
+              // Macronutrients với dữ liệu từ UserService
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: macroData
@@ -267,7 +400,7 @@ class _JournalScreenState extends State<JournalScreen> {
                 ),
               ),
 
-              // Detailed view (sử dụng dữ liệu chung)
+              // Detailed view với dữ liệu từ UserService
               AnimatedContainer(
                 duration: const Duration(milliseconds: 300),
                 height: _isMacroExpanded ? null : 0,
@@ -315,7 +448,7 @@ class _JournalScreenState extends State<JournalScreen> {
 
               const SizedBox(height: 24),
 
-              // White container with rounded corners
+              // White container với meal calories từ UserService
               Container(
                 decoration: BoxDecoration(
                   color: Colors.white,
@@ -346,7 +479,7 @@ class _JournalScreenState extends State<JournalScreen> {
 
                     const SizedBox(height: 20),
 
-                    // Meal items
+                    // Meal items với calories từ UserService
                     Column(
                       children: mealList
                           .map(
@@ -379,15 +512,12 @@ class _JournalScreenState extends State<JournalScreen> {
             _selectedBottomIndex = index;
           });
 
-          // Điều hướng sang màn khác
           if (index == 1) {
-            // Chuyển sang Profile
             Navigator.pushReplacement(
               context,
               MaterialPageRoute(builder: (context) => const ProfileScreen()),
             );
           }
-          // index == 0 là Journal (màn hình hiện tại), không cần làm gì
         },
         items: const [
           BottomNavigationBarItem(icon: Icon(Icons.article), label: "Journal"),
@@ -398,7 +528,7 @@ class _JournalScreenState extends State<JournalScreen> {
   }
 }
 
-// Cập nhật _SimpleMacroItem
+// Rest of the classes remain the same...
 class _SimpleMacroItem extends StatelessWidget {
   final String label;
   final double currentValue;
@@ -417,7 +547,7 @@ class _SimpleMacroItem extends StatelessWidget {
         : 0.0;
 
     return SizedBox(
-      width: 70, // Fixed width giống detailed view
+      width: 70,
       child: Column(
         children: [
           Container(
@@ -448,7 +578,7 @@ class _SimpleMacroItem extends StatelessWidget {
               color: Colors.black54,
               fontWeight: FontWeight.bold,
             ),
-            textAlign: TextAlign.center, // Center align text
+            textAlign: TextAlign.center,
           ),
         ],
       ),
@@ -456,7 +586,6 @@ class _SimpleMacroItem extends StatelessWidget {
   }
 }
 
-// Cập nhật _MacroNutrientBar
 class _MacroNutrientBar extends StatelessWidget {
   final String label;
   final String current;
@@ -483,29 +612,23 @@ class _MacroNutrientBar extends StatelessWidget {
             height: 60,
             child: Stack(
               children: [
-                // Background circle (vòng tròn nhạt)
                 Container(
                   width: 60,
                   height: 60,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    border: Border.all(
-                      color: color.withOpacity(0.2), // Màu nhạt hơn
-                      width: 4,
-                    ),
+                    border: Border.all(color: color.withOpacity(0.2), width: 4),
                     color: Colors.white,
                   ),
                 ),
-                // Progress circle - đặt chính xác trên background
                 Positioned.fill(
                   child: CircularProgressIndicator(
                     value: progress,
                     backgroundColor: Colors.transparent,
                     valueColor: AlwaysStoppedAnimation<Color>(color),
-                    strokeWidth: 4, // Cùng độ dày với border
+                    strokeWidth: 4,
                   ),
                 ),
-                // Center text
                 Center(
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
@@ -520,7 +643,11 @@ class _MacroNutrientBar extends StatelessWidget {
                       ),
                       Text(
                         "/$target",
-                        style: TextStyle(fontSize: 9, color: Colors.grey[600]),
+                        style: TextStyle(
+                          fontSize: 9,
+                          color: const Color.fromARGB(255, 0, 0, 0),
+                          fontWeight: FontWeight.w500,
+                        ),
                       ),
                     ],
                   ),
@@ -544,7 +671,6 @@ class _MacroNutrientBar extends StatelessWidget {
   }
 }
 
-// Meal data model
 class Meal {
   final IconData icon;
   final String name;
@@ -559,7 +685,6 @@ class Meal {
   });
 }
 
-// Meal item widget
 class MealItem extends StatelessWidget {
   final IconData imageAsset;
   final String mealName;
@@ -640,7 +765,6 @@ class WaterChallengeCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Column(
       children: [
-        // Water Challenge card
         Container(
           margin: const EdgeInsets.symmetric(horizontal: 0, vertical: 20),
           padding: const EdgeInsets.all(16),
@@ -658,7 +782,6 @@ class WaterChallengeCard extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Title row
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: const [
@@ -674,8 +797,6 @@ class WaterChallengeCard extends StatelessWidget {
                 ],
               ),
               const SizedBox(height: 8),
-
-              // Subtitles
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: const [
@@ -699,8 +820,6 @@ class WaterChallengeCard extends StatelessWidget {
                 ],
               ),
               const SizedBox(height: 16),
-
-              // Water cups row
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: List.generate(7, (index) {
@@ -720,8 +839,6 @@ class WaterChallengeCard extends StatelessWidget {
             ],
           ),
         ),
-
-        // Customize Button
         OutlinedButton(
           style: OutlinedButton.styleFrom(
             padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),

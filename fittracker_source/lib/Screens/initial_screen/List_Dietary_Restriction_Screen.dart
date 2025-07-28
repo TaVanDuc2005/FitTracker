@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'Health_Goal_Screen.dart';
+import '../../services/user_service.dart';
 
 class listDietaryRestrictionsScreen extends StatefulWidget {
   const listDietaryRestrictionsScreen({super.key});
@@ -24,6 +25,42 @@ class _DietaryRestrictionsScreenState
     "Other",
     "None",
   ];
+
+  @override
+  void initState() {
+    // THÊM initState
+    super.initState();
+    _loadSavedRestrictions();
+  }
+
+  // THÊM: Load dietary restrictions đã lưu
+  Future<void> _loadSavedRestrictions() async {
+    final savedRestrictions = await UserService.getDietaryRestrictionsList();
+    if (savedRestrictions != null && savedRestrictions.isNotEmpty) {
+      if (mounted) {
+        setState(() {
+          selectedRestrictions = savedRestrictions
+              .split(',')
+              .map((e) => e.trim())
+              .where((e) => e.isNotEmpty)
+              .toList();
+        });
+      }
+    }
+  }
+
+  // THÊM: Lưu dietary restrictions
+  Future<void> _saveRestrictions() async {
+    if (selectedRestrictions.isNotEmpty) {
+      final restrictionsString = selectedRestrictions.join(', ');
+      final success = await UserService.updateDietaryRestrictionsList(
+        restrictionsString,
+      ); // SỬA METHOD
+      if (success) {
+        print('✅ Dietary restrictions list saved: $restrictionsString');
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -146,12 +183,13 @@ class _DietaryRestrictionsScreenState
                   // Next button - only show if something is selected
                   if (selectedRestrictions.isNotEmpty)
                     ElevatedButton(
-                      onPressed: () {
+                      onPressed: () async {
+                        // LƯU DIETARY RESTRICTIONS TRƯỚC KHI CHUYỂN TRANG
+                        await _saveRestrictions();
                         Navigator.push(
                           context,
                           MaterialPageRoute(
-                            builder: (context) =>
-                                const healthGoalsScreen(),
+                            builder: (context) => const healthGoalsScreen(),
                           ),
                         );
                       },
