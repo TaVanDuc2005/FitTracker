@@ -43,6 +43,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   File? _avatarFile;
 
+  Map<String, double> weightHistoryMap = {};
+
   // ✅ Dữ liệu history từ UserService - giữ nguyên format cũ
   List<double> weightHistory7 = [];
   List<double> weightHistory30 = [];
@@ -210,130 +212,128 @@ class _ProfileScreenState extends State<ProfileScreen> {
     String userGoal = userInfo!['goal'] ?? 'maintain weight';
     final prefs = await SharedPreferences.getInstance();
 
-    // ✅ FIXED: Load weight history từ SharedPreferences
-    List<String>? saved7 = prefs.getStringList('weight_history_7');
-    List<String>? saved30 = prefs.getStringList('weight_history_30');
-    List<String>? saved90 = prefs.getStringList('weight_history_90');
+    // ✅ Load weight history map từ SharedPreferences
+    Map<String, String>? savedHistoryMap = {};
+    try {
+      String? savedMapString = prefs.getString('weight_history_map');
+      if (savedMapString != null) {
+        Map<String, dynamic> tempMap = Map<String, dynamic>.from(
+          Map<String, dynamic>.from(
+            // Parse JSON string
+            {}..addAll(
+              savedMapString.split(',').fold<Map<String, String>>({}, (
+                map,
+                item,
+              ) {
+                var parts = item.split(':');
+                if (parts.length == 2) {
+                  map[parts[0]] = parts[1];
+                }
+                return map;
+              }),
+            ),
+          ),
+        );
+        savedHistoryMap = tempMap.map(
+          (key, value) => MapEntry(key, value.toString()),
+        );
+      }
+    } catch (e) {
+      print('Error loading weight history map: $e');
+      savedHistoryMap = {};
+    }
 
-    if (saved7 == null || saved30 == null || saved90 == null) {
-      print('🆕 First time: Generating weight history data...');
+    // ✅ Better approach: Load from SharedPreferences with proper JSON
+    String? savedJson = prefs.getString('weight_history_map_json');
+    if (savedJson != null) {
+      try {
+        Map<String, dynamic> tempMap = {};
+        // Simple parsing for key:value pairs
+        savedJson.split('|').forEach((pair) {
+          var parts = pair.split(':');
+          if (parts.length == 2) {
+            tempMap[parts[0]] = double.parse(parts[1]);
+          }
+        });
 
-      // Generate weight history based on goal (chỉ lần đầu tiên)
-      weightHistory7 = List.generate(7, (i) {
-        double progress = i / 6.0;
-        switch (userGoal.toLowerCase()) {
-          case 'lose weight':
-            return currentWeight +
-                (2.0 * (1 - progress)) +
-                (i % 2 == 0 ? 0.2 : -0.2);
-          case 'gain weight':
-            return currentWeight -
-                (1.5 * (1 - progress)) +
-                (i % 2 == 0 ? 0.1 : -0.1);
-          default:
-            return currentWeight +
-                (i % 3 == 0
-                    ? 0.3
-                    : i % 3 == 1
-                    ? -0.2
-                    : 0.1);
-        }
-      });
+        weightHistoryMap = tempMap.map(
+          (key, value) => MapEntry(key, value.toDouble()),
+        );
+        print(
+          '🔄 Loaded weight history map: ${weightHistoryMap.length} entries',
+        );
+      } catch (e) {
+        print('Error parsing weight history map: $e');
+        weightHistoryMap = {};
+      }
+    } else {
+      print('🆕 First time: Creating weight history map...');
+      weightHistoryMap = {};
+    }
 
-      weightHistory30 = List.generate(30, (i) {
-        double progress = i / 29.0;
-        switch (userGoal.toLowerCase()) {
-          case 'lose weight':
-            return currentWeight +
-                (6.0 * (1 - progress)) +
-                (i % 4 == 0 ? 0.4 : -0.3);
-          case 'gain weight':
-            return currentWeight -
-                (4.0 * (1 - progress)) +
-                (i % 4 == 0 ? 0.2 : -0.2);
-          default:
-            return currentWeight +
-                (i % 5 == 0
-                    ? 0.5
-                    : i % 5 == 1
-                    ? -0.4
-                    : 0.2);
-        }
-      });
+    // ✅ Generate data cho các ngày thiếu
+    DateTime now = DateTime.now();
 
-      weightHistory90 = List.generate(90, (i) {
+    // Generate cho 90 ngày (bao gồm cả 7 và 30 ngày)
+    for (int i = 0; i < 90; i++) {
+      DateTime date = now.subtract(Duration(days: 90 - 1 - i));
+      String dateKey =
+          "${date.day.toString().padLeft(2, '0')}/${date.month.toString().padLeft(2, '0')}";
+
+      // ✅ Chỉ generate nếu chưa có data cho ngày này
+      if (!weightHistoryMap.containsKey(dateKey)) {
         double progress = i / 89.0;
+        double generatedWeight;
+
         switch (userGoal.toLowerCase()) {
           case 'lose weight':
-            return currentWeight +
+            generatedWeight =
+                currentWeight +
                 (15.0 * (1 - progress)) +
                 (i % 7 == 0 ? 0.8 : -0.6);
+            break;
           case 'gain weight':
-            return currentWeight -
+            generatedWeight =
+                currentWeight -
                 (12.0 * (1 - progress)) +
                 (i % 7 == 0 ? 0.3 : -0.3);
+            break;
           default:
-            return currentWeight +
+            generatedWeight =
+                currentWeight +
                 (i % 10 == 0
                     ? 1.0
                     : i % 10 == 1
                     ? -0.8
                     : 0.3);
         }
-      });
 
-      // ✅ Save to SharedPreferences
-      await prefs.setStringList(
-        'weight_history_7',
-        weightHistory7.map((e) => e.toString()).toList(),
-      );
-      await prefs.setStringList(
-        'weight_history_30',
-        weightHistory30.map((e) => e.toString()).toList(),
-      );
-      await prefs.setStringList(
-        'weight_history_90',
-        weightHistory90.map((e) => e.toString()).toList(),
-      );
-
-      print('✅ Weight history generated and saved to SharedPreferences');
-    } else {
-      print('🔄 Loading weight history from SharedPreferences');
-
-      // ✅ Load từ SharedPreferences
-      weightHistory7 = saved7.map((e) => double.parse(e)).toList();
-      weightHistory30 = saved30.map((e) => double.parse(e)).toList();
-      weightHistory90 = saved90.map((e) => double.parse(e)).toList();
+        weightHistoryMap[dateKey] = generatedWeight;
+        print(
+          '📝 Generated weight for $dateKey: ${generatedWeight.toStringAsFixed(1)} lbs',
+        );
+      }
     }
 
-    // ✅ Update điểm cuối cùng (ngày hôm nay) với current weight mới
-    if (weightHistory7.isNotEmpty) {
-      weightHistory7[weightHistory7.length - 1] = currentWeight;
-    }
-    if (weightHistory30.isNotEmpty) {
-      weightHistory30[weightHistory30.length - 1] = currentWeight;
-    }
-    if (weightHistory90.isNotEmpty) {
-      weightHistory90[weightHistory90.length - 1] = currentWeight;
-    }
-
-    // ✅ Save updated history
-    await prefs.setStringList(
-      'weight_history_7',
-      weightHistory7.map((e) => e.toString()).toList(),
-    );
-    await prefs.setStringList(
-      'weight_history_30',
-      weightHistory30.map((e) => e.toString()).toList(),
-    );
-    await prefs.setStringList(
-      'weight_history_90',
-      weightHistory90.map((e) => e.toString()).toList(),
+    // ✅ Update ngày hôm nay với current weight
+    String todayKey =
+        "${now.day.toString().padLeft(2, '0')}/${now.month.toString().padLeft(2, '0')}";
+    weightHistoryMap[todayKey] = currentWeight;
+    print(
+      '✅ Updated today ($todayKey) weight: ${currentWeight.toStringAsFixed(1)} lbs',
     );
 
-    // Generate calories history (có thể thay đổi mỗi lần vì không cần persistent)
+    // ✅ Save updated map to SharedPreferences
+    String mapJson = weightHistoryMap.entries
+        .map((e) => '${e.key}:${e.value}')
+        .join('|');
+    await prefs.setString('weight_history_map_json', mapJson);
+
+    // ✅ Generate arrays từ map cho UI
+    _generateArraysFromMap();
+
+    // Generate calories history (unchanged)
     double baseCalories = caloriesPerDay.toDouble();
-
     calHistory7 = List.generate(7, (i) {
       double variation = (i % 3 == 0
           ? 100
@@ -342,19 +342,51 @@ class _ProfileScreenState extends State<ProfileScreen> {
           : 50);
       return baseCalories + variation;
     });
-
     calHistory30 = List.generate(30, (i) {
       double variation = (i % 5) * 80.0 - 160;
       return baseCalories + variation;
     });
-
     calHistory90 = List.generate(90, (i) {
       double variation = (i % 7) * 60.0 - 180;
       return baseCalories + variation;
     });
 
+    print('✅ History data loaded: Map has ${weightHistoryMap.length} entries');
+  }
+
+  // ✅ Generate arrays từ map dựa trên current date
+  void _generateArraysFromMap() {
+    DateTime now = DateTime.now();
+
+    // Generate 7-day array
+    weightHistory7 = [];
+    for (int i = 0; i < 7; i++) {
+      DateTime date = now.subtract(Duration(days: 6 - i));
+      String dateKey =
+          "${date.day.toString().padLeft(2, '0')}/${date.month.toString().padLeft(2, '0')}";
+      weightHistory7.add(weightHistoryMap[dateKey] ?? currentWeight);
+    }
+
+    // Generate 30-day array
+    weightHistory30 = [];
+    for (int i = 0; i < 30; i++) {
+      DateTime date = now.subtract(Duration(days: 29 - i));
+      String dateKey =
+          "${date.day.toString().padLeft(2, '0')}/${date.month.toString().padLeft(2, '0')}";
+      weightHistory30.add(weightHistoryMap[dateKey] ?? currentWeight);
+    }
+
+    // Generate 90-day array
+    weightHistory90 = [];
+    for (int i = 0; i < 90; i++) {
+      DateTime date = now.subtract(Duration(days: 89 - i));
+      String dateKey =
+          "${date.day.toString().padLeft(2, '0')}/${date.month.toString().padLeft(2, '0')}";
+      weightHistory90.add(weightHistoryMap[dateKey] ?? currentWeight);
+    }
+
     print(
-      '✅ History data loaded: 7d=${weightHistory7.length}, 30d=${weightHistory30.length}, 90d=${weightHistory90.length}',
+      '✅ Arrays generated: 7d=${weightHistory7.length}, 30d=${weightHistory30.length}, 90d=${weightHistory90.length}',
     );
   }
 
@@ -1208,52 +1240,38 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 try {
                   final prefs = await SharedPreferences.getInstance();
 
-                  // ✅ Save to UserService TRƯỚC
+                  // ✅ Save to UserService
                   double weightInKg = _lbsToKg(tempWeight);
                   await UserService.updateWeight(weightInKg);
 
-                  // ✅ FIXED: Recalculate calories và BMI dựa trên weight mới
+                  // ✅ Recalculate calories và BMI
                   final updatedCalories =
                       await UserService.calculateDailyCalories();
-                  final updatedBMI =
-                      await UserService.calculateBMI(); // ✅ Thêm BMI
+                  final updatedBMI = await UserService.calculateBMI();
 
                   setState(() {
                     currentWeight = tempWeight;
-
-                    // ✅ FIXED: Update calories và BMI với giá trị mới
                     caloriesPerDay = updatedCalories?.toInt() ?? caloriesPerDay;
-                    currentBMI = updatedBMI; // ✅ Update BMI
+                    currentBMI = updatedBMI;
 
-                    // ✅ Update weight history arrays
-                    if (weightHistory7.isNotEmpty) {
-                      weightHistory7[weightHistory7.length - 1] = tempWeight;
-                    }
-                    if (weightHistory30.isNotEmpty) {
-                      weightHistory30[weightHistory30.length - 1] = tempWeight;
-                    }
-                    if (weightHistory90.isNotEmpty) {
-                      weightHistory90[weightHistory90.length - 1] = tempWeight;
-                    }
+                    // ✅ FIXED: Update map với today's date
+                    DateTime now = DateTime.now();
+                    String todayKey =
+                        "${now.day.toString().padLeft(2, '0')}/${now.month.toString().padLeft(2, '0')}";
+                    weightHistoryMap[todayKey] = tempWeight;
+
+                    // ✅ Regenerate arrays từ updated map
+                    _generateArraysFromMap();
                   });
 
-                  // ✅ Save updated history to SharedPreferences
-                  await prefs.setStringList(
-                    'weight_history_7',
-                    weightHistory7.map((e) => e.toString()).toList(),
-                  );
-                  await prefs.setStringList(
-                    'weight_history_30',
-                    weightHistory30.map((e) => e.toString()).toList(),
-                  );
-                  await prefs.setStringList(
-                    'weight_history_90',
-                    weightHistory90.map((e) => e.toString()).toList(),
-                  );
+                  // ✅ Save updated map
+                  String mapJson = weightHistoryMap.entries
+                      .map((e) => '${e.key}:${e.value}')
+                      .join('|');
+                  await prefs.setString('weight_history_map_json', mapJson);
 
-                  // ✅ FIXED: Regenerate calHistory với calories mới
+                  // ✅ Regenerate calHistory
                   double baseCalories = caloriesPerDay.toDouble();
-
                   calHistory7 = List.generate(7, (i) {
                     double variation = (i % 3 == 0
                         ? 100
@@ -1262,12 +1280,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         : 50);
                     return baseCalories + variation;
                   });
-
                   calHistory30 = List.generate(30, (i) {
                     double variation = (i % 5) * 80.0 - 160;
                     return baseCalories + variation;
                   });
-
                   calHistory90 = List.generate(90, (i) {
                     double variation = (i % 7) * 60.0 - 180;
                     return baseCalories + variation;
@@ -1275,13 +1291,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
                   Navigator.pop(context);
                   print(
-                    '✅ Weight updated: ${tempWeight.toStringAsFixed(1)} lbs',
+                    '✅ Weight updated for today: ${tempWeight.toStringAsFixed(1)} lbs',
                   );
-                  print('✅ Calories recalculated: $caloriesPerDay cal/day');
-                  print(
-                    '✅ BMI recalculated: ${currentBMI?.toStringAsFixed(1) ?? 'N/A'}',
-                  ); // ✅ Log BMI
-                  print('   Previous days weight data unchanged');
+                  print('✅ Previous days data preserved in map');
                 } catch (e) {
                   print('❌ Error updating weight: $e');
                   Navigator.pop(context);
