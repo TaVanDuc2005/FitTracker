@@ -208,47 +208,17 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   // ✅ Generate history data based on UserService info
+  // ✅ FIXED: Generate history data based on UserService info - COMPLETE VERSION
   void _generateHistoryData() async {
     String userGoal = userInfo!['goal'] ?? 'maintain weight';
     final prefs = await SharedPreferences.getInstance();
 
-    // ✅ Load weight history map từ SharedPreferences
-    Map<String, String>? savedHistoryMap = {};
-    try {
-      String? savedMapString = prefs.getString('weight_history_map');
-      if (savedMapString != null) {
-        Map<String, dynamic> tempMap = Map<String, dynamic>.from(
-          Map<String, dynamic>.from(
-            // Parse JSON string
-            {}..addAll(
-              savedMapString.split(',').fold<Map<String, String>>({}, (
-                map,
-                item,
-              ) {
-                var parts = item.split(':');
-                if (parts.length == 2) {
-                  map[parts[0]] = parts[1];
-                }
-                return map;
-              }),
-            ),
-          ),
-        );
-        savedHistoryMap = tempMap.map(
-          (key, value) => MapEntry(key, value.toString()),
-        );
-      }
-    } catch (e) {
-      print('Error loading weight history map: $e');
-      savedHistoryMap = {};
-    }
-
-    // ✅ Better approach: Load from SharedPreferences with proper JSON
+    // ✅ Load weight history map from SharedPreferences
     String? savedJson = prefs.getString('weight_history_map_json');
     if (savedJson != null) {
       try {
         Map<String, dynamic> tempMap = {};
-        // Simple parsing for key:value pairs
+        // Simple parsing for key:value pairs (format: "28/07:165.2|29/07:164.8")
         savedJson.split('|').forEach((pair) {
           var parts = pair.split(':');
           if (parts.length == 2) {
@@ -271,7 +241,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       weightHistoryMap = {};
     }
 
-    // ✅ Generate data cho các ngày thiếu
+    // ✅ FIXED: Generate data cho các ngày thiếu - từ startWeight đến currentWeight
     DateTime now = DateTime.now();
 
     // Generate cho 90 ngày (bao gồm cả 7 và 30 ngày)
@@ -282,31 +252,60 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
       // ✅ Chỉ generate nếu chưa có data cho ngày này
       if (!weightHistoryMap.containsKey(dateKey)) {
-        double progress = i / 89.0;
+        double progress = i / 89.0; // 0.0 (90 ngày trước) → 1.0 (hôm nay)
         double generatedWeight;
 
         switch (userGoal.toLowerCase()) {
           case 'lose weight':
+            // ✅ FIXED: Từ startWeight (90 ngày trước) → currentWeight (hôm nay)
+            // Logic: User bắt đầu từ startWeight và giảm cân đến currentWeight
+            double weightDifference = startWeight - currentWeight;
             generatedWeight =
-                currentWeight +
-                (15.0 * (1 - progress)) +
-                (i % 7 == 0 ? 0.8 : -0.6);
+                startWeight -
+                (weightDifference * progress) +
+                (i % 7 == 0
+                    ? 0.8
+                    : i % 7 == 1
+                    ? -0.6
+                    : 0.2); // Daily fluctuation
             break;
+
           case 'gain weight':
+            // ✅ FIXED: Từ startWeight (90 ngày trước) → currentWeight (hôm nay)
+            // Logic: User bắt đầu từ startWeight và tăng cân đến currentWeight
+            double weightDifference = currentWeight - startWeight;
             generatedWeight =
-                currentWeight -
-                (12.0 * (1 - progress)) +
-                (i % 7 == 0 ? 0.3 : -0.3);
+                startWeight +
+                (weightDifference * progress) +
+                (i % 7 == 0
+                    ? 0.3
+                    : i % 7 == 1
+                    ? -0.3
+                    : 0.1); // Daily fluctuation
             break;
-          default:
+
+          default: // maintain weight
+            // ✅ FIXED: Fluctuate around startWeight với slow trend toward currentWeight
+            double baseWeight =
+                startWeight +
+                (currentWeight - startWeight) * progress * 0.3; // Slow trend
             generatedWeight =
-                currentWeight +
+                baseWeight +
                 (i % 10 == 0
                     ? 1.0
                     : i % 10 == 1
                     ? -0.8
+                    : i % 10 == 2
+                    ? 0.5
                     : 0.3);
+            break;
         }
+
+        // ✅ Ensure generated weight is reasonable (không âm hoặc quá cao)
+        generatedWeight = generatedWeight.clamp(
+          startWeight - 20.0, // Min: startWeight - 20 lbs
+          startWeight + 20.0, // Max: startWeight + 20 lbs
+        );
 
         weightHistoryMap[dateKey] = generatedWeight;
         print(
@@ -315,13 +314,49 @@ class _ProfileScreenState extends State<ProfileScreen> {
       }
     }
 
-    // ✅ Update ngày hôm nay với current weight
+    // ✅ Update ngày hôm nay với current weight (luôn accurate)
     String todayKey =
         "${now.day.toString().padLeft(2, '0')}/${now.month.toString().padLeft(2, '0')}";
     weightHistoryMap[todayKey] = currentWeight;
     print(
       '✅ Updated today ($todayKey) weight: ${currentWeight.toStringAsFixed(1)} lbs',
     );
+
+    // ✅ Cleanup old data (optional - giữ data trong 1 năm)
+    DateTime cutoffDate = now.subtract(Duration(days: 365));
+    List<String> keysToRemove = [];
+
+    weightHistoryMap.forEach((key, value) {
+      try {
+        List<String> parts = key.split('/');
+        if (parts.length == 2) {
+          int day = int.parse(parts[0]);
+          int month = int.parse(parts[1]);
+          int year = now.year;
+
+          // Handle year rollover (nếu tháng > current month thì là năm trước)
+          if (month > now.month) {
+            year = now.year - 1;
+          }
+
+          DateTime entryDate = DateTime(year, month, day);
+          if (entryDate.isBefore(cutoffDate)) {
+            keysToRemove.add(key);
+          }
+        }
+      } catch (e) {
+        // Skip invalid date keys
+      }
+    });
+
+    // Remove old entries
+    for (String key in keysToRemove) {
+      weightHistoryMap.remove(key);
+    }
+
+    if (keysToRemove.isNotEmpty) {
+      print('🗑️ Cleaned up ${keysToRemove.length} old weight entries');
+    }
 
     // ✅ Save updated map to SharedPreferences
     String mapJson = weightHistoryMap.entries
@@ -332,26 +367,80 @@ class _ProfileScreenState extends State<ProfileScreen> {
     // ✅ Generate arrays từ map cho UI
     _generateArraysFromMap();
 
-    // Generate calories history (unchanged)
+    // ✅ IMPROVED: Generate calories history with more realistic patterns
     double baseCalories = caloriesPerDay.toDouble();
+
+    // 7-day pattern: Weekdays vs weekends
     calHistory7 = List.generate(7, (i) {
-      double variation = (i % 3 == 0
-          ? 100
-          : i % 3 == 1
-          ? -150
-          : 50);
-      return baseCalories + variation;
+      DateTime date = now.subtract(Duration(days: 6 - i));
+      bool isWeekend =
+          date.weekday == DateTime.saturday || date.weekday == DateTime.sunday;
+
+      double variation;
+      if (isWeekend) {
+        variation =
+            150 + (i % 2 == 0 ? 50 : -30); // Higher calories on weekends
+      } else {
+        variation = (i % 3 == 0
+            ? 100
+            : i % 3 == 1
+            ? -150
+            : 50); // Weekday pattern
+      }
+
+      return (baseCalories + variation).clamp(
+        baseCalories * 0.6,
+        baseCalories * 1.4,
+      );
     });
+
+    // 30-day pattern: Weekly cycles
     calHistory30 = List.generate(30, (i) {
-      double variation = (i % 5) * 80.0 - 160;
-      return baseCalories + variation;
+      DateTime date = now.subtract(Duration(days: 29 - i));
+      bool isWeekend =
+          date.weekday == DateTime.saturday || date.weekday == DateTime.sunday;
+
+      double variation;
+      if (isWeekend) {
+        variation = (i % 4) * 100.0 - 100; // Weekend variation
+      } else {
+        variation = (i % 5) * 80.0 - 160; // Weekday variation
+      }
+
+      return (baseCalories + variation).clamp(
+        baseCalories * 0.7,
+        baseCalories * 1.3,
+      );
     });
+
+    // 90-day pattern: Long-term trends
     calHistory90 = List.generate(90, (i) {
-      double variation = (i % 7) * 60.0 - 180;
-      return baseCalories + variation;
+      DateTime date = now.subtract(Duration(days: 89 - i));
+      bool isWeekend =
+          date.weekday == DateTime.saturday || date.weekday == DateTime.sunday;
+
+      // Add seasonal trend (slight increase over time)
+      double seasonalTrend =
+          (i / 89.0) * 100; // Up to +100 calories over 90 days
+
+      double variation;
+      if (isWeekend) {
+        variation = (i % 7) * 80.0 - 120 + seasonalTrend;
+      } else {
+        variation = (i % 7) * 60.0 - 180 + seasonalTrend;
+      }
+
+      return (baseCalories + variation).clamp(
+        baseCalories * 0.8,
+        baseCalories * 1.2,
+      );
     });
 
     print('✅ History data loaded: Map has ${weightHistoryMap.length} entries');
+    print('   Start Weight: ${startWeight.toStringAsFixed(1)} lbs');
+    print('   Current Weight: ${currentWeight.toStringAsFixed(1)} lbs');
+    print('   Goal: $userGoal');
+    print('   Generated realistic progression from start to current weight');
   }
 
   // ✅ Generate arrays từ map dựa trên current date
@@ -366,6 +455,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
           "${date.day.toString().padLeft(2, '0')}/${date.month.toString().padLeft(2, '0')}";
       weightHistory7.add(weightHistoryMap[dateKey] ?? currentWeight);
     }
+    // Nếu weightHistory7 rỗng, fill bằng currentWeight
+    if (weightHistory7.isEmpty) {
+      weightHistory7 = List.filled(7, currentWeight);
+    }
 
     // Generate 30-day array
     weightHistory30 = [];
@@ -375,6 +468,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
           "${date.day.toString().padLeft(2, '0')}/${date.month.toString().padLeft(2, '0')}";
       weightHistory30.add(weightHistoryMap[dateKey] ?? currentWeight);
     }
+    if (weightHistory30.isEmpty) {
+      weightHistory30 = List.filled(30, currentWeight);
+    }
 
     // Generate 90-day array
     weightHistory90 = [];
@@ -383,6 +479,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
       String dateKey =
           "${date.day.toString().padLeft(2, '0')}/${date.month.toString().padLeft(2, '0')}";
       weightHistory90.add(weightHistoryMap[dateKey] ?? currentWeight);
+    }
+    if (weightHistory90.isEmpty) {
+      weightHistory90 = List.filled(90, currentWeight);
     }
 
     print(

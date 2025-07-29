@@ -60,83 +60,95 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
     return Scaffold(
       backgroundColor: Colors.white,
       body: SafeArea(
-        child: Stack(
+        child: Column(
           children: [
-            // 🌿 Icon trang trí bốn góc
-            const Positioned(
-              top: 90,
-              left: 80,
-              child: Icon(Icons.eco, color: Colors.greenAccent, size: 40),
-            ),
-            const Positioned(
-              top: 90,
-              right: 0,
-              child: Icon(Icons.local_florist, color: Colors.orange, size: 40),
-            ),
-            const Positioned(
-              bottom: 320,
-              left: 0,
-              child: Icon(Icons.star, color: Colors.redAccent, size: 40),
-            ),
-            const Positioned(
-              bottom: 330,
-              right: 60,
-              child: Icon(Icons.sunny, color: Colors.amber, size: 40),
-            ),
-
-            // 📝 Tiêu đề và mô tả
-            Positioned(
-              top: 180,
-              left: 30,
-              right: 20,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: const [
-                  Text(
-                    "FitTracker",
-                    style: TextStyle(fontSize: 40, fontWeight: FontWeight.bold),
-                  ),
-                  SizedBox(height: 8),
-                  Text(
-                    "Personalized nutrition for\nevery motivation",
-                    style: TextStyle(fontSize: 20, color: Colors.black54),
-                  ),
-                ],
-              ),
-            ),
-
-            // 🧘 Icon thiền ở giữa màn hình
-            const Align(
-              alignment: Alignment(0, 0.6),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
+            Expanded(
+              child: Stack(
                 children: [
-                  Icon(
-                    Icons.self_improvement,
-                    size: 80,
-                    color: Color.fromRGBO(76, 175, 80, 1),
+                  // 🌿 Icon trang trí bốn góc
+                  const Positioned(
+                    top: 90,
+                    left: 80,
+                    child: Icon(Icons.eco, color: Colors.greenAccent, size: 40),
                   ),
-                  SizedBox(height: 16),
-                  Text(
-                    'Get Started',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w600,
-                      color: Colors.black87,
+                  const Positioned(
+                    top: 90,
+                    right: 0,
+                    child: Icon(
+                      Icons.local_florist,
+                      color: Colors.orange,
+                      size: 40,
                     ),
                   ),
-                  SizedBox(height: 8),
-                  Text(
-                    'Create your personalized plan',
-                    style: TextStyle(fontSize: 14, color: Colors.black54),
+                  const Positioned(
+                    bottom: 320,
+                    left: 0,
+                    child: Icon(Icons.star, color: Colors.redAccent, size: 40),
+                  ),
+                  const Positioned(
+                    bottom: 330,
+                    right: 60,
+                    child: Icon(Icons.sunny, color: Colors.amber, size: 40),
+                  ),
+
+                  // 📝 Tiêu đề và mô tả
+                  Positioned(
+                    top: 180,
+                    left: 30,
+                    right: 20,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: const [
+                        Text(
+                          "FitTracker",
+                          style: TextStyle(
+                            fontSize: 40,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        SizedBox(height: 8),
+                        Text(
+                          "Personalized nutrition for\nevery motivation",
+                          style: TextStyle(fontSize: 20, color: Colors.black54),
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  // 🧘 Icon thiền ở giữa màn hình
+                  const Align(
+                    alignment: Alignment(0, 0.6),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          Icons.self_improvement,
+                          size: 80,
+                          color: Color.fromRGBO(76, 175, 80, 1),
+                        ),
+                        SizedBox(height: 16),
+                        Text(
+                          'Get Started',
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.black87,
+                          ),
+                        ),
+                        SizedBox(height: 8),
+                        Text(
+                          'Create your personalized plan',
+                          style: TextStyle(fontSize: 14, color: Colors.black54),
+                        ),
+                      ],
+                    ),
                   ),
                 ],
               ),
             ),
-
-            // 🚀 Nút Start
-            Align(
-              alignment: const Alignment(0, 0.75),
+            // 🚀 Nút Start - Đặt dưới cùng, không bị đè lên text
+            Padding(
+              padding: const EdgeInsets.only(bottom: 40.0),
               child: ElevatedButton(
                 onPressed: () {
                   print('🚀 Starting onboarding process...');

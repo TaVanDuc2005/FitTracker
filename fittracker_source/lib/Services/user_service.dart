@@ -61,6 +61,13 @@ class UserService {
     }
   }
 
+  // In user_service.dart
+  static Future<void> clearAllUserData() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.clear();
+    print('✅ All user data cleared');
+  }
+
   // Lưu name riêng lẻ
   static Future<bool> saveName(String name) async {
     try {
