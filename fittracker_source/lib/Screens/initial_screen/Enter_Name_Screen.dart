@@ -1,7 +1,7 @@
 // file: enter_name_screen.dart
 
 import 'package:flutter/material.dart';
-import 'User_Info_Screen.dart';
+import 'onboarding_controller.dart';
 import 'package:fittracker_source/services/user_service.dart'; // THÊM IMPORT
 
 class EnterNameScreen extends StatefulWidget {
@@ -141,7 +141,7 @@ class _EnterNameScreenState extends State<EnterNameScreen> {
                     Navigator.push(
                       context,
                       MaterialPageRoute(
-                        builder: (context) => const UserInfoScreen(),
+                        builder: (context) => const StepProgressForm(),
                       ),
                     );
                   }, // THÊM dấu ph

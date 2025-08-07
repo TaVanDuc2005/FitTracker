@@ -1,5 +1,4 @@
-import 'dart:async'; // Thêm dòng này
-
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'Enter_Name_Screen.dart';
 
@@ -13,7 +12,7 @@ class OnboardingScreen extends StatefulWidget {
 class _OnboardingScreenState extends State<OnboardingScreen> {
   final PageController _controller = PageController();
   int _currentIndex = 0;
-  Timer? _timer; // Thêm timer
+  Timer? _timer;
 
   final List<Map<String, String>> _pages = [
     {
@@ -35,10 +34,16 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   void initState() {
     super.initState();
 
-    // Tự động chuyển trang mỗi 4 giây
-    _timer = Timer.periodic(const Duration(seconds: 4), (timer) {
-      if (_currentIndex < _pages.length - 1) {
-        _nextPage();
+    // Auto move page every 4 seconds
+    _timer = Timer.periodic(const Duration(seconds: 3), (timer) {
+      final nextPage = (_controller.page ?? 0).round() + 1;
+
+      if (nextPage < _pages.length) {
+        _controller.animateToPage(
+          nextPage,
+          duration: const Duration(milliseconds: 300),
+          curve: Curves.easeInOut,
+        );
       } else {
         timer.cancel();
         Navigator.pushReplacement(
@@ -55,12 +60,18 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
         duration: const Duration(milliseconds: 300),
         curve: Curves.easeInOut,
       );
+    } else {
+      _timer?.cancel();
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => const EnterNameScreen()),
+      );
     }
   }
 
   @override
   void dispose() {
-    _timer?.cancel(); // Hủy timer khi không dùng nữa
+    _timer?.cancel();
     _controller.dispose();
     super.dispose();
   }
@@ -86,7 +97,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      // Ảnh
+                      // Image
                       ClipRRect(
                         borderRadius: BorderRadius.circular(30),
                         child: Container(
@@ -102,7 +113,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                       ),
                       const SizedBox(height: 40),
 
-                      // Văn bản
+                      // Text
                       Text(
                         page['text']!,
                         textAlign: TextAlign.center,
@@ -128,7 +139,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: List.generate(_pages.length, (index) {
                   final isActive = index == _currentIndex;
-                  return Container(
+                  return AnimatedContainer(
+                    duration: const Duration(milliseconds: 300),
                     margin: const EdgeInsets.symmetric(horizontal: 4),
                     width: isActive ? 20 : 8,
                     height: 8,
@@ -141,7 +153,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
               ),
             ),
 
-            // Nút mũi tên
+            // Next Button
             Positioned(
               bottom: 30,
               right: 24,
