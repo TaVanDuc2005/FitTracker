@@ -1048,11 +1048,137 @@ class MealItem extends StatelessWidget {
   }
 }
 
-class WaterChallengeCard extends StatelessWidget {
+void _showWaterCupSelector(
+  BuildContext context,
+  int selectedCups,
+  Function(int) onSelected,
+) {
+  showDialog(
+    context: context,
+    builder: (ctx) {
+      int tempCups = selectedCups;
+      double cupVolume = 0.21; // hoặc lấy từ state
+      return StatefulBuilder(
+        builder: (context, setState) {
+          return AlertDialog(
+            title: const Text('Select number of cups'),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  '$tempCups cups = ${(tempCups * cupVolume).toStringAsFixed(2)} L',
+                  style: const TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 32),
+                Slider(
+                  value: tempCups.toDouble(),
+                  min: 4,
+                  max: 12,
+                  divisions: 8,
+                  label: '$tempCups',
+                  onChanged: (value) {
+                    setState(() {
+                      tempCups = value.round();
+                    });
+                  },
+                ),
+              ],
+            ),
+            actions: [
+              TextButton(
+                onPressed: () {
+                  Navigator.pop(ctx);
+                  onSelected(tempCups);
+                },
+                child: const Text('OK'),
+              ),
+            ],
+          );
+        },
+      );
+    },
+  );
+}
+
+// Sử dụng trong WaterChallengeCard
+class WaterChallengeCard extends StatefulWidget {
   const WaterChallengeCard({super.key});
 
   @override
+  State<WaterChallengeCard> createState() => _WaterChallengeCardState();
+}
+
+class _WaterChallengeCardState extends State<WaterChallengeCard> {
+  int totalCups = 7;
+  int cupsDrank = 0;
+  double cupVolume = 0.21; // Mỗi cốc là 0.21L mặc định
+  double get goalWater => totalCups * cupVolume;
+
+  List<double> fillPercents = [];
+
+  @override
+  void initState() {
+    super.initState();
+    fillPercents = List.filled(totalCups, 0.0);
+  }
+
+  void _fillCup(int index, bool isFilled) async {
+    if (isFilled) {
+      // Hiệu ứng nước rút từ từ cho các cốc từ index đến cuối
+      for (double p = 1.0; p >= 0.0; p -= 0.05) {
+        await Future.delayed(const Duration(milliseconds: 20));
+        setState(() {
+          for (int i = index; i < totalCups; i++) {
+            fillPercents[i] = p;
+          }
+        });
+      }
+      setState(() {
+        cupsDrank = index;
+        for (int i = index; i < totalCups; i++) {
+          fillPercents[i] = 0.0;
+        }
+      });
+    } else {
+      setState(() {
+        cupsDrank = index + 1;
+        for (int i = 0; i <= index; i++) {
+          fillPercents[i] = 0.0;
+        }
+      });
+      // Tất cả các cốc từ 0 đến index cùng lên nước đồng thời
+      for (double p = 0.0; p <= 1.0; p += 0.05) {
+        await Future.delayed(const Duration(milliseconds: 20));
+        setState(() {
+          for (int i = 0; i <= index; i++) {
+            fillPercents[i] = p;
+          }
+        });
+      }
+      setState(() {
+        for (int i = 0; i <= index; i++) {
+          fillPercents[i] = 1.0;
+        }
+      });
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
+    if (fillPercents.length != totalCups) {
+      List<double> newPercents = List.filled(totalCups, 0.0);
+      for (int i = 0; i < cupsDrank && i < totalCups; i++) {
+        newPercents[i] = 1.0;
+      }
+      fillPercents = newPercents;
+      if (cupsDrank > totalCups) cupsDrank = totalCups;
+    }
+
+    double waterDrank = cupsDrank * cupVolume;
+
     return Column(
       children: [
         Container(
@@ -1074,8 +1200,8 @@ class WaterChallengeCard extends StatelessWidget {
             children: [
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: const [
-                  Text(
+                children: [
+                  const Text(
                     "Water Challenge",
                     style: TextStyle(
                       fontSize: 16,
@@ -1083,45 +1209,72 @@ class WaterChallengeCard extends StatelessWidget {
                       color: Colors.black87,
                     ),
                   ),
-                  Icon(Icons.more_horiz),
+                  GestureDetector(
+                    onTap: () {
+                      _showWaterCupSelector(context, totalCups, (selected) {
+                        setState(() {
+                          totalCups = selected;
+                          // Cập nhật lại fillPercents đúng số lượng cốc
+                          List<double> newPercents = List.filled(
+                            totalCups,
+                            0.0,
+                          );
+                          for (int i = 0; i < cupsDrank && i < totalCups; i++) {
+                            newPercents[i] = 1.0;
+                          }
+                          fillPercents = newPercents;
+                          if (cupsDrank > totalCups) cupsDrank = totalCups;
+                        });
+                      });
+                    },
+                    child: const Icon(Icons.more_horiz),
+                  ),
                 ],
               ),
               const SizedBox(height: 8),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: const [
+                children: [
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
+                      const Text(
                         "Water",
                         style: TextStyle(fontSize: 14, color: Colors.black87),
                       ),
                       Text(
-                        "Goal : 1,50 L",
-                        style: TextStyle(fontSize: 13, color: Colors.grey),
+                        "Goal : ${goalWater.toStringAsFixed(2)} L",
+                        style: const TextStyle(
+                          fontSize: 13,
+                          color: Colors.grey,
+                        ),
                       ),
                     ],
                   ),
                   Text(
-                    "0,00 L",
-                    style: TextStyle(fontSize: 14, color: Colors.black87),
+                    "${waterDrank.toStringAsFixed(2)} / ${goalWater.toStringAsFixed(2)} L",
+                    style: const TextStyle(fontSize: 14, color: Colors.black87),
                   ),
                 ],
               ),
               const SizedBox(height: 16),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: List.generate(7, (index) {
-                  return Container(
-                    width: 36,
-                    height: 48,
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFF2F6FA),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: const Center(
-                      child: Icon(Icons.add, size: 20, color: Colors.grey),
+              Wrap(
+                spacing: 8,
+                runSpacing: 12,
+                children: List.generate(totalCups, (index) {
+                  bool isFilled = index < cupsDrank;
+                  return GestureDetector(
+                    onTap: () {
+                      _fillCup(index, isFilled);
+                    },
+                    child: Column(
+                      children: [
+                        GlassCupWidget(
+                          isFilled: isFilled,
+                          fillPercent: fillPercents[index],
+                        ),
+                        const SizedBox(height: 4),
+                      ],
                     ),
                   );
                 }),
@@ -1149,4 +1302,108 @@ class WaterChallengeCard extends StatelessWidget {
       ],
     );
   }
+}
+
+class GlassCupWidget extends StatelessWidget {
+  final bool isFilled;
+  final double fillPercent;
+
+  const GlassCupWidget({
+    super.key,
+    required this.isFilled,
+    this.fillPercent = 1.0,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: 36,
+      height: 48,
+      child: CustomPaint(
+        painter: _GlassCupPainter(isFilled: isFilled, fillPercent: fillPercent),
+      ),
+    );
+  }
+}
+
+class _GlassCupPainter extends CustomPainter {
+  final bool isFilled;
+  final double fillPercent;
+
+  _GlassCupPainter({required this.isFilled, required this.fillPercent});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paintCup = Paint()
+      ..color = const Color.fromARGB(255, 214, 220, 223)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 2;
+
+    // Vẽ outline cốc
+    Path cupPath = Path();
+    cupPath.moveTo(size.width * 0.1, 0);
+    cupPath.lineTo(size.width * 0.25, size.height * 0.85);
+    cupPath.lineTo(size.width * 0.75, size.height * 0.85);
+    cupPath.lineTo(size.width * 0.9, 0);
+    cupPath.close();
+    canvas.drawPath(cupPath, paintCup);
+
+    if (isFilled && fillPercent > 0) {
+      double waterHeight = size.height * 0.85 * fillPercent;
+      double waterBottom = size.height * 0.85;
+      double waterTop = waterBottom - waterHeight;
+
+      // Tính điểm trái/phải theo fillPercent (điểm nằm trên cạnh cốc)
+      double leftStartX = size.width * 0.25;
+      double rightStartX = size.width * 0.75;
+      // Tính lại: điểm miệng nước nằm trên cạnh cốc (từ đáy lên miệng)
+      double leftTopX =
+          size.width * 0.25 +
+          (size.width * 0.1 - size.width * 0.25) *
+              ((waterBottom - waterTop) / (waterBottom));
+      double rightTopX =
+          size.width * 0.75 +
+          (size.width * 0.9 - size.width * 0.75) *
+              ((waterBottom - waterTop) / (waterBottom));
+
+      Path waterPath = Path();
+      waterPath.moveTo(leftStartX, waterBottom); // Đáy trái
+      waterPath.lineTo(leftTopX, waterTop); // Miệng trái
+      waterPath.lineTo(rightTopX, waterTop); // Miệng phải
+      waterPath.lineTo(rightStartX, waterBottom); // Đáy phải
+      waterPath.close();
+
+      final paintWater = Paint()
+        ..color = const Color.fromARGB(255, 120, 241, 241)!.withOpacity(0.7)
+        ..style = PaintingStyle.fill;
+      canvas.drawPath(waterPath, paintWater);
+    } else {
+      // Vẽ nước màu xám phủ kín ly khi chưa đầy
+      final paintGray = Paint()
+        ..color = const Color.fromARGB(255, 233, 231, 231)!.withOpacity(0.8)
+        ..style = PaintingStyle.fill;
+      canvas.drawPath(cupPath, paintGray);
+
+      // Vẽ dấu cộng ở giữa cốc
+      final double centerX = size.width / 2;
+      final double centerY = size.height * 0.5;
+      final paintPlus = Paint()
+        ..color = const Color.fromARGB(255, 161, 161, 161)!
+        ..strokeWidth = 2;
+
+      canvas.drawLine(
+        Offset(centerX - 6, centerY),
+        Offset(centerX + 6, centerY),
+        paintPlus,
+      );
+      canvas.drawLine(
+        Offset(centerX, centerY - 6),
+        Offset(centerX, centerY + 6),
+        paintPlus,
+      );
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => true;
 }

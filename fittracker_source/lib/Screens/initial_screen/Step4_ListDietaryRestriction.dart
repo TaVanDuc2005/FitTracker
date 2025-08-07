@@ -124,9 +124,7 @@ class _Step4DietaryRestrictionsState
                                 ? Colors.green
                                 : Colors.transparent,
                             border: Border.all(
-                              color: isSelected
-                                  ? Colors.green
-                                  : Colors.grey,
+                              color: isSelected ? Colors.green : Colors.grey,
                               width: 2,
                             ),
                             borderRadius: BorderRadius.circular(4),
