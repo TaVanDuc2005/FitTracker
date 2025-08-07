@@ -1,40 +1,34 @@
 import 'Food_Bast.dart';
 
-/// Các loại món ăn
-enum CategoryType { monNuoc, monKho, monXao, monChien }
+/// Các loại món nước
+enum DrinkCategory { sua, tra, cafe, nuocNgot }
 
-class Food extends FoodBase {
-  final CategoryType category;
-  final double protein;
+class Drink extends FoodBase {
+  final DrinkCategory category;
+  final double sugar;
   final double fat;
-  final double carb;
-  final double fiber;
-  
-  Food({
+
+  Drink({
     required super.id,
     required super.name,
     required super.calories,
     required super.imageUrl,
     required super.description,
     required this.category,
-    required this.protein,
+    required this.sugar,
     required this.fat,
-    required this.carb,
-    required this.fiber,
   });
 
-  factory Food.fromMap(Map<String, dynamic> map) {
-    return Food(
-      id: map['id'],   
+  factory Drink.fromMap(Map<String, dynamic> map) {
+    return Drink(
+      id: map['id'],
       name: map['name'],
       calories: map['calories'],
       imageUrl: map['imageUrl'],
       description: map['description'],
-      category: CategoryType.values[map['category']],
-      protein: (map['protein'] as num).toDouble(),
+      category: DrinkCategory.values[map['category']],
+      sugar: (map['sugar'] as num).toDouble(),
       fat: (map['fat'] as num).toDouble(),
-      carb: (map['carb'] as num).toDouble(),
-      fiber: (map['fiber'] as num).toDouble(),
     );
   }
 
@@ -47,36 +41,30 @@ class Food extends FoodBase {
       'imageUrl': imageUrl,
       'description': description,
       'category': category.index,
-      'protein': protein,
+      'sugar': sugar,
       'fat': fat,
-      'carb': carb,
-      'fiber': fiber,
     };
   }
 
-  Food copyWith({
+  Drink copyWith({
     String? id,
     String? name,
     int? calories,
     String? imageUrl,
     String? description,
-    CategoryType? category,
-    double? protein,
+    DrinkCategory? category,
+    double? sugar,
     double? fat,
-    double? carb,
-    double? fiber,
   }) {
-    return Food(
+    return Drink(
       id: id ?? this.id,
       name: name ?? this.name,
       calories: calories ?? this.calories,
       imageUrl: imageUrl ?? this.imageUrl,
       description: description ?? this.description,
       category: category ?? this.category,
-      protein: protein ?? this.protein,
+      sugar: sugar ?? this.sugar,
       fat: fat ?? this.fat,
-      carb: carb ?? this.carb,
-      fiber: fiber ?? this.fiber,
     );
   }
 }

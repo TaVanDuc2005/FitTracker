@@ -1,3 +1,5 @@
+import 'dart:async'; // Thêm dòng này
+
 import 'package:flutter/material.dart';
 import 'Enter_Name_Screen.dart';
 
@@ -11,6 +13,7 @@ class OnboardingScreen extends StatefulWidget {
 class _OnboardingScreenState extends State<OnboardingScreen> {
   final PageController _controller = PageController();
   int _currentIndex = 0;
+  Timer? _timer; // Thêm timer
 
   final List<Map<String, String>> _pages = [
     {
@@ -28,18 +31,38 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     },
   ];
 
+  @override
+  void initState() {
+    super.initState();
+
+    // Tự động chuyển trang mỗi 4 giây
+    _timer = Timer.periodic(const Duration(seconds: 4), (timer) {
+      if (_currentIndex < _pages.length - 1) {
+        _nextPage();
+      } else {
+        timer.cancel();
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => const EnterNameScreen()),
+        );
+      }
+    });
+  }
+
   void _nextPage() {
     if (_currentIndex < _pages.length - 1) {
       _controller.nextPage(
         duration: const Duration(milliseconds: 300),
         curve: Curves.easeInOut,
       );
-    } else {
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (context) => const EnterNameScreen()),
-      );
     }
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel(); // Hủy timer khi không dùng nữa
+    _controller.dispose();
+    super.dispose();
   }
 
   @override

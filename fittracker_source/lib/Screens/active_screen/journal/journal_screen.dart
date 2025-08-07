@@ -324,7 +324,7 @@ class _JournalScreenState extends State<JournalScreen> {
                         ],
                       ),
                       const Positioned(
-                        top: -65,
+                        top: -40,
                         right: -10,
                         child: DecoratedBox(
                           decoration: BoxDecoration(

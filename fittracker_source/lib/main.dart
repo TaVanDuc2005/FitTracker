@@ -1,5 +1,5 @@
-import 'package:fittracker_source/Screens/initial_screen/Welcome_Screen.dart';
 import 'package:flutter/material.dart';
+import 'package:fittracker_source/Screens/initial_screen/Welcome_Screen.dart';
 
 void main() {
   runApp(const MyApp());

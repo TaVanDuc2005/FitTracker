@@ -19,7 +19,6 @@ class _EnterNameScreenState extends State<EnterNameScreen> {
   void initState() {
     super.initState();
     _nameController.addListener(_onTextChanged);
-
     _loadSavedName();
   }
 
@@ -55,22 +54,18 @@ class _EnterNameScreenState extends State<EnterNameScreen> {
       body: SafeArea(
         child: Stack(
           children: [
-            const Positioned(
-              top: 20,
-              left: 0,
-              right: 0,
-              child: Center(
-                child: Icon(
-                  Icons.local_florist,
-                  color: Colors.yellow,
-                  size: 70,
-                ),
-              ),
-            ),
-
+            Positioned(
+                    top: 40,
+                    left: 80,
+                    child: Image.asset(
+                      'Assets/Images/Enter_name.png',
+                      width: 250,
+                      height: 200,
+                    ),
+                  ),
             // Tiêu đề
             Positioned(
-              top: 100,
+              top: 200,
               left: 30,
               right: 20,
               child: Column(
@@ -78,16 +73,16 @@ class _EnterNameScreenState extends State<EnterNameScreen> {
                 children: const [
                   Center(
                     child: Text(
-                      "Enter your name",
+                      "Welcome",
                       style: TextStyle(
                         fontSize: 40,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
                   ),
-                  SizedBox(height: 8),
+                  SizedBox(height: 10),
                   Text(
-                    "Let's get to know each other 😄 \nWhat is your name?",
+                    "Let's get to know each other 😍 \nWhat is your name?",
                     style: TextStyle(
                       fontSize: 20,
                       fontWeight: FontWeight.bold,
@@ -100,7 +95,7 @@ class _EnterNameScreenState extends State<EnterNameScreen> {
 
             // TextField
             Positioned(
-              top: 240,
+              top: 380,
               left: 30,
               right: 30,
               child: TextField(
