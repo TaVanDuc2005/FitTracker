@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../services/user_service.dart';
+import 'Enter_Name_Screen.dart';
 
 class Step1UserInfo extends StatefulWidget {
   final VoidCallback onNext;
@@ -96,19 +97,28 @@ class _Step1UserInfoState extends State<Step1UserInfo> {
 
               if (isGenderSelected) ...[
                 const SizedBox(height: 24),
-                const Text("How old are you (years)?", style: TextStyle(fontSize: 18)),
+                const Text(
+                  "How old are you (years)?",
+                  style: TextStyle(fontSize: 18),
+                ),
                 const SizedBox(height: 8),
                 _customInputField(controller: ageController),
               ],
               if (isGenderSelected && isAgeEntered) ...[
                 const SizedBox(height: 20),
-                const Text("What is your height (cm)?", style: TextStyle(fontSize: 18)),
+                const Text(
+                  "What is your height (cm)?",
+                  style: TextStyle(fontSize: 18),
+                ),
                 const SizedBox(height: 8),
                 _customInputField(controller: heightController),
               ],
               if (isGenderSelected && isAgeEntered && isHeightEntered) ...[
                 const SizedBox(height: 20),
-                const Text("What is your current weight (kg)?", style: TextStyle(fontSize: 18)),
+                const Text(
+                  "What is your current weight (kg)?",
+                  style: TextStyle(fontSize: 18),
+                ),
                 const SizedBox(height: 8),
                 _customInputField(controller: weightController),
               ],
@@ -122,7 +132,11 @@ class _Step1UserInfoState extends State<Step1UserInfo> {
           bottom: 30,
           child: IconButton(
             icon: const Icon(Icons.arrow_back, size: 28),
-            onPressed: widget.onBack,
+            onPressed: () {
+              Navigator.of(context).pushReplacement(
+                MaterialPageRoute(builder: (context) => EnterNameScreen()),
+              );
+            },
           ),
         ),
 
@@ -158,7 +172,10 @@ class _Step1UserInfoState extends State<Step1UserInfo> {
               },
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.black87,
-                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 24,
+                  vertical: 14,
+                ),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(30),
                 ),
@@ -180,7 +197,10 @@ class _Step1UserInfoState extends State<Step1UserInfo> {
       decoration: InputDecoration(
         filled: true,
         fillColor: const Color(0xFFFFF0D9),
-        contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 20,
+          vertical: 14,
+        ),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(18),
           borderSide: BorderSide.none,

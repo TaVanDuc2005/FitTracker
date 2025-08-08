@@ -1,31 +1,62 @@
 import 'package:flutter/material.dart';
 import 'package:fittracker_source/models/food.dart';
 import 'package:fittracker_source/Screens/active_screen/journal/Meal_Summary_Screen.dart';
+import '../../../services/user_service.dart';
 
 // Map macro chỉ số cho từng bữa
-final Map<String, Map<String, int>> mealMacroTarget = {
-  "Breakfast": {
-    "calories": 608,
-    "protein": 46,
-    "fat": 20,
-    "carbs": 58,
-    "fiber": 6,
-  },
-  "Lunch": {
-    "calories": 800,
-    "protein": 50,
-    "fat": 25,
-    "carbs": 100,
-    "fiber": 8,
-  },
-  "Dinner": {
-    "calories": 600,
-    "protein": 40,
-    "fat": 18,
-    "carbs": 80,
-    "fiber": 7,
-  },
-};
+Future<Map<String, Map<String, int>>> getMealMacroTarget() async {
+  final macroTargets = await UserService.calculateMacroTargets();
+  if (macroTargets == null) {
+    // fallback nếu chưa có dữ liệu
+    return {
+      "Breakfast": {
+        "calories": 600,
+        "protein": 40,
+        "fat": 20,
+        "carbs": 60,
+        "fiber": 6,
+      },
+      "Lunch": {
+        "calories": 800,
+        "protein": 50,
+        "fat": 25,
+        "carbs": 100,
+        "fiber": 8,
+      },
+      "Dinner": {
+        "calories": 600,
+        "protein": 40,
+        "fat": 18,
+        "carbs": 80,
+        "fiber": 7,
+      },
+    };
+  }
+  // Chia macro cho từng bữa (30% sáng, 40% trưa, 30% tối)
+  return {
+    "Breakfast": {
+      "calories": (macroTargets['calories']! * 0.3).round(),
+      "protein": (macroTargets['protein']! * 0.3).round(),
+      "fat": (macroTargets['fat']! * 0.3).round(),
+      "carbs": (macroTargets['carbs']! * 0.3).round(),
+      "fiber": (macroTargets['fiber']! * 0.3).round(),
+    },
+    "Lunch": {
+      "calories": (macroTargets['calories']! * 0.4).round(),
+      "protein": (macroTargets['protein']! * 0.4).round(),
+      "fat": (macroTargets['fat']! * 0.4).round(),
+      "carbs": (macroTargets['carbs']! * 0.4).round(),
+      "fiber": (macroTargets['fiber']! * 0.4).round(),
+    },
+    "Dinner": {
+      "calories": (macroTargets['calories']! * 0.3).round(),
+      "protein": (macroTargets['protein']! * 0.3).round(),
+      "fat": (macroTargets['fat']! * 0.3).round(),
+      "carbs": (macroTargets['carbs']! * 0.3).round(),
+      "fiber": (macroTargets['fiber']! * 0.3).round(),
+    },
+  };
+}
 
 enum MealType { breakfast, lunch, dinner }
 
@@ -41,6 +72,15 @@ class SearchFoodScreen extends StatefulWidget {
 class _SearchFoodScreenState extends State<SearchFoodScreen> {
   bool isSearchSelected = true;
   List<Food> selectedFoods = []; // Dùng để truyền qua màn tổng kết
+
+  // Thêm vào class _SearchFoodScreenState:
+  Future<Map<String, Map<String, int>>>? _mealMacroFuture;
+
+  @override
+  void initState() {
+    super.initState();
+    _mealMacroFuture = getMealMacroTarget();
+  }
 
   String get _mealTitle {
     switch (widget.mealType) {
@@ -89,6 +129,7 @@ class _SearchFoodScreenState extends State<SearchFoodScreen> {
                     ),
                   ),
                   const SizedBox(width: 15),
+                  // ...existing code...
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -101,13 +142,43 @@ class _SearchFoodScreenState extends State<SearchFoodScreen> {
                             fontWeight: FontWeight.bold,
                           ),
                         ),
-                        const Text(
-                          "0 / 1056 Cal",
-                          style: TextStyle(color: Colors.white70, fontSize: 16),
+                        FutureBuilder<Map<String, Map<String, int>>>(
+                          future: _mealMacroFuture,
+                          builder: (context, snapshot) {
+                            if (snapshot.connectionState ==
+                                ConnectionState.waiting) {
+                              return const Text(
+                                "0 / ... Cal",
+                                style: TextStyle(
+                                  color: Colors.white70,
+                                  fontSize: 16,
+                                ),
+                              );
+                            }
+                            if (snapshot.hasError || !snapshot.hasData) {
+                              return const Text(
+                                "0 / ... Cal",
+                                style: TextStyle(
+                                  color: Colors.white70,
+                                  fontSize: 16,
+                                ),
+                              );
+                            }
+                            final target =
+                                snapshot.data?[_mealTitle]?["calories"];
+                            return Text(
+                              "0 / ${target ?? "..."} Cal",
+                              style: const TextStyle(
+                                color: Colors.white70,
+                                fontSize: 16,
+                              ),
+                            );
+                          },
                         ),
                       ],
                     ),
                   ),
+                  // ...existing code...
                   // Nút X để quay lại màn hình trước đó Journal
                   GestureDetector(
                     onTap: () => Navigator.pop(context),
@@ -204,7 +275,8 @@ class _SearchFoodScreenState extends State<SearchFoodScreen> {
               borderRadius: BorderRadius.circular(16),
             ),
           ),
-          onPressed: () {
+          onPressed: () async {
+            final mealMacroTarget = await getMealMacroTarget();
             Navigator.push(
               context,
               MaterialPageRoute(

@@ -66,121 +66,96 @@ class _Step4DietaryRestrictionsState
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      children: [
-        const Padding(
-          padding: EdgeInsets.fromLTRB(30, 40, 30, 20),
-          child: Text(
-            "Which restrictions/allergies do you have?",
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.w500),
-          ),
-        ),
-        Expanded(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.symmetric(horizontal: 24),
-            child: Column(
-              children: options.map((item) {
-                final isSelected = selectedRestrictions.contains(item);
-                return GestureDetector(
-                  onTap: () {
-                    setState(() {
-                      if (isSelected) {
-                        selectedRestrictions.remove(item);
-                      } else {
-                        selectedRestrictions.add(item);
-                      }
-                    });
-                  },
-                  child: Container(
-                    width: double.infinity,
-                    margin: const EdgeInsets.only(bottom: 16),
-                    padding: const EdgeInsets.symmetric(
-                      vertical: 16,
-                      horizontal: 20,
-                    ),
-                    decoration: BoxDecoration(
-                      color: isSelected
-                          ? const Color(0xFFFFF0D9)
-                          : const Color(0xFFF7F9FB),
-                      borderRadius: BorderRadius.circular(24),
-                    ),
-                    child: Row(
-                      children: [
-                        Expanded(
-                          child: Text(
-                            item,
-                            style: TextStyle(
-                              fontSize: 16,
-                              color: isSelected
-                                  ? Colors.black
-                                  : Colors.grey[800],
-                            ),
-                          ),
-                        ),
-                        Container(
-                          width: 20,
-                          height: 20,
-                          decoration: BoxDecoration(
-                            color: isSelected
-                                ? Colors.green
-                                : Colors.transparent,
-                            border: Border.all(
-                              color: isSelected ? Colors.green : Colors.grey,
-                              width: 2,
-                            ),
-                            borderRadius: BorderRadius.circular(4),
-                          ),
-                          child: isSelected
-                              ? const Icon(
-                                  Icons.check,
-                                  size: 14,
-                                  color: Colors.white,
-                                )
-                              : null,
-                        ),
-                      ],
-                    ),
-                  ),
-                );
-              }).toList(),
+    return Scaffold(
+      backgroundColor: Colors.white, // hoặc màu bạn muốn
+      body: Column(
+        children: [
+          const Padding(
+            padding: EdgeInsets.fromLTRB(30, 40, 30, 20),
+            child: Text(
+              "Which restrictions/allergies do you have?",
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.w500),
             ),
           ),
-        ),
-        Padding(
-          padding: const EdgeInsets.all(20),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              ElevatedButton(
-                onPressed: widget.onBack,
-                style: ElevatedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 32,
-                    vertical: 14,
-                  ),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(30),
-                  ),
-                  backgroundColor: Colors.grey[200],
-                ),
-                child: const Text(
-                  "Back",
-                  style: TextStyle(color: Colors.black),
-                ),
-              ),
-              if (selectedRestrictions.isNotEmpty)
-                ElevatedButton(
-                  onPressed: () async {
-                    await _saveRestrictions();
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => const LoadingScreen(),
+          Expanded(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.symmetric(horizontal: 24),
+              child: Column(
+                children: options.map((item) {
+                  final isSelected = selectedRestrictions.contains(item);
+                  return GestureDetector(
+                    onTap: () {
+                      setState(() {
+                        if (isSelected) {
+                          selectedRestrictions.remove(item);
+                        } else {
+                          selectedRestrictions.add(item);
+                        }
+                      });
+                    },
+                    child: Container(
+                      width: double.infinity,
+                      margin: const EdgeInsets.only(bottom: 16),
+                      padding: const EdgeInsets.symmetric(
+                        vertical: 16,
+                        horizontal: 20,
                       ),
-                    );
-                  },
+                      decoration: BoxDecoration(
+                        color: isSelected
+                            ? const Color(0xFFFFF0D9)
+                            : const Color(0xFFF7F9FB),
+                        borderRadius: BorderRadius.circular(24),
+                      ),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: Text(
+                              item,
+                              style: TextStyle(
+                                fontSize: 16,
+                                color: isSelected
+                                    ? Colors.black
+                                    : Colors.grey[800],
+                              ),
+                            ),
+                          ),
+                          Container(
+                            width: 20,
+                            height: 20,
+                            decoration: BoxDecoration(
+                              color: isSelected
+                                  ? Colors.green
+                                  : Colors.transparent,
+                              border: Border.all(
+                                color: isSelected ? Colors.green : Colors.grey,
+                                width: 2,
+                              ),
+                              borderRadius: BorderRadius.circular(4),
+                            ),
+                            child: isSelected
+                                ? const Icon(
+                                    Icons.check,
+                                    size: 14,
+                                    color: Colors.white,
+                                  )
+                                : null,
+                          ),
+                        ],
+                      ),
+                    ),
+                  );
+                }).toList(),
+              ),
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.all(20),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                ElevatedButton(
+                  onPressed: widget.onBack,
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.black87,
                     padding: const EdgeInsets.symmetric(
                       horizontal: 32,
                       vertical: 14,
@@ -188,16 +163,44 @@ class _Step4DietaryRestrictionsState
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(30),
                     ),
+                    backgroundColor: Colors.grey[200],
                   ),
                   child: const Text(
-                    "Next",
-                    style: TextStyle(color: Colors.white, fontSize: 16),
+                    "Back",
+                    style: TextStyle(color: Colors.black),
                   ),
                 ),
-            ],
+                if (selectedRestrictions.isNotEmpty)
+                  ElevatedButton(
+                    onPressed: () async {
+                      await _saveRestrictions();
+                      Navigator.pushReplacement(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const LoadingScreen(),
+                        ),
+                      );
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.black87,
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 32,
+                        vertical: 14,
+                      ),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(30),
+                      ),
+                    ),
+                    child: const Text(
+                      "Next",
+                      style: TextStyle(color: Colors.white, fontSize: 16),
+                    ),
+                  ),
+              ],
+            ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 }

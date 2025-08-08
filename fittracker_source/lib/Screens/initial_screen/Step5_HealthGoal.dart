@@ -70,147 +70,149 @@ class _Step5SummaryState extends State<Step5HealthGoal> {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      children: [
-        // Title
-        Container(
-          padding: const EdgeInsets.fromLTRB(30, 60, 30, 20),
-          child: const Text(
-            "What are your health goals?",
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.w500),
-          ),
-        ),
-
-        if (bmi != null && gender != null && age != null)
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 24),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  "BMI: ${bmi!.toStringAsFixed(1)}",
-                  style: const TextStyle(fontSize: 16),
-                ),
-                const SizedBox(height: 4),
-                Text("Gender: $gender", style: const TextStyle(fontSize: 16)),
-                const SizedBox(height: 4),
-                Text("Age: $age", style: const TextStyle(fontSize: 16)),
-                const SizedBox(height: 20),
-              ],
+    return Scaffold(
+      backgroundColor: Colors.white, // hoặc màu bạn muốn
+      body: Column(
+        children: [
+          // Title
+          Container(
+            padding: const EdgeInsets.fromLTRB(30, 60, 30, 20),
+            child: const Text(
+              "What are your health goals?",
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.w500),
             ),
           ),
 
-        // Options list
-        Expanded(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.symmetric(horizontal: 24),
-            child: Column(
-              children: options.map((item) {
-                final isSelected = selectedGoal == item;
-                return GestureDetector(
-                  onTap: () {
-                    setState(() {
-                      selectedGoal = item;
-                    });
-                  },
-                  child: Container(
-                    width: double.infinity,
-                    margin: const EdgeInsets.only(bottom: 16),
-                    padding: const EdgeInsets.symmetric(
-                      vertical: 16,
-                      horizontal: 20,
-                    ),
-                    decoration: BoxDecoration(
-                      color: isSelected
-                          ? const Color(0xFFFFF0D9)
-                          : const Color(0xFFF7F9FB),
-                      borderRadius: BorderRadius.circular(24),
-                    ),
-                    child: Row(
-                      children: [
-                        Expanded(
-                          child: Text(
-                            item,
-                            style: TextStyle(
-                              fontSize: 16,
-                              color: isSelected
-                                  ? Colors.black
-                                  : Colors.grey[800],
-                            ),
-                          ),
-                        ),
-                        Container(
-                          width: 20,
-                          height: 20,
-                          decoration: BoxDecoration(
-                            color: isSelected
-                                ? Colors.green
-                                : Colors.transparent,
-                            border: Border.all(
-                              color: isSelected ? Colors.green : Colors.grey,
-                              width: 2,
-                            ),
-                            borderRadius: BorderRadius.circular(4),
-                          ),
-                          child: isSelected
-                              ? const Icon(
-                                  Icons.check,
-                                  size: 14,
-                                  color: Colors.white,
-                                )
-                              : null,
-                        ),
-                      ],
-                    ),
+          if (bmi != null && gender != null && age != null)
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 24),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    "BMI: ${bmi!.toStringAsFixed(1)}",
+                    style: const TextStyle(fontSize: 16),
                   ),
-                );
-              }).toList(),
-            ),
-          ),
-        ),
-
-        // Buttons
-        Container(
-          padding: const EdgeInsets.all(20),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              // Back button
-              ElevatedButton(
-                onPressed: widget.onBack,
-                style: ElevatedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 32,
-                    vertical: 14,
-                  ),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(30),
-                  ),
-                  backgroundColor: Colors.grey[200],
-                ),
-                child: const Text(
-                  "Back",
-                  style: TextStyle(color: Colors.black),
-                ),
+                  const SizedBox(height: 4),
+                  Text("Gender: $gender", style: const TextStyle(fontSize: 16)),
+                  const SizedBox(height: 4),
+                  Text("Age: $age", style: const TextStyle(fontSize: 16)),
+                  const SizedBox(height: 20),
+                ],
               ),
+            ),
 
-              // Finish / Save button
-              if (selectedGoal != null)
-                ElevatedButton(
-                  onPressed: () async {
-                    await _saveGoals();
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => RecommendScreen(
-                          height: height ?? 170, // fallback nếu null
-                          weight: weight ?? 60,
-                          goal: selectedGoal!,
-                        ),
+          // Options list
+          Expanded(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.symmetric(horizontal: 24),
+              child: Column(
+                children: options.map((item) {
+                  final isSelected = selectedGoal == item;
+                  return GestureDetector(
+                    onTap: () {
+                      setState(() {
+                        selectedGoal = item;
+                      });
+                    },
+                    child: Container(
+                      width: double.infinity,
+                      margin: const EdgeInsets.only(bottom: 16),
+                      padding: const EdgeInsets.symmetric(
+                        vertical: 16,
+                        horizontal: 20,
                       ),
-                    );
+                      decoration: BoxDecoration(
+                        color: isSelected
+                            ? const Color(0xFFFFF0D9)
+                            : const Color(0xFFF7F9FB),
+                        borderRadius: BorderRadius.circular(24),
+                      ),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: Text(
+                              item,
+                              style: TextStyle(
+                                fontSize: 16,
+                                color: isSelected
+                                    ? Colors.black
+                                    : Colors.grey[800],
+                              ),
+                            ),
+                          ),
+                          Container(
+                            width: 20,
+                            height: 20,
+                            decoration: BoxDecoration(
+                              color: isSelected
+                                  ? Colors.green
+                                  : Colors.transparent,
+                              border: Border.all(
+                                color: isSelected ? Colors.green : Colors.grey,
+                                width: 2,
+                              ),
+                              borderRadius: BorderRadius.circular(4),
+                            ),
+                            child: isSelected
+                                ? const Icon(
+                                    Icons.check,
+                                    size: 14,
+                                    color: Colors.white,
+                                  )
+                                : null,
+                          ),
+                        ],
+                      ),
+                    ),
+                  );
+                }).toList(),
+              ),
+            ),
+          ),
 
-                    /*showDialog(
+          // Buttons
+          Container(
+            padding: const EdgeInsets.all(20),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                // Back button
+                ElevatedButton(
+                  onPressed: widget.onBack,
+                  style: ElevatedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 32,
+                      vertical: 14,
+                    ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(30),
+                    ),
+                    backgroundColor: Colors.grey[200],
+                  ),
+                  child: const Text(
+                    "Back",
+                    style: TextStyle(color: Colors.black),
+                  ),
+                ),
+
+                // Finish / Save button
+                if (selectedGoal != null)
+                  ElevatedButton(
+                    onPressed: () async {
+                      await _saveGoals();
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => RecommendScreen(
+                            height: height ?? 170, // fallback nếu null
+                            weight: weight ?? 60,
+                            goal: selectedGoal!,
+                          ),
+                        ),
+                      );
+
+                      /*showDialog(
                       context: context,
                       builder: (context) => AlertDialog(
                         title: const Text("Setup Complete"),
@@ -225,26 +227,27 @@ class _Step5SummaryState extends State<Step5HealthGoal> {
                         ],
                       ),
                     );*/
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.black87,
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 32,
-                      vertical: 14,
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.black87,
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 32,
+                        vertical: 14,
+                      ),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(30),
+                      ),
                     ),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(30),
+                    child: const Text(
+                      "Next",
+                      style: TextStyle(color: Colors.white, fontSize: 16),
                     ),
                   ),
-                  child: const Text(
-                    "Next",
-                    style: TextStyle(color: Colors.white, fontSize: 16),
-                  ),
-                ),
-            ],
+              ],
+            ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 }
