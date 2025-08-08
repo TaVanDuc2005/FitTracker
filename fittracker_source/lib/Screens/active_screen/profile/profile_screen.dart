@@ -30,14 +30,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
   int _selectedBottomIndex = 1; // Journal | Profile (Profile là mặc định)
   int _selectedDayRange = 0; // 0: 7 ngày, 1: 30 ngày, 2: 90 ngày
 
-  // ✅ Thông tin từ UserService
+  //Thông tin từ UserService
   String userName = "";
   String goal = "";
   int caloriesPerDay = 0;
   double startWeight = 0.0;
   double currentWeight = 0.0;
   double goalWeight = 0.0;
-  double? currentBMI; // ✅ Thêm BMI
+  double? currentBMI; // Thêm BMI
   Map<String, dynamic>? userInfo;
   bool _isLoading = true;
 
@@ -45,7 +45,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   Map<String, double> weightHistoryMap = {};
 
-  // ✅ Dữ liệu history từ UserService - giữ nguyên format cũ
+  //Dữ liệu history từ UserService - giữ nguyên format cũ
   List<double> weightHistory7 = [];
   List<double> weightHistory30 = [];
   List<double> weightHistory90 = [];
@@ -68,7 +68,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     _loadUserData();
   }
 
-  // ✅ Load dữ liệu từ UserService
+  // Load dữ liệu từ UserService
   Future<void> _loadUserData() async {
     try {
       print('📊 Loading user data for Profile...');
@@ -84,9 +84,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
       // Tính toán calories và BMI
       final dailyCalories = await UserService.calculateDailyCalories();
-      final bmi = await UserService.calculateBMI(); // ✅ Thêm BMI
+      final bmi = await UserService.calculateBMI(); // Thêm BMI
 
-      // ✅ Load persistent data từ SharedPreferences
+      // Load persistent data từ SharedPreferences
       final prefs = await SharedPreferences.getInstance();
 
       setState(() {
@@ -94,13 +94,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
         userName = userInfo!['name'] ?? 'User';
         goal = _getGoalText(userInfo!['goal'] ?? 'maintain weight');
         caloriesPerDay = dailyCalories?.toInt() ?? 2000;
-        currentBMI = bmi; // ✅ Set BMI
+        currentBMI = bmi; // Set BMI
 
         // Weight info - convert kg to lbs for display
         double weightInKg = (userInfo!['weight'] ?? 70.0).toDouble();
         currentWeight = _kgToLbs(weightInKg);
 
-        // ✅ FIXED: Load startWeight từ SharedPreferences
+        // Load startWeight từ SharedPreferences
         double? savedStartWeight = prefs.getDouble('profile_start_weight');
         if (savedStartWeight == null) {
           // Lần đầu tiên, set start weight = current weight
@@ -117,7 +117,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           );
         }
 
-        // ✅ FIXED: Load goalWeight từ SharedPreferences
+        // Load goalWeight từ SharedPreferences
         double? savedGoalWeight = prefs.getDouble('profile_goal_weight');
         if (savedGoalWeight == null) {
           // Lần đầu tiên, tính goal weight dựa trên goal
@@ -145,7 +145,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       print('   Name: $userName');
       print('   Goal: $goal');
       print('   Calories: $caloriesPerDay');
-      print('   BMI: ${currentBMI?.toStringAsFixed(1) ?? 'N/A'}'); // ✅ Log BMI
+      print('   BMI: ${currentBMI?.toStringAsFixed(1) ?? 'N/A'}');
       print('   Current Weight: ${currentWeight.toStringAsFixed(1)} lbs');
       print(
         '   Start Weight: ${startWeight.toStringAsFixed(1)} lbs (persistent)',
@@ -161,7 +161,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     }
   }
 
-  // ✅ Thêm method để get BMI category
+  // Thêm method để get BMI category
   String _getBMICategory(double bmi) {
     if (bmi < 18.5) return 'Underweight';
     if (bmi < 25.0) return 'Normal';
@@ -169,17 +169,17 @@ class _ProfileScreenState extends State<ProfileScreen> {
     return 'Obese';
   }
 
-  // ✅ Convert kg to lbs
+  // Convert kg to lbs
   double _kgToLbs(double kg) {
     return kg * 2.20462;
   }
 
-  // ✅ Convert lbs to kg
+  // Convert lbs to kg
   double _lbsToKg(double lbs) {
     return lbs / 2.20462;
   }
 
-  // ✅ Get goal text in English
+  // Get goal text in English
   String _getGoalText(String goal) {
     switch (goal.toLowerCase()) {
       case 'lose weight':
@@ -193,7 +193,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     }
   }
 
-  // ✅ Calculate goal weight based on current goal
+  // Calculate goal weight based on current goal
   double _calculateGoalWeight(double current, String goal) {
     switch (goal.toLowerCase()) {
       case 'lose weight':
@@ -207,13 +207,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
     }
   }
 
-  // ✅ Generate history data based on UserService info
-  // ✅ FIXED: Generate history data based on UserService info - COMPLETE VERSION
+  // Generate history data based on UserService info
+  // Generate history data based on UserService info - COMPLETE VERSION
   void _generateHistoryData() async {
     String userGoal = userInfo!['goal'] ?? 'maintain weight';
     final prefs = await SharedPreferences.getInstance();
 
-    // ✅ Load weight history map from SharedPreferences
+    // Load weight history map from SharedPreferences
     String? savedJson = prefs.getString('weight_history_map_json');
     if (savedJson != null) {
       try {
@@ -241,7 +241,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       weightHistoryMap = {};
     }
 
-    // ✅ FIXED: Generate data cho các ngày thiếu - từ startWeight đến currentWeight
+    // Generate data cho các ngày thiếu - từ startWeight đến currentWeight
     DateTime now = DateTime.now();
 
     // Generate cho 90 ngày (bao gồm cả 7 và 30 ngày)
@@ -250,14 +250,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
       String dateKey =
           "${date.day.toString().padLeft(2, '0')}/${date.month.toString().padLeft(2, '0')}";
 
-      // ✅ Chỉ generate nếu chưa có data cho ngày này
+      // Chỉ generate nếu chưa có data cho ngày này
       if (!weightHistoryMap.containsKey(dateKey)) {
         double progress = i / 89.0; // 0.0 (90 ngày trước) → 1.0 (hôm nay)
         double generatedWeight;
 
         switch (userGoal.toLowerCase()) {
           case 'lose weight':
-            // ✅ FIXED: Từ startWeight (90 ngày trước) → currentWeight (hôm nay)
+            // Từ startWeight (90 ngày trước) → currentWeight (hôm nay)
             // Logic: User bắt đầu từ startWeight và giảm cân đến currentWeight
             double weightDifference = startWeight - currentWeight;
             generatedWeight =
@@ -271,7 +271,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             break;
 
           case 'gain weight':
-            // ✅ FIXED: Từ startWeight (90 ngày trước) → currentWeight (hôm nay)
+            // Từ startWeight (90 ngày trước) → currentWeight (hôm nay)
             // Logic: User bắt đầu từ startWeight và tăng cân đến currentWeight
             double weightDifference = currentWeight - startWeight;
             generatedWeight =
@@ -285,7 +285,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             break;
 
           default: // maintain weight
-            // ✅ FIXED: Fluctuate around startWeight với slow trend toward currentWeight
+            // Fluctuate around startWeight với slow trend toward currentWeight
             double baseWeight =
                 startWeight +
                 (currentWeight - startWeight) * progress * 0.3; // Slow trend
@@ -301,7 +301,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             break;
         }
 
-        // ✅ Ensure generated weight is reasonable (không âm hoặc quá cao)
+        // Ensure generated weight is reasonable (không âm hoặc quá cao)
         generatedWeight = generatedWeight.clamp(
           startWeight - 20.0, // Min: startWeight - 20 lbs
           startWeight + 20.0, // Max: startWeight + 20 lbs
@@ -314,7 +314,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       }
     }
 
-    // ✅ Update ngày hôm nay với current weight (luôn accurate)
+    // Update ngày hôm nay với current weight (luôn accurate)
     String todayKey =
         "${now.day.toString().padLeft(2, '0')}/${now.month.toString().padLeft(2, '0')}";
     weightHistoryMap[todayKey] = currentWeight;
@@ -322,7 +322,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       '✅ Updated today ($todayKey) weight: ${currentWeight.toStringAsFixed(1)} lbs',
     );
 
-    // ✅ Cleanup old data (optional - giữ data trong 1 năm)
+    // Cleanup old data (optional - giữ data trong 1 năm)
     DateTime cutoffDate = now.subtract(Duration(days: 365));
     List<String> keysToRemove = [];
 
@@ -358,16 +358,16 @@ class _ProfileScreenState extends State<ProfileScreen> {
       print('🗑️ Cleaned up ${keysToRemove.length} old weight entries');
     }
 
-    // ✅ Save updated map to SharedPreferences
+    // Save updated map to SharedPreferences
     String mapJson = weightHistoryMap.entries
         .map((e) => '${e.key}:${e.value}')
         .join('|');
     await prefs.setString('weight_history_map_json', mapJson);
 
-    // ✅ Generate arrays từ map cho UI
+    // Generate arrays từ map cho UI
     _generateArraysFromMap();
 
-    // ✅ IMPROVED: Generate calories history with more realistic patterns
+    // Generate calories history with more realistic patterns
     double baseCalories = caloriesPerDay.toDouble();
 
     // 7-day pattern: Weekdays vs weekends
@@ -443,7 +443,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     print('   Generated realistic progression from start to current weight');
   }
 
-  // ✅ Generate arrays từ map dựa trên current date
+  // Generate arrays từ map dựa trên current date
   void _generateArraysFromMap() {
     DateTime now = DateTime.now();
 
@@ -491,7 +491,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // ✅ Show loading screen
+    // Show loading screen
     if (_isLoading) {
       return Scaffold(
         backgroundColor: const Color(0xFFF5FBF8),
@@ -511,7 +511,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       );
     }
 
-    // ✅ Show error if no data
+    // Show error if no data
     if (userInfo == null) {
       return Scaffold(
         backgroundColor: const Color(0xFFF5FBF8),
@@ -543,7 +543,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       );
     }
 
-    // ✅ Giữ nguyên giao diện cũ, chỉ thay data source
+    // Giữ nguyên giao diện cũ, chỉ thay data source
     return Scaffold(
       backgroundColor: const Color(0xFFF5FBF8),
       body: SafeArea(
@@ -616,7 +616,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                   const SizedBox(width: 6),
                                   InkWell(
                                     onTap: () async {
-                                      // ✅ Giữ nguyên edit profile functionality
+                                      // Giữ nguyên edit profile functionality
                                       final result = await Navigator.push(
                                         context,
                                         MaterialPageRoute(
@@ -684,7 +684,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         ),
                       ),
                       const SizedBox(width: 12),
-                      // ✅ THÊM: BMI display
+                      // BMI display
                       if (currentBMI != null)
                         Container(
                           padding: const EdgeInsets.symmetric(
@@ -804,7 +804,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  // ✅ Update user data với UserService
+  // Update user data với UserService
   Future<void> _updateUserData(Map<String, dynamic> newData) async {
     try {
       print('🔄 Updating user data...');
@@ -832,7 +832,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           '✅ Weight updated: ${newData['currentWeight']} lbs (${weightInKg.toStringAsFixed(1)} kg)',
         );
 
-        // ✅ Update weight history arrays
+        // Update weight history arrays
         setState(() {
           currentWeight = newData['currentWeight'];
 
@@ -849,13 +849,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
         });
       }
 
-      // ✅ State update - FIXED: Update SharedPreferences
+      // State update - FIXED: Update SharedPreferences
       setState(() {
         userName = newData['name'] ?? userName;
         goal = newData['goal'] ?? goal;
         caloriesPerDay = newData['calories'] ?? caloriesPerDay;
 
-        // ✅ FIXED: Update SharedPreferences
+        // Update SharedPreferences
         if (newData['startWeight'] != null) {
           startWeight = newData['startWeight'];
           prefs.setDouble('profile_start_weight', startWeight);
@@ -881,7 +881,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     }
   }
 
-  // ✅ Map goal text về format UserService
+  // Map goal text về format UserService
   String _mapGoalToService(String displayGoal) {
     switch (displayGoal.toLowerCase()) {
       case 'lose weight':
@@ -985,14 +985,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         return LineTooltipItem(
                           touchedSpot.y.toStringAsFixed(
                             2,
-                          ), // ✅ Giữ nguyên format cũ
+                          ), // Giữ nguyên format cũ
                           const TextStyle(
                             color: Color.fromARGB(
                               255,
                               247,
                               248,
                               248,
-                            ), // ✅ Giữ nguyên màu cũ
+                            ), // Giữ nguyên màu cũ
                             fontWeight: FontWeight.bold,
                             fontSize: 16,
                           ),
@@ -1339,11 +1339,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 try {
                   final prefs = await SharedPreferences.getInstance();
 
-                  // ✅ Save to UserService
+                  // Save to UserService
                   double weightInKg = _lbsToKg(tempWeight);
                   await UserService.updateWeight(weightInKg);
 
-                  // ✅ Recalculate calories và BMI
+                  // Recalculate calories và BMI
                   final updatedCalories =
                       await UserService.calculateDailyCalories();
                   final updatedBMI = await UserService.calculateBMI();
@@ -1353,23 +1353,23 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     caloriesPerDay = updatedCalories?.toInt() ?? caloriesPerDay;
                     currentBMI = updatedBMI;
 
-                    // ✅ FIXED: Update map với today's date
+                    // Update map với today's date
                     DateTime now = DateTime.now();
                     String todayKey =
                         "${now.day.toString().padLeft(2, '0')}/${now.month.toString().padLeft(2, '0')}";
                     weightHistoryMap[todayKey] = tempWeight;
 
-                    // ✅ Regenerate arrays từ updated map
+                    // Regenerate arrays từ updated map
                     _generateArraysFromMap();
                   });
 
-                  // ✅ Save updated map
+                  // Save updated map
                   String mapJson = weightHistoryMap.entries
                       .map((e) => '${e.key}:${e.value}')
                       .join('|');
                   await prefs.setString('weight_history_map_json', mapJson);
 
-                  // ✅ Regenerate calHistory
+                  // Regenerate calHistory
                   double baseCalories = caloriesPerDay.toDouble();
                   calHistory7 = List.generate(7, (i) {
                     double variation = (i % 3 == 0
