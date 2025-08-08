@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../services/user_service.dart';
+import '../initial_screen/Loading.dart';
 
 class Step4ListDietaryRestrictions extends StatefulWidget {
   final VoidCallback onNext;
@@ -171,7 +172,12 @@ class _Step4DietaryRestrictionsState
                 ElevatedButton(
                   onPressed: () async {
                     await _saveRestrictions();
-                    widget.onNext();
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const LoadingScreen(),
+                      ),
+                    );
                   },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.black87,

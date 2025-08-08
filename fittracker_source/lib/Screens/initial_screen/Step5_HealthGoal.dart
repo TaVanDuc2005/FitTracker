@@ -1,56 +1,69 @@
 import 'package:flutter/material.dart';
+import 'Loading_Screen.dart';
 import '../../services/user_service.dart';
+import 'Step1_UserInfo.dart';
+import 'Recommend.dart';
 
 class Step5HealthGoal extends StatefulWidget {
   final VoidCallback onBack;
 
-  const Step5HealthGoal({
-    super.key,
-    required this.onBack,
-  });
+  const Step5HealthGoal({super.key, required this.onBack});
 
   @override
   State<Step5HealthGoal> createState() => _Step5SummaryState();
 }
 
 class _Step5SummaryState extends State<Step5HealthGoal> {
-  List<String> selectedGoals = [];
+  String? selectedGoal;
+  double? bmi;
+  String? gender;
+  int? age;
+  double? height;
+  double? weight;
 
   final List<String> options = [
     "Weight loss",
     "Weight gain",
     "Muscle building",
     "Maintain weight",
-    "Other",
   ];
 
   @override
   void initState() {
     super.initState();
-    _loadSavedGoals();
+    _loadSavedData();
   }
 
-  Future<void> _loadSavedGoals() async {
+  Future<void> _loadSavedData() async {
     final savedGoal = await UserService.getGoal();
-    if (savedGoal != null && savedGoal.isNotEmpty) {
-      setState(() {
-        selectedGoals = savedGoal
-            .split(',')
-            .map((e) => e.trim())
-            .where((e) => e.isNotEmpty)
-            .toList();
-      });
-    }
+    final savedGender = await UserService.getGender();
+    final savedAge = await UserService.getAge();
+    final savedHeight = await UserService.getHeight();
+    final savedWeight = await UserService.getWeight();
+
+    setState(() {
+      gender = savedGender;
+      age = savedAge;
+      height = savedHeight;
+      weight = savedWeight;
+
+      if (savedHeight != null && savedWeight != null && savedHeight > 0) {
+        bmi = savedWeight / ((savedHeight / 100) * (savedHeight / 100));
+      }
+
+      if (savedGoal != null && savedGoal.isNotEmpty) {
+        selectedGoal = savedGoal.split(',').first.trim();
+      }
+    });
   }
 
   Future<void> _saveGoals() async {
-    if (selectedGoals.isNotEmpty) {
-      final goalsString = selectedGoals.join(', ');
-      final success = await UserService.updateGoal(goalsString);
+    if (selectedGoal != null && selectedGoal!.isNotEmpty) {
+      final success = await UserService.updateGoal(selectedGoal!);
       if (success) {
-        print('✅ Health goals saved: $goalsString');
+        print('✅ Health goal saved: $selectedGoal');
       } else {
-        print('❌ Failed to save health goals');
+        print('❌ Failed to save health goal');
       }
     }
   }
@@ -68,21 +81,36 @@ class _Step5SummaryState extends State<Step5HealthGoal> {
           ),
         ),
 
+        if (bmi != null && gender != null && age != null)
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 24),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  "BMI: ${bmi!.toStringAsFixed(1)}",
+                  style: const TextStyle(fontSize: 16),
+                ),
+                const SizedBox(height: 4),
+                Text("Gender: $gender", style: const TextStyle(fontSize: 16)),
+                const SizedBox(height: 4),
+                Text("Age: $age", style: const TextStyle(fontSize: 16)),
+                const SizedBox(height: 20),
+              ],
+            ),
+          ),
+
         // Options list
         Expanded(
           child: SingleChildScrollView(
             padding: const EdgeInsets.symmetric(horizontal: 24),
             child: Column(
               children: options.map((item) {
-                final isSelected = selectedGoals.contains(item);
+                final isSelected = selectedGoal == item;
                 return GestureDetector(
                   onTap: () {
                     setState(() {
-                      if (isSelected) {
-                        selectedGoals.remove(item);
-                      } else {
-                        selectedGoals.add(item);
-                      }
+                      selectedGoal = item;
                     });
                   },
                   child: Container(
@@ -167,16 +195,28 @@ class _Step5SummaryState extends State<Step5HealthGoal> {
               ),
 
               // Finish / Save button
-              if (selectedGoals.isNotEmpty)
+              if (selectedGoal != null)
                 ElevatedButton(
                   onPressed: () async {
                     await _saveGoals();
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => RecommendScreen(
+                          height: height ?? 170, // fallback nếu null
+                          weight: weight ?? 60,
+                          goal: selectedGoal!,
+                        ),
+                      ),
+                    );
 
-                    showDialog(
+                    /*showDialog(
                       context: context,
                       builder: (context) => AlertDialog(
                         title: const Text("Setup Complete"),
-                        content: const Text("Your health goals have been saved."),
+                        content: const Text(
+                          "Your health goals have been saved.",
+                        ),
                         actions: [
                           TextButton(
                             onPressed: () => Navigator.of(context).pop(),
@@ -184,7 +224,7 @@ class _Step5SummaryState extends State<Step5HealthGoal> {
                           ),
                         ],
                       ),
-                    );
+                    );*/
                   },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.black87,
@@ -197,7 +237,7 @@ class _Step5SummaryState extends State<Step5HealthGoal> {
                     ),
                   ),
                   child: const Text(
-                    "Finish",
+                    "Next",
                     style: TextStyle(color: Colors.white, fontSize: 16),
                   ),
                 ),

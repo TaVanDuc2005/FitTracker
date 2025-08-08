@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'Step5_HealthGoal.dart'; // Import đúng file đích bạn muốn chuyển đến
+import 'Step5_HealthGoal.dart';
 import 'Step4_ListDietaryRestriction.dart';
 
 class LoadingScreen extends StatefulWidget {
@@ -19,7 +19,10 @@ class _LoadingScreenState extends State<LoadingScreen> {
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(
-          builder: (context) => const Step5HealthGoal(), // Đúng tên class
+          builder: (context) => Step5HealthGoal(
+            onBack: () => Navigator.pop(context),
+            // Nếu có onNext thì truyền thêm ở đây
+          ),
         ),
       );
     });
@@ -29,9 +32,7 @@ class _LoadingScreenState extends State<LoadingScreen> {
   Widget build(BuildContext context) {
     return const Scaffold(
       backgroundColor: Colors.white,
-      body: Center(
-        child: CircularProgressIndicator(), // Vòng loading
-      ),
+      body: Center(child: CircularProgressIndicator()),
     );
   }
 }
