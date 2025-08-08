@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'On_boarding_Screen.dart';
 import 'package:fittracker_source/Screens/auth/Login_Screen.dart';
 
-
 class WelcomeScreen extends StatelessWidget {
   const WelcomeScreen({super.key});
 
@@ -33,7 +32,7 @@ class WelcomeScreen extends StatelessWidget {
                     child: Image.asset(
                       'Assets/Images/Welcome5.png',
                       width: 200,
-                      height:200,
+                      height: 200,
                     ),
                   ),
                   Positioned(
@@ -42,7 +41,7 @@ class WelcomeScreen extends StatelessWidget {
                     child: Image.asset(
                       'Assets/Images/Welcome2.png',
                       width: 120,
-                      height:120,
+                      height: 120,
                     ),
                   ),
                   Positioned(
@@ -105,7 +104,10 @@ class WelcomeScreen extends StatelessWidget {
                     );
                   },
                   style: ElevatedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(horizontal: 60, vertical: 14),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 60,
+                      vertical: 14,
+                    ),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(30),
                     ),
@@ -127,32 +129,37 @@ class WelcomeScreen extends StatelessWidget {
 
                 // 🔐 Đã có tài khoản? Log in
                 Row(
-  mainAxisAlignment: MainAxisAlignment.center,
-  children: [
-    const Text("Already have an account? "),
-    GestureDetector(
-      onTap: () {
-        Navigator.of(context).push(
-          MaterialPageRoute(builder: (_) => const LoginScreen()),
-        );
-      },
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-        decoration: BoxDecoration(
-          color: Colors.grey[300],
-          borderRadius: BorderRadius.circular(4),
-        ),
-        child: const Text(
-          "Log in",
-          style: TextStyle(
-            fontWeight: FontWeight.bold,
-            color: Colors.black87,
-          ),
-        ),
-      ),
-    ),
-  ],
-),
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Text("Already have an account? "),
+                    GestureDetector(
+                      onTap: () {
+                        Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (_) => const LoginScreen(),
+                          ),
+                        );
+                      },
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 4,
+                        ),
+                        decoration: BoxDecoration(
+                          color: Colors.grey[300],
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                        child: const Text(
+                          "Log in",
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            color: Colors.black87,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
 
                 const SizedBox(height: 24),
               ],

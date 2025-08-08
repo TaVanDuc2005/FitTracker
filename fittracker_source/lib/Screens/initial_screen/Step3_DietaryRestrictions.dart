@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../services/user_service.dart';
+import 'Loading.dart';
 
 class Step3DietaryRestriction extends StatefulWidget {
   final VoidCallback onNext;
@@ -30,8 +31,7 @@ class _Step3GoalState extends State<Step3DietaryRestriction> {
   }
 
   Future<void> _loadSavedRestriction() async {
-    final savedRestriction =
-        await UserService.getHasDietaryRestrictions();
+    final savedRestriction = await UserService.getHasDietaryRestrictions();
     if (savedRestriction != null && savedRestriction.isNotEmpty) {
       setState(() {
         selectedRestriction = savedRestriction;
@@ -113,16 +113,15 @@ class _Step3GoalState extends State<Step3DietaryRestriction> {
               onPressed: widget.onBack,
               style: ElevatedButton.styleFrom(
                 padding: const EdgeInsets.symmetric(
-                    horizontal: 28, vertical: 14),
+                  horizontal: 28,
+                  vertical: 14,
+                ),
                 backgroundColor: Colors.grey[200],
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(30),
                 ),
               ),
-              child: const Text(
-                "Back",
-                style: TextStyle(color: Colors.black),
-              ),
+              child: const Text("Back", style: TextStyle(color: Colors.black)),
             ),
           ),
 
@@ -134,17 +133,26 @@ class _Step3GoalState extends State<Step3DietaryRestriction> {
               child: ElevatedButton(
                 onPressed: () async {
                   await UserService.updateHasDietaryRestrictions(
-                      selectedRestriction);
+                    selectedRestriction,
+                  );
 
                   if (selectedRestriction == "Yes") {
                     widget.onNext(); // Sang Step 4
                   } else {
-                    widget.onSkipToStep(5); // Bỏ qua Step 4 -> tới Step 5
+                    // Nếu chọn "No", chuyển sang LoadingScreen
+                    Navigator.pushReplacement(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const LoadingScreen(),
+                      ),
+                    );
                   }
                 },
                 style: ElevatedButton.styleFrom(
                   padding: const EdgeInsets.symmetric(
-                      horizontal: 28, vertical: 14),
+                    horizontal: 28,
+                    vertical: 14,
+                  ),
                   backgroundColor: Colors.black87,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(30),
