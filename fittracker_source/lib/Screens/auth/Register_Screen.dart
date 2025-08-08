@@ -51,12 +51,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   prefixIcon: Icon(Icons.person),
                 ),
                 validator: (v) {
-<<<<<<< HEAD
-                  if (v == null || v.trim().isEmpty) return 'Please enter a username';
-=======
                   if (v == null || v.trim().isEmpty)
                     return 'Please enter a username';
->>>>>>> 9115f8365ea0432247877f76e2b577bd48dc033a
                   if (v.trim().length < 3) return 'Username too short';
                   return null;
                 },
@@ -70,23 +66,15 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   border: const OutlineInputBorder(),
                   prefixIcon: const Icon(Icons.lock),
                   suffixIcon: IconButton(
-<<<<<<< HEAD
-                    icon: Icon(_obscure1 ? Icons.visibility : Icons.visibility_off),
-=======
                     icon: Icon(
                       _obscure1 ? Icons.visibility : Icons.visibility_off,
                     ),
->>>>>>> 9115f8365ea0432247877f76e2b577bd48dc033a
                     onPressed: () => setState(() => _obscure1 = !_obscure1),
                   ),
                 ),
                 validator: (v) {
-<<<<<<< HEAD
-                  if (v == null || v.length < 8) return 'At least 8 characters required';
-=======
                   if (v == null || v.length < 8)
                     return 'At least 8 characters required';
->>>>>>> 9115f8365ea0432247877f76e2b577bd48dc033a
                   return null;
                 },
               ),
@@ -99,23 +87,15 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   border: const OutlineInputBorder(),
                   prefixIcon: const Icon(Icons.lock_outline),
                   suffixIcon: IconButton(
-<<<<<<< HEAD
-                    icon: Icon(_obscure2 ? Icons.visibility : Icons.visibility_off),
-=======
                     icon: Icon(
                       _obscure2 ? Icons.visibility : Icons.visibility_off,
                     ),
->>>>>>> 9115f8365ea0432247877f76e2b577bd48dc033a
                     onPressed: () => setState(() => _obscure2 = !_obscure2),
                   ),
                 ),
                 validator: (v) {
-<<<<<<< HEAD
-                  if (v != _passwordController.text) return 'Passwords do not match';
-=======
                   if (v != _passwordController.text)
                     return 'Passwords do not match';
->>>>>>> 9115f8365ea0432247877f76e2b577bd48dc033a
                   return null;
                 },
               ),
@@ -123,15 +103,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
               ElevatedButton(
                 onPressed: _isLoading ? null : _onSubmit,
                 child: _isLoading
-<<<<<<< HEAD
-                    ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator())
-=======
                     ? const SizedBox(
                         height: 20,
                         width: 20,
                         child: CircularProgressIndicator(),
                       )
->>>>>>> 9115f8365ea0432247877f76e2b577bd48dc033a
                     : const Text('Sign up'),
               ),
             ],

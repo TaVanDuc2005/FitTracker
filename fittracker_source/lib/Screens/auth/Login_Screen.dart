@@ -50,13 +50,9 @@ class _LoginScreenState extends State<LoginScreen> {
                   border: OutlineInputBorder(),
                   prefixIcon: Icon(Icons.person),
                 ),
-<<<<<<< HEAD
-                validator: (v) => v == null || v.trim().isEmpty ? 'Please enter a username' : null,
-=======
                 validator: (v) => v == null || v.trim().isEmpty
                     ? 'Please enter a username'
                     : null,
->>>>>>> 9115f8365ea0432247877f76e2b577bd48dc033a
               ),
               const SizedBox(height: 12),
               TextFormField(
@@ -67,14 +63,6 @@ class _LoginScreenState extends State<LoginScreen> {
                   border: const OutlineInputBorder(),
                   prefixIcon: const Icon(Icons.lock),
                   suffixIcon: IconButton(
-<<<<<<< HEAD
-                    icon: Icon(_obscure ? Icons.visibility : Icons.visibility_off),
-                    onPressed: () => setState(() => _obscure = !_obscure),
-                  ),
-                ),
-                validator: (v) =>
-                    v == null || v.length < 8 ? 'Password must be at least 8 characters' : null,
-=======
                     icon: Icon(
                       _obscure ? Icons.visibility : Icons.visibility_off,
                     ),
@@ -84,21 +72,16 @@ class _LoginScreenState extends State<LoginScreen> {
                 validator: (v) => v == null || v.length < 8
                     ? 'Password must be at least 8 characters'
                     : null,
->>>>>>> 9115f8365ea0432247877f76e2b577bd48dc033a
               ),
               const SizedBox(height: 20),
               ElevatedButton(
                 onPressed: _isLoading ? null : _onSubmit,
                 child: _isLoading
                     ? const SizedBox(
-<<<<<<< HEAD
-                        height: 20, width: 20, child: CircularProgressIndicator(strokeWidth: 2))
-=======
                         height: 20,
                         width: 20,
                         child: CircularProgressIndicator(strokeWidth: 2),
                       )
->>>>>>> 9115f8365ea0432247877f76e2b577bd48dc033a
                     : const Text('Log in'),
               ),
               const SizedBox(height: 12),
@@ -109,11 +92,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   );
                 },
                 child: const Text("Don't have an account? Sign up"),
-<<<<<<< HEAD
-              )
-=======
               ),
->>>>>>> 9115f8365ea0432247877f76e2b577bd48dc033a
             ],
           ),
         ),
