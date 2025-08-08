@@ -5,6 +5,8 @@ import 'package:image_picker/image_picker.dart';
 import 'package:fittracker_source/Screens/active_screen/journal/journal_screen.dart';
 import '../../../services/user_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:fittracker_source/Screens/active_screen/profile/Setting_Screen.dart';
+
 
 // ====== Hàm sinh ngày "chuẩn lịch" ======
 List<String> generateDateLabels(int days) {
@@ -1534,28 +1536,6 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
               ),
             ),
           ],
-        ),
-      ),
-    );
-  }
-}
-
-// ========== SETTINGS SCREEN - giữ nguyên hoàn toàn ==========
-class SettingsScreen extends StatelessWidget {
-  const SettingsScreen({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text("Settings"),
-        backgroundColor: Colors.teal[300],
-      ),
-      body: const Center(
-        child: Text(
-          "Settings Content Demo",
-          style: TextStyle(fontSize: 20, color: Colors.teal),
-          textAlign: TextAlign.center,
         ),
       ),
     );
