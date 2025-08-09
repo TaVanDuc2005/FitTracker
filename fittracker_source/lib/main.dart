@@ -5,8 +5,7 @@ import 'Screens/initial_screen/Welcome_Screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  tz.initializeTimeZones();
-  await NotificationService.init();
+  await NotificationService.initialize();
   runApp(const MyApp());
 }
 
