@@ -7,7 +7,6 @@ import '../../../services/user_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:fittracker_source/Screens/active_screen/profile/Setting_Screen.dart';
 
-
 // ====== Hàm sinh ngày "chuẩn lịch" ======
 List<String> generateDateLabels(int days) {
   DateTime now = DateTime.now();
@@ -1148,6 +1147,29 @@ class _ProfileScreenState extends State<ProfileScreen> {
               LineChartData(
                 minY: 0,
                 maxY: maxCal,
+                lineTouchData: LineTouchData(
+                  touchTooltipData: LineTouchTooltipData(
+                    getTooltipItems: (touchedSpots) {
+                      return touchedSpots.map((touchedSpot) {
+                        return LineTooltipItem(
+                          touchedSpot.y.toStringAsFixed(
+                            2,
+                          ), // Giữ nguyên format cũ
+                          const TextStyle(
+                            color: Color.fromARGB(
+                              255,
+                              247,
+                              248,
+                              248,
+                            ), // Giữ nguyên màu cũ
+                            fontWeight: FontWeight.bold,
+                            fontSize: 16,
+                          ),
+                        );
+                      }).toList();
+                    },
+                  ),
+                ),
                 lineBarsData: [
                   LineChartBarData(
                     spots: List.generate(
@@ -1156,7 +1178,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     ),
                     isCurved: true,
                     barWidth: 3,
-                    color: Colors.teal[600],
+                    color: Colors.teal[700],
                     dotData: FlDotData(show: true),
                     belowBarData: BarAreaData(
                       show: true,
