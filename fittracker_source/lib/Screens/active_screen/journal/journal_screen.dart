@@ -4,6 +4,7 @@ import '../profile/profile_Screen.dart';
 import '../../../services/user_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:fittracker_source/Screens/initial_screen/Welcome_Screen.dart';
+import 'package:fittracker_source/Screens/initial_screen/AI_agent_screen.dart';
 
 // Tạo class MacroData để quản lý dữ liệu
 class MacroData {
@@ -233,6 +234,25 @@ class _JournalScreenState extends State<JournalScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              // Thêm nút AI Agent ở đầu màn hình
+              Align(
+                alignment: Alignment.topLeft,
+                child: IconButton(
+                  icon: const Icon(
+                    Icons.smart_toy_outlined,
+                    color: Colors.black87,
+                  ),
+                  tooltip: 'Open AI Agent',
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const AIAgentScreen(),
+                      ),
+                    );
+                  },
+                ),
+              ),
               // Calories Overview với dữ liệu từ UserService
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
