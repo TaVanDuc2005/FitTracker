@@ -34,7 +34,7 @@ class WelcomeScreen extends StatelessWidget {
                     child: Image.asset(
                       'Assets/Images/Welcome5.png',
                       width: 200,
-                      height:200,
+                      height: 200,
                     ),
                   ),
                   Positioned(
@@ -43,7 +43,7 @@ class WelcomeScreen extends StatelessWidget {
                     child: Image.asset(
                       'Assets/Images/Welcome2.png',
                       width: 120,
-                      height:120,
+                      height: 120,
                     ),
                   ),
                   Positioned(
@@ -106,7 +106,10 @@ class WelcomeScreen extends StatelessWidget {
                     );
                   },
                   style: ElevatedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(horizontal: 60, vertical: 14),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 60,
+                      vertical: 14,
+                    ),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(30),
                     ),

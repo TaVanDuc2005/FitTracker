@@ -1,7 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:fittracker_source/Screens/initial_screen/Welcome_Screen.dart';
+import 'package:timezone/data/latest.dart' as tz;
+import 'package:fittracker_source/services/notification_service.dart';
+import 'Screens/initial_screen/Welcome_Screen.dart';
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await NotificationService.initialize();
   runApp(const MyApp());
 }
 
@@ -13,7 +17,7 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       title: 'FitTracker',
       debugShowCheckedModeBanner: false,
-      theme: ThemeData(primarySwatch: Colors.green, useMaterial3: true),
+      theme: ThemeData(primarySwatch: Colors.teal),
       home: const WelcomeScreen(),
     );
   }

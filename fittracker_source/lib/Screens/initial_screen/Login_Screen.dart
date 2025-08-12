@@ -74,12 +74,15 @@ class _LoginScreenState extends State<LoginScreen> {
                   border: const OutlineInputBorder(),
                   prefixIcon: const Icon(Icons.lock),
                   suffixIcon: IconButton(
-                    icon: Icon(_obscure ? Icons.visibility : Icons.visibility_off),
+                    icon: Icon(
+                      _obscure ? Icons.visibility : Icons.visibility_off,
+                    ),
                     onPressed: () => setState(() => _obscure = !_obscure),
                   ),
                 ),
-                validator: (v) =>
-                    v == null || v.length < 8 ? 'Password must be at least 8 characters' : null,
+                validator: (v) => v == null || v.length < 8
+                    ? 'Password must be at least 8 characters'
+                    : null,
               ),
               const SizedBox(height: 20),
 

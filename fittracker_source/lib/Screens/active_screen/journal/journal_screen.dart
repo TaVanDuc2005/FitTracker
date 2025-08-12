@@ -4,6 +4,7 @@ import '../profile/profile_Screen.dart';
 import '../../../services/user_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:fittracker_source/Screens/initial_screen/Welcome_Screen.dart';
+import 'package:fittracker_source/Screens/initial_screen/AI_agent_screen.dart';
 
 // Tạo class MacroData để quản lý dữ liệu
 class MacroData {
@@ -233,6 +234,25 @@ class _JournalScreenState extends State<JournalScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              // Thêm nút AI Agent ở đầu màn hình
+              Align(
+                alignment: Alignment.topLeft,
+                child: IconButton(
+                  icon: const Icon(
+                    Icons.smart_toy_outlined,
+                    color: Colors.black87,
+                  ),
+                  tooltip: 'Open AI Agent',
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const AIAgentScreen(),
+                      ),
+                    );
+                  },
+                ),
+              ),
               // Calories Overview với dữ liệu từ UserService
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -499,9 +519,7 @@ class _JournalScreenState extends State<JournalScreen> {
               const WaterChallengeCard(),
 
               // ✅ NEW: Reset Food Journey Button
-              const SizedBox(height: 20),
-              _buildResetFoodJourneyButton(),
-              const SizedBox(height: 40), // Extra bottom padding
+              const SizedBox(height: 40),
             ],
           ),
         ),
@@ -530,291 +548,6 @@ class _JournalScreenState extends State<JournalScreen> {
         ],
       ),
     );
-  }
-
-  // ✅ NEW: Reset Food Journey Button Widget - MOVED INSIDE CLASS
-  Widget _buildResetFoodJourneyButton() {
-    return Container(
-      width: double.infinity,
-      margin: const EdgeInsets.symmetric(horizontal: 0),
-      child: Column(
-        children: [
-          // Divider line
-          Container(
-            height: 1,
-            color: Colors.white.withOpacity(0.3),
-            margin: const EdgeInsets.symmetric(vertical: 20),
-          ),
-
-          // Reset button
-          SizedBox(
-            width: double.infinity,
-            child: ElevatedButton.icon(
-              onPressed: _showResetConfirmationDialog,
-              icon: const Icon(
-                Icons.restore_rounded,
-                color: Colors.white,
-                size: 22,
-              ),
-              label: const Text(
-                "Complete Journey Reset",
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w600,
-                  color: Colors.white,
-                ),
-              ),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.red.withOpacity(0.9),
-                padding: const EdgeInsets.symmetric(vertical: 16),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(25),
-                ),
-                elevation: 3,
-                shadowColor: Colors.red.withOpacity(0.3),
-              ),
-            ),
-          ),
-
-          const SizedBox(height: 8),
-
-          // Description text
-          Text(
-            "Clear all data and restart your fitness journey",
-            style: TextStyle(
-              fontSize: 13,
-              color: Colors.black54,
-              fontStyle: FontStyle.italic,
-            ),
-            textAlign: TextAlign.center,
-          ),
-        ],
-      ),
-    );
-  }
-
-  // ✅ NEW: Show confirmation dialog before reset - MOVED INSIDE CLASS
-  void _showResetConfirmationDialog() {
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(20),
-          ),
-          title: Row(
-            children: const [
-              Icon(Icons.warning_rounded, color: Colors.red, size: 28),
-              SizedBox(width: 12),
-              Text(
-                "Complete Reset",
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.red,
-                ),
-              ),
-            ],
-          ),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: const [
-              Text(
-                "This will COMPLETELY RESET your entire fitness journey!",
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w600,
-                  color: Colors.red,
-                ),
-              ),
-              SizedBox(height: 12),
-              Text(
-                "This will:",
-                style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
-              ),
-              SizedBox(height: 8),
-              Text(
-                "• Delete ALL your profile data",
-                style: TextStyle(fontSize: 14, color: Colors.black87),
-              ),
-              Text(
-                "• Clear all weight history",
-                style: TextStyle(fontSize: 14, color: Colors.black87),
-              ),
-              Text(
-                "• Reset all food entries",
-                style: TextStyle(fontSize: 14, color: Colors.black87),
-              ),
-              Text(
-                "• Return to initial setup",
-                style: TextStyle(fontSize: 14, color: Colors.black87),
-              ),
-              SizedBox(height: 12),
-              Text(
-                "You will need to set up your profile again from scratch.",
-                style: TextStyle(
-                  fontSize: 14,
-                  color: Colors.red,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-            ],
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: Text(
-                "Cancel",
-                style: TextStyle(color: Colors.grey[600], fontSize: 16),
-              ),
-            ),
-            ElevatedButton(
-              onPressed: () {
-                Navigator.of(context).pop();
-                _performFoodJourneyReset();
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.red,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(15),
-                ),
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 24,
-                  vertical: 12,
-                ),
-              ),
-              child: const Text(
-                "Complete Reset",
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 16,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-            ),
-          ],
-        );
-      },
-    );
-  }
-
-  // ✅ NEW: Perform the actual reset - MOVED INSIDE CLASS
-  void _performFoodJourneyReset() async {
-    try {
-      // Show loading
-      showDialog(
-        context: context,
-        barrierDismissible: false,
-        builder: (context) => Center(
-          child: Container(
-            padding: const EdgeInsets.all(20),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(15),
-            ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: const [
-                CircularProgressIndicator(
-                  color: Color.fromARGB(255, 143, 178, 171),
-                ),
-                SizedBox(height: 16),
-                Text(
-                  "Resetting your entire journey...",
-                  style: TextStyle(fontSize: 16),
-                ),
-              ],
-            ),
-          ),
-        ),
-      );
-
-      // ✅ COMPLETE RESET: Clear ALL UserService data
-      await UserService.clearAllUserData();
-
-      // ✅ Clear SharedPreferences
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.clear();
-
-      // ✅ Reset all local state
-      setState(() {
-        _targetCalories = 0.0;
-        _targetBreakfast = 0.0;
-        _targetLunch = 0.0;
-        _targetDinner = 0.0;
-        macroData.clear();
-        _isLoading = false;
-      });
-
-      // Close loading dialog
-      if (Navigator.canPop(context)) {
-        Navigator.of(context).pop();
-      }
-
-      // ✅ Show success message then navigate to setup
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Row(
-            children: const [
-              Icon(Icons.refresh, color: Colors.white),
-              SizedBox(width: 12),
-              Text(
-                "Journey reset! Redirecting to setup...",
-                style: TextStyle(fontSize: 16),
-              ),
-            ],
-          ),
-          backgroundColor: Colors.green,
-          duration: const Duration(seconds: 2),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(10),
-          ),
-          behavior: SnackBarBehavior.floating,
-        ),
-      );
-
-      // ✅ Wait then navigate to first setup screen
-      await Future.delayed(const Duration(seconds: 2));
-
-      if (mounted) {
-        Navigator.of(context).pushAndRemoveUntil(
-          MaterialPageRoute(builder: (context) => const WelcomeScreen()),
-          (route) => false,
-        );
-      }
-
-      print('✅ Complete journey reset and redirect to setup');
-    } catch (e) {
-      // Close loading dialog if open
-      if (Navigator.canPop(context)) {
-        Navigator.of(context).pop();
-      }
-
-      print('❌ Error resetting complete journey: $e');
-
-      // Show error message
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Row(
-            children: const [
-              Icon(Icons.error, color: Colors.white),
-              SizedBox(width: 12),
-              Text(
-                "Failed to reset journey. Please try again.",
-                style: TextStyle(fontSize: 16),
-              ),
-            ],
-          ),
-          backgroundColor: Colors.red,
-          duration: const Duration(seconds: 3),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(10),
-          ),
-          behavior: SnackBarBehavior.floating,
-        ),
-      );
-    }
   }
 }
 
@@ -1280,23 +1013,6 @@ class _WaterChallengeCardState extends State<WaterChallengeCard> {
                 }),
               ),
             ],
-          ),
-        ),
-        OutlinedButton(
-          style: OutlinedButton.styleFrom(
-            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-            side: const BorderSide(color: Colors.black87),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(30),
-            ),
-          ),
-          onPressed: () {},
-          child: const Text(
-            "Customize my diary",
-            style: TextStyle(
-              color: Colors.black87,
-              fontWeight: FontWeight.w500,
-            ),
           ),
         ),
       ],
