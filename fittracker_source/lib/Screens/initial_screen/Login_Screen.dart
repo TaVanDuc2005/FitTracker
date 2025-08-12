@@ -2,7 +2,14 @@ import 'package:flutter/material.dart';
 import 'Register_Screen.dart';
 
 class LoginScreen extends StatefulWidget {
-  const LoginScreen({super.key});
+  final VoidCallback onNext;
+  final VoidCallback onBack;
+
+  const LoginScreen({
+    super.key,
+    required this.onNext,
+    required this.onBack,
+  });
 
   @override
   State<LoginScreen> createState() => _LoginScreenState();
@@ -24,13 +31,15 @@ class _LoginScreenState extends State<LoginScreen> {
 
   Future<void> _onSubmit() async {
     if (!_formKey.currentState!.validate()) return;
+
     setState(() => _isLoading = true);
+
     await Future.delayed(const Duration(milliseconds: 800));
+
     if (!mounted) return;
     setState(() => _isLoading = false);
 
-    final username = _usernameController.text.trim();
-    Navigator.of(context).pop({'username': username});
+    widget.onNext();
   }
 
   @override
@@ -43,6 +52,7 @@ class _LoginScreenState extends State<LoginScreen> {
           key: _formKey,
           child: Column(
             children: [
+              // Username
               TextFormField(
                 controller: _usernameController,
                 decoration: const InputDecoration(
@@ -50,9 +60,12 @@ class _LoginScreenState extends State<LoginScreen> {
                   border: OutlineInputBorder(),
                   prefixIcon: Icon(Icons.person),
                 ),
-                validator: (v) => v == null || v.trim().isEmpty ? 'Please enter a username' : null,
+                validator: (v) =>
+                    v == null || v.trim().isEmpty ? 'Please enter a username' : null,
               ),
               const SizedBox(height: 12),
+
+              // Password
               TextFormField(
                 controller: _passwordController,
                 obscureText: _obscure,
@@ -69,14 +82,24 @@ class _LoginScreenState extends State<LoginScreen> {
                     v == null || v.length < 8 ? 'Password must be at least 8 characters' : null,
               ),
               const SizedBox(height: 20),
-              ElevatedButton(
-                onPressed: _isLoading ? null : _onSubmit,
-                child: _isLoading
-                    ? const SizedBox(
-                        height: 20, width: 20, child: CircularProgressIndicator(strokeWidth: 2))
-                    : const Text('Log in'),
+
+              // Login button
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: _isLoading ? null : _onSubmit,
+                  child: _isLoading
+                      ? const SizedBox(
+                          height: 20,
+                          width: 20,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : const Text('Log in'),
+                ),
               ),
               const SizedBox(height: 12),
+
+              // Sign up
               TextButton(
                 onPressed: () {
                   Navigator.of(context).push(
@@ -84,7 +107,15 @@ class _LoginScreenState extends State<LoginScreen> {
                   );
                 },
                 child: const Text("Don't have an account? Sign up"),
-              )
+              ),
+
+              const Spacer(),
+
+              // Back
+              TextButton(
+                onPressed: widget.onBack,
+                child: const Text("Back"),
+              ),
             ],
           ),
         ),

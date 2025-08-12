@@ -157,18 +157,20 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
             Positioned(
               bottom: 30,
               right: 24,
-              child: GestureDetector(
-                onTap: _nextPage,
-                child: Container(
-                  width: 56,
-                  height: 56,
-                  decoration: const BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: Colors.black,
-                  ),
-                  child: const Icon(Icons.arrow_forward, color: Colors.white),
-                ),
-              ),
+              child: _currentIndex == _pages.length - 1
+                ? GestureDetector(
+                    onTap: _nextPage,
+                    child: Container(
+                      width: 56,
+                      height: 56,
+                      decoration: const BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: Colors.black,
+                      ),
+                      child: const Icon(Icons.arrow_forward, color: Colors.white),
+                    ),
+                  )
+                : const SizedBox.shrink(),
             ),
           ],
         ),

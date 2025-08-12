@@ -1,5 +1,3 @@
-// file: enter_name_screen.dart
-
 import 'package:flutter/material.dart';
 import 'onboarding_controller.dart';
 import 'package:fittracker_source/services/user_service.dart'; // THÊM IMPORT
@@ -22,14 +20,13 @@ class _EnterNameScreenState extends State<EnterNameScreen> {
     _loadSavedName();
   }
 
-  // THÊM: Hàm load name đã lưu
   Future<void> _loadSavedName() async {
     final savedName = await UserService.getName();
     if (savedName != null && savedName.isNotEmpty) {
       if (mounted) {
         setState(() {
-          _nameController.text = savedName; // TỰ ĐỘNG ĐIỀN NAME
-          _isButtonVisible = true; // HIỆN NÚT NEXT
+          _nameController.text = savedName;
+          _isButtonVisible = true;
         });
       }
     }
@@ -130,6 +127,7 @@ class _EnterNameScreenState extends State<EnterNameScreen> {
                 alignment: const Alignment(0, 0.75),
                 child: ElevatedButton(
                   onPressed: () async {
+                    FocusScope.of(context).unfocus();
                     final name = _nameController.text.trim();
 
                     if (name.isNotEmpty) {
@@ -144,7 +142,7 @@ class _EnterNameScreenState extends State<EnterNameScreen> {
                         builder: (context) => const StepProgressForm(),
                       ),
                     );
-                  }, // THÊM dấu ph
+                  },  
                   style: ElevatedButton.styleFrom(
                     padding: const EdgeInsets.symmetric(
                       horizontal: 60,

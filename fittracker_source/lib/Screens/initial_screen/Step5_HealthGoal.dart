@@ -1,19 +1,99 @@
 import 'package:flutter/material.dart';
-import 'Loading_Screen.dart';
 import '../../services/user_service.dart';
-import 'Step1_UserInfo.dart';
-import 'Recommend.dart';
+
+class RangeProgressBar extends StatelessWidget {
+  final double minValue;
+  final double maxValue;
+  final double currentValue;
+  final String label;
+  final Color barColor;
+
+  const RangeProgressBar({
+    super.key,
+    required this.minValue,
+    required this.maxValue,
+    required this.currentValue,
+    required this.label,
+    this.barColor = Colors.orange,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    double progress = ((currentValue - minValue) / (maxValue - minValue)).clamp(0.0, 1.0);
+
+    final barWidth = MediaQuery.of(context).size.width - 48;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(label,
+            style: const TextStyle(
+                fontWeight: FontWeight.bold, fontSize: 16, color: Colors.black87)),
+        const SizedBox(height: 6),
+        Stack(
+          children: [
+            Container(
+              height: 12,
+              decoration: BoxDecoration(
+                color: barColor.withOpacity(0.2),
+                borderRadius: BorderRadius.circular(6),
+              ),
+            ),
+            FractionallySizedBox(
+              widthFactor: progress,
+              child: Container(
+                height: 12,
+                decoration: BoxDecoration(
+                  color: barColor,
+                  borderRadius: BorderRadius.circular(6),
+                ),
+              ),
+            ),
+            Positioned(
+              left: (progress * barWidth).clamp(0, barWidth - 20),
+              top: -4,
+              child: Container(
+                width: 20,
+                height: 20,
+                decoration: BoxDecoration(
+                  color: barColor,
+                  shape: BoxShape.circle,
+                  border: Border.all(color: Colors.white, width: 2),
+                ),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 4),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(minValue.toStringAsFixed(1),
+                style: const TextStyle(color: Colors.grey, fontSize: 12)),
+            Text(maxValue.toStringAsFixed(1),
+                style: const TextStyle(color: Colors.grey, fontSize: 12)),
+          ],
+        ),
+      ],
+    );
+  }
+}
 
 class Step5HealthGoal extends StatefulWidget {
   final VoidCallback onBack;
+  final VoidCallback onNext;
 
-  const Step5HealthGoal({super.key, required this.onBack});
+  const Step5HealthGoal({
+    super.key,
+    required this.onBack,
+    required this.onNext,
+  });
 
   @override
-  State<Step5HealthGoal> createState() => _Step5SummaryState();
+  State<Step5HealthGoal> createState() => _Step5HealthGoalState();
 }
 
-class _Step5SummaryState extends State<Step5HealthGoal> {
+class _Step5HealthGoalState extends State<Step5HealthGoal> {
   String? selectedGoal;
   double? bmi;
   String? gender;
@@ -57,19 +137,39 @@ class _Step5SummaryState extends State<Step5HealthGoal> {
     });
   }
 
-  Future<void> _saveGoals() async {
+  Future<void> _saveGoal() async {
     if (selectedGoal != null && selectedGoal!.isNotEmpty) {
       final success = await UserService.updateGoal(selectedGoal!);
-      if (success) {
-        print('✅ Health goal saved: $selectedGoal');
-      } else {
+      if (!success) {
         print('❌ Failed to save health goal');
+      } else {
+        print('✅ Health goal saved: $selectedGoal');
       }
     }
   }
 
+  Widget _infoItem(String label, String value) {
+    return Column(
+      children: [
+        Text(label,
+            style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500)),
+        const SizedBox(height: 4),
+        Text(value, style: const TextStyle(fontSize: 16)),
+      ],
+    );
+  }
+
+  Map<String, List<double>> bmiRanges = {
+    "Weight loss": [18.5, 24.9],
+    "Weight gain": [25.0, 29.9],
+    "Muscle building": [20.0, 30.0],
+    "Maintain weight": [18.5, 24.9],
+  };
+
   @override
   Widget build(BuildContext context) {
+    final range = selectedGoal != null ? bmiRanges[selectedGoal!] : null;
+
     return Column(
       children: [
         // Title
@@ -81,26 +181,44 @@ class _Step5SummaryState extends State<Step5HealthGoal> {
           ),
         ),
 
+        // BMI, gender, age info card
         if (bmi != null && gender != null && age != null)
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 24),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  "BMI: ${bmi!.toStringAsFixed(1)}",
-                  style: const TextStyle(fontSize: 16),
-                ),
-                const SizedBox(height: 4),
-                Text("Gender: $gender", style: const TextStyle(fontSize: 16)),
-                const SizedBox(height: 4),
-                Text("Age: $age", style: const TextStyle(fontSize: 16)),
-                const SizedBox(height: 20),
-              ],
+          Card(
+            elevation: 3,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+            ),
+            color: Colors.orange.shade50,
+            margin: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceAround,
+                    children: [
+                      _infoItem("BMI", bmi!.toStringAsFixed(1)),
+                      _infoItem("Gender", gender!),
+                      _infoItem("Age", age.toString()),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+
+                  // Thanh range progress bar cho BMI dựa theo goal
+                  if (range != null)
+                    RangeProgressBar(
+                      minValue: range[0],
+                      maxValue: range[1],
+                      currentValue: bmi!,
+                      label: "BMI Range for $selectedGoal",
+                      barColor: Colors.orange,
+                    ),
+                ],
+              ),
             ),
           ),
 
-        // Options list
+        // Goal options
         Expanded(
           child: SingleChildScrollView(
             padding: const EdgeInsets.symmetric(horizontal: 24),
@@ -117,13 +235,9 @@ class _Step5SummaryState extends State<Step5HealthGoal> {
                     width: double.infinity,
                     margin: const EdgeInsets.only(bottom: 16),
                     padding: const EdgeInsets.symmetric(
-                      vertical: 16,
-                      horizontal: 20,
-                    ),
+                        vertical: 16, horizontal: 20),
                     decoration: BoxDecoration(
-                      color: isSelected
-                          ? const Color(0xFFFFF0D9)
-                          : const Color(0xFFF7F9FB),
+                      color: isSelected ? const Color(0xFFFFF0D9) : const Color(0xFFF7F9FB),
                       borderRadius: BorderRadius.circular(24),
                     ),
                     child: Row(
@@ -133,9 +247,7 @@ class _Step5SummaryState extends State<Step5HealthGoal> {
                             item,
                             style: TextStyle(
                               fontSize: 16,
-                              color: isSelected
-                                  ? Colors.black
-                                  : Colors.grey[800],
+                              color: isSelected ? Colors.black : Colors.grey[800],
                             ),
                           ),
                         ),
@@ -143,9 +255,7 @@ class _Step5SummaryState extends State<Step5HealthGoal> {
                           width: 20,
                           height: 20,
                           decoration: BoxDecoration(
-                            color: isSelected
-                                ? Colors.green
-                                : Colors.transparent,
+                            color: isSelected ? Colors.green : Colors.transparent,
                             border: Border.all(
                               color: isSelected ? Colors.green : Colors.grey,
                               width: 2,
@@ -153,11 +263,7 @@ class _Step5SummaryState extends State<Step5HealthGoal> {
                             borderRadius: BorderRadius.circular(4),
                           ),
                           child: isSelected
-                              ? const Icon(
-                                  Icons.check,
-                                  size: 14,
-                                  color: Colors.white,
-                                )
+                              ? const Icon(Icons.check, size: 14, color: Colors.white)
                               : null,
                         ),
                       ],
@@ -169,7 +275,7 @@ class _Step5SummaryState extends State<Step5HealthGoal> {
           ),
         ),
 
-        // Buttons
+        // Bottom buttons
         Container(
           padding: const EdgeInsets.all(20),
           child: Row(
@@ -179,67 +285,31 @@ class _Step5SummaryState extends State<Step5HealthGoal> {
               ElevatedButton(
                 onPressed: widget.onBack,
                 style: ElevatedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 32,
-                    vertical: 14,
-                  ),
+                  padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 14),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(30),
                   ),
                   backgroundColor: Colors.grey[200],
                 ),
-                child: const Text(
-                  "Back",
-                  style: TextStyle(color: Colors.black),
-                ),
+                child: const Text("Back", style: TextStyle(color: Colors.black)),
               ),
 
-              // Finish / Save button
+              // Next button
               if (selectedGoal != null)
                 ElevatedButton(
                   onPressed: () async {
-                    await _saveGoals();
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => RecommendScreen(
-                          height: height ?? 170, // fallback nếu null
-                          weight: weight ?? 60,
-                          goal: selectedGoal!,
-                        ),
-                      ),
-                    );
-
-                    /*showDialog(
-                      context: context,
-                      builder: (context) => AlertDialog(
-                        title: const Text("Setup Complete"),
-                        content: const Text(
-                          "Your health goals have been saved.",
-                        ),
-                        actions: [
-                          TextButton(
-                            onPressed: () => Navigator.of(context).pop(),
-                            child: const Text("OK"),
-                          ),
-                        ],
-                      ),
-                    );*/
+                    await _saveGoal();
+                    widget.onNext();
                   },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.black87,
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 32,
-                      vertical: 14,
-                    ),
+                    padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 14),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(30),
                     ),
                   ),
-                  child: const Text(
-                    "Next",
-                    style: TextStyle(color: Colors.white, fontSize: 16),
-                  ),
+                  child: const Text("Next",
+                      style: TextStyle(color: Colors.white, fontSize: 16)),
                 ),
             ],
           ),

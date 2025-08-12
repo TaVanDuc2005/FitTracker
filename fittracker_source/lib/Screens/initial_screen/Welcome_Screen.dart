@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
-import 'On_boarding_Screen.dart';
-import 'package:fittracker_source/Screens/auth/Login_Screen.dart';
+import 'Login_Screen.dart';
+import 'package:fittracker_source/Screens/active_screen/Journal/journal_screen.dart';
+import 'On_Boarding_Screen.dart';
 
 
 class WelcomeScreen extends StatelessWidget {
@@ -124,8 +125,6 @@ class WelcomeScreen extends StatelessWidget {
                 ),
 
                 const SizedBox(height: 16),
-
-                // 🔐 Đã có tài khoản? Log in
                 Row(
   mainAxisAlignment: MainAxisAlignment.center,
   children: [
@@ -133,7 +132,18 @@ class WelcomeScreen extends StatelessWidget {
     GestureDetector(
       onTap: () {
         Navigator.of(context).push(
-          MaterialPageRoute(builder: (_) => const LoginScreen()),
+          MaterialPageRoute(
+            builder: (_) => LoginScreen(
+              onNext: () {
+                Navigator.of(context).pushReplacement(
+                  MaterialPageRoute(builder: (_) => const JournalScreen()),
+                );
+              },
+              onBack: () {
+                Navigator.pop(context); // Quay lại màn Welcome
+              },
+            ),
+          ),
         );
       },
       child: Container(
