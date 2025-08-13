@@ -1,18 +1,13 @@
 import 'package:flutter/material.dart';
 import 'Loading_Screen.dart';
+import '../../services/user_service.dart';
 
 class Step6IdealWeight extends StatefulWidget {
-  final double? height;
-  final double? weight;
-  final String? goal;
   final VoidCallback onNext;
   final VoidCallback onPrevious;
 
   const Step6IdealWeight({
     Key? key,
-    required this.height,
-    required this.weight,
-    required this.goal,
     required this.onNext,
     required this.onPrevious,
   }) : super(key: key);
@@ -22,48 +17,52 @@ class Step6IdealWeight extends StatefulWidget {
 }
 
 class _Step6IdealWeightState extends State<Step6IdealWeight> {
-  late double bmi;
-  late double minIdealWeight;
-  late double maxIdealWeight;
-  late double suggestedWeight;
+  double? bmi;
+  double? minIdealWeight;
+  double? maxIdealWeight;
+  double? suggestedWeight;
+  double? height;
+  double? weight;
+  String? goal;
   final TextEditingController _targetWeightController = TextEditingController();
 
   @override
   void initState() {
     super.initState();
-    _calculateRecommendation();
+    _loadUserDataAndCalculate();
   }
 
-  void _calculateRecommendation() {
-    if (widget.height == null || widget.weight == null || widget.goal == null) {
-      bmi = 0;
-      minIdealWeight = 0;
-      maxIdealWeight = 0;
-      suggestedWeight = 0;
-      return;
+  Future<void> _loadUserDataAndCalculate() async {
+    height = await UserService.getHeight();
+    weight = await UserService.getWeight();
+    goal = await UserService.getGoal();
+
+    if (height != null && weight != null && height! > 0 && goal != null) {
+      double heightInMeters = height! / 100;
+      bmi = weight! / (heightInMeters * heightInMeters);
+
+      minIdealWeight = 18.5 * heightInMeters * heightInMeters;
+      maxIdealWeight = 24.9 * heightInMeters * heightInMeters;
+
+      switch (goal!.toLowerCase()) {
+        case "weight gain":
+          suggestedWeight = maxIdealWeight! - 1;
+          break;
+        case "weight loss":
+          suggestedWeight = minIdealWeight! + 1;
+          break;
+        case "muscle building":
+          suggestedWeight = minIdealWeight! + 2;
+          break;
+        default:
+          suggestedWeight = (minIdealWeight! + maxIdealWeight!) / 2;
+          break;
+      }
+
+      suggestedWeight = double.parse(suggestedWeight!.toStringAsFixed(1));
     }
-    double heightInMeters = widget.height! / 100;
-    bmi = widget.weight! / (heightInMeters * heightInMeters);
 
-    minIdealWeight = 18.5 * heightInMeters * heightInMeters;
-    maxIdealWeight = 24.9 * heightInMeters * heightInMeters;
-
-    switch (widget.goal!.toLowerCase()) {
-      case "weight gain":
-        suggestedWeight = maxIdealWeight - 1;
-        break;
-      case "weight loss":
-        suggestedWeight = minIdealWeight + 1;
-        break;
-      case "muscle building":
-        suggestedWeight = minIdealWeight + 2;
-        break;
-      default:
-        suggestedWeight = (minIdealWeight + maxIdealWeight) / 2;
-        break;
-    }
-
-    suggestedWeight = double.parse(suggestedWeight.toStringAsFixed(1));
+    setState(() {});
   }
 
   void _goToNext() {
@@ -74,7 +73,6 @@ class _Step6IdealWeightState extends State<Step6IdealWeight> {
       );
       return;
     }
-
     widget.onNext();
   }
 
@@ -104,12 +102,15 @@ class _Step6IdealWeightState extends State<Step6IdealWeight> {
             Card(
               elevation: 6,
               shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(20)),
+                borderRadius: BorderRadius.circular(20),
+              ),
               color: orangeLight,
               shadowColor: orangePrimary.withOpacity(0.4),
               child: Padding(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 24,
+                  vertical: 24,
+                ),
                 child: Row(
                   children: [
                     Icon(Icons.monitor_weight, size: 48, color: orangePrimary),
@@ -121,13 +122,17 @@ class _Step6IdealWeightState extends State<Step6IdealWeight> {
                           Text(
                             "Your BMI",
                             style: theme.textTheme.titleMedium?.copyWith(
-                                fontWeight: FontWeight.w700, color: orangeDarker),
+                              fontWeight: FontWeight.w700,
+                              color: orangeDarker,
+                            ),
                           ),
                           const SizedBox(height: 6),
                           Text(
-                            bmi.toStringAsFixed(1),
+                            bmi != null ? bmi!.toStringAsFixed(1) : "--",
                             style: theme.textTheme.headlineMedium?.copyWith(
-                                fontWeight: FontWeight.bold, color: orangePrimary),
+                              fontWeight: FontWeight.bold,
+                              color: orangePrimary,
+                            ),
                           ),
                         ],
                       ),
@@ -141,9 +146,10 @@ class _Step6IdealWeightState extends State<Step6IdealWeight> {
 
             // Ideal Weight Range
             Text(
-              "Ideal weight range for your height (${widget.height != null ? widget.height!.toInt() : '--'} cm):",
-              style: theme.textTheme.titleMedium
-                  ?.copyWith(fontWeight: FontWeight.w700),
+              "Ideal weight range for your height (${height != null ? height!.toInt() : '--'} cm):",
+              style: theme.textTheme.titleMedium?.copyWith(
+                fontWeight: FontWeight.w700,
+              ),
             ),
             const SizedBox(height: 12),
             Container(
@@ -153,7 +159,9 @@ class _Step6IdealWeightState extends State<Step6IdealWeight> {
                 borderRadius: BorderRadius.circular(16),
               ),
               child: Text(
-                "${minIdealWeight.toStringAsFixed(1)} kg – ${maxIdealWeight.toStringAsFixed(1)} kg",
+                minIdealWeight != null && maxIdealWeight != null
+                    ? "${minIdealWeight!.toStringAsFixed(1)} kg – ${maxIdealWeight!.toStringAsFixed(1)} kg"
+                    : "-- kg – -- kg",
                 style: theme.textTheme.titleLarge?.copyWith(
                   color: greenDark,
                   fontWeight: FontWeight.bold,
@@ -165,9 +173,10 @@ class _Step6IdealWeightState extends State<Step6IdealWeight> {
 
             // Suggested Target Weight
             Text(
-              "Based on your goal (${widget.goal}):",
-              style: theme.textTheme.titleMedium
-                  ?.copyWith(fontWeight: FontWeight.w700),
+              "Based on your goal (${goal ?? "--"}):",
+              style: theme.textTheme.titleMedium?.copyWith(
+                fontWeight: FontWeight.w700,
+              ),
             ),
             const SizedBox(height: 12),
             Container(
@@ -182,13 +191,16 @@ class _Step6IdealWeightState extends State<Step6IdealWeight> {
                   const SizedBox(width: 16),
                   Text(
                     "Suggested target weight: ",
-                    style: theme.textTheme.titleMedium
-                        ?.copyWith(fontWeight: FontWeight.w700),
+                    style: theme.textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.w700,
+                    ),
                   ),
                   Text(
-                    "$suggestedWeight kg",
+                    suggestedWeight != null ? "$suggestedWeight kg" : "-- kg",
                     style: theme.textTheme.headlineSmall?.copyWith(
-                        fontWeight: FontWeight.bold, color: orangeDarker),
+                      fontWeight: FontWeight.bold,
+                      color: orangeDarker,
+                    ),
                   ),
                 ],
               ),
@@ -199,16 +211,18 @@ class _Step6IdealWeightState extends State<Step6IdealWeight> {
             // Input target weight
             Text(
               "Enter your desired target weight:",
-              style: theme.textTheme.titleMedium
-                  ?.copyWith(fontWeight: FontWeight.w700),
+              style: theme.textTheme.titleMedium?.copyWith(
+                fontWeight: FontWeight.w700,
+              ),
             ),
             const SizedBox(height: 12),
             TextField(
               controller: _targetWeightController,
-              keyboardType:
-                  const TextInputType.numberWithOptions(decimal: true),
+              keyboardType: const TextInputType.numberWithOptions(
+                decimal: true,
+              ),
               decoration: InputDecoration(
-                hintText: "$suggestedWeight",
+                hintText: suggestedWeight != null ? "$suggestedWeight" : "",
                 filled: true,
                 fillColor: Colors.grey.shade100,
                 border: OutlineInputBorder(
@@ -219,8 +233,10 @@ class _Step6IdealWeightState extends State<Step6IdealWeight> {
                   borderRadius: BorderRadius.circular(20),
                   borderSide: BorderSide(color: orangePrimary, width: 2),
                 ),
-                contentPadding:
-                    const EdgeInsets.symmetric(vertical: 18, horizontal: 24),
+                contentPadding: const EdgeInsets.symmetric(
+                  vertical: 18,
+                  horizontal: 24,
+                ),
                 suffixText: "kg",
                 suffixStyle: TextStyle(color: Colors.grey.shade600),
               ),
@@ -239,8 +255,10 @@ class _Step6IdealWeightState extends State<Step6IdealWeight> {
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(32),
                     ),
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 36, vertical: 16),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 36,
+                      vertical: 16,
+                    ),
                   ),
                   child: const Text('Back'),
                 ),
@@ -251,8 +269,10 @@ class _Step6IdealWeightState extends State<Step6IdealWeight> {
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(32),
                     ),
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 36, vertical: 16),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 36,
+                      vertical: 16,
+                    ),
                   ),
                   child: const Text('Next'),
                 ),

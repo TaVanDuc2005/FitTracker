@@ -51,7 +51,6 @@ class _StepProgressFormState extends State<StepProgressForm> {
     setState(() {});
   }
 
-
   int getStepNumber(StepScreen screen) {
     switch (screen) {
       case StepScreen.step1UserInfo:
@@ -181,13 +180,46 @@ class _StepProgressFormState extends State<StepProgressForm> {
   }
 
   Widget _buildProgressBar() {
-  if (currentScreen == StepScreen.policyAgreement || currentScreen == StepScreen.login) {
-    return const SizedBox.shrink();
-  }
+    if (currentScreen == StepScreen.policyAgreement ||
+        currentScreen == StepScreen.login) {
+      return const SizedBox.shrink();
+    }
 
-  if (currentScreen == StepScreen.step5HealthGoal || currentScreen == StepScreen.step6IdealWeight) {
-    final currentStep = currentScreen == StepScreen.step5HealthGoal ? 1 : 2;
-    const totalSteps = 2;
+    if (currentScreen == StepScreen.step5HealthGoal ||
+        currentScreen == StepScreen.step6IdealWeight) {
+      final currentStep = currentScreen == StepScreen.step5HealthGoal ? 1 : 2;
+      const totalSteps = 2;
+
+      return Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 8),
+        child: Row(
+          children: List.generate(totalSteps, (index) {
+            final stepNum = index + 1;
+            final isCompleted = stepNum < currentStep;
+            final isActive = stepNum == currentStep;
+
+            return Expanded(
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 300),
+                margin: const EdgeInsets.symmetric(horizontal: 2),
+                height: 6,
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(4),
+                  color: isCompleted
+                      ? Colors.orange
+                      : isActive
+                      ? Colors.orange.withOpacity(0.9)
+                      : Colors.grey.shade300,
+                ),
+              ),
+            );
+          }),
+        ),
+      );
+    }
+
+    final currentStep = getStepNumber(currentScreen);
+    const totalSteps = 6;
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 8),
@@ -207,8 +239,8 @@ class _StepProgressFormState extends State<StepProgressForm> {
                 color: isCompleted
                     ? Colors.orange
                     : isActive
-                        ? Colors.orange.withOpacity(0.9)
-                        : Colors.grey.shade300,
+                    ? Colors.orange.withOpacity(0.9)
+                    : Colors.grey.shade300,
               ),
             ),
           );
@@ -217,50 +249,12 @@ class _StepProgressFormState extends State<StepProgressForm> {
     );
   }
 
-  final currentStep = getStepNumber(currentScreen);
-  const totalSteps = 6;
-
-  return Padding(
-    padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 8),
-    child: Row(
-      children: List.generate(totalSteps, (index) {
-        final stepNum = index + 1;
-        final isCompleted = stepNum < currentStep;
-        final isActive = stepNum == currentStep;
-
-        return Expanded(
-          child: AnimatedContainer(
-            duration: const Duration(milliseconds: 300),
-            margin: const EdgeInsets.symmetric(horizontal: 2),
-            height: 6,
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(4),
-              color: isCompleted
-                  ? Colors.orange
-                  : isActive
-                      ? Colors.orange.withOpacity(0.9)
-                      : Colors.grey.shade300,
-            ),
-          ),
-        );
-      }),
-    ),
-  );
-}
-
-
   Widget _buildCurrentScreen() {
     switch (currentScreen) {
       case StepScreen.step1UserInfo:
-        return Step1UserInfo(
-          onNext: goToNextStep,
-          onBack: goToPreviousStep,
-        );
+        return Step1UserInfo(onNext: goToNextStep, onBack: goToPreviousStep);
       case StepScreen.step2Lifestyle:
-        return Step2Lifestyle(
-          onNext: goToNextStep,
-          onBack: goToPreviousStep,
-        );
+        return Step2Lifestyle(onNext: goToNextStep, onBack: goToPreviousStep);
       case StepScreen.step3DietaryRestriction:
         return Step3DietaryRestriction(
           onNext: goToNextStep,
@@ -279,20 +273,11 @@ class _StepProgressFormState extends State<StepProgressForm> {
           onPrevious: goToPreviousStep,
         );
       case StepScreen.login:
-        return LoginScreen(
-          onNext: goToNextStep,
-          onBack: goToPreviousStep,
-        );
+        return LoginScreen(onNext: goToNextStep, onBack: goToPreviousStep);
       case StepScreen.step5HealthGoal:
-        return Step5HealthGoal(
-          onNext: goToNextStep,
-          onBack: goToPreviousStep,
-        );
+        return Step5HealthGoal(onNext: goToNextStep, onBack: goToPreviousStep);
       case StepScreen.step6IdealWeight:
         return Step6IdealWeight(
-          height: userHeight,
-          weight: userWeight,
-          goal: userGoal,
           onNext: goToNextStep,
           onPrevious: goToPreviousStep,
         );

@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 
 class AIAgentScreen extends StatefulWidget {
   const AIAgentScreen({super.key});
@@ -9,18 +11,51 @@ class AIAgentScreen extends StatefulWidget {
 
 class _AIAgentScreenState extends State<AIAgentScreen> {
   final TextEditingController _controller = TextEditingController();
-  final List<Map<String, String>> _messages =
-      []; // {role: 'user'/'bot', text: '...'}
+  final List<Map<String, String>> _messages = [];
+  bool _isLoading = false;
 
-  void _sendMessage() {
+  void _sendMessage() async {
     String text = _controller.text.trim();
     if (text.isEmpty) return;
 
     setState(() {
       _messages.add({'role': 'user', 'text': text});
-      _messages.add({'role': 'bot', 'text': 'Tôi có thể giúp gì cho bạn?'});
+      _isLoading = true;
+      _controller.clear(); // Xóa dữ liệu ô nhập ngay khi gửi
     });
-    _controller.clear();
+
+    // Gọi Gemini API
+    final apiKey = 'AIzaSyDx_t3w2mYuD0ZDSOkCE3jljYALgMgASbM';
+    final url = Uri.parse(
+      'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent',
+    );
+
+    final response = await http.post(
+      url,
+      headers: {'Content-Type': 'application/json', 'X-goog-api-key': apiKey},
+      body: jsonEncode({
+        "contents": [
+          {
+            "parts": [
+              {"text": text},
+            ],
+          },
+        ],
+      }),
+    );
+
+    String botReply = 'Lỗi kết nối AI!';
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body);
+      botReply =
+          data['candidates']?[0]?['content']?['parts']?[0]?['text'] ??
+          'Không có phản hồi từ AI.';
+    }
+
+    setState(() {
+      _messages.add({'role': 'bot', 'text': botReply});
+      _isLoading = false;
+    });
   }
 
   @override
@@ -36,8 +71,30 @@ class _AIAgentScreenState extends State<AIAgentScreen> {
           Expanded(
             child: ListView.builder(
               padding: const EdgeInsets.all(12),
-              itemCount: _messages.length,
+              itemCount: _messages.length + (_isLoading ? 1 : 0),
               itemBuilder: (context, index) {
+                if (_isLoading && index == _messages.length) {
+                  // Hiện loading khi đang chờ AI trả lời
+                  return Align(
+                    alignment: Alignment.centerLeft,
+                    child: Container(
+                      margin: const EdgeInsets.symmetric(vertical: 4),
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: Colors.teal.shade100,
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: const SizedBox(
+                        width: 24,
+                        height: 24,
+                        child: CircularProgressIndicator(
+                          color: Colors.teal,
+                          strokeWidth: 3,
+                        ),
+                      ),
+                    ),
+                  );
+                }
                 final message = _messages[index];
                 final isUser = message['role'] == 'user';
                 return Align(
@@ -82,6 +139,7 @@ class _AIAgentScreenState extends State<AIAgentScreen> {
                         vertical: 8,
                       ),
                     ),
+                    onSubmitted: (_) => _sendMessage(), // Gửi khi nhấn Enter
                   ),
                 ),
                 const SizedBox(width: 8),

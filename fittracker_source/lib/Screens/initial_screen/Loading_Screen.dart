@@ -516,39 +516,29 @@ class _ChartPainter extends CustomPainter {
     Path pathGreen;
     Path pathGray;
 
-    // Default positions
-    double startY = size.height * 0.6;
-    double targetY = size.height * 0.4;
-
+    // Nếu có dữ liệu cân nặng
     if (userWeight != null && targetWeight != null) {
-      print(
-        '🎨 Drawing personalized chart: ${userWeight}kg → ${targetWeight}kg',
-      );
+      // Tính vị trí Y cho cân nặng bắt đầu và cân nặng mục tiêu
+      final minWeight = (userWeight! < targetWeight!)
+          ? userWeight!
+          : targetWeight!;
+      final maxWeight = (userWeight! > targetWeight!)
+          ? userWeight!
+          : targetWeight!;
+      final chartHeight = size.height * 0.5;
+      final chartTop = size.height * 0.25;
 
-      // ✅ CẢI THIỆN: Better weight range calculation
-      final weightDiff = (userWeight! - targetWeight!).abs();
-      final maxDiff = weightDiff < 5
-          ? 10.0
-          : weightDiff * 1.5; // Minimum visible range
-
-      final centerWeight = (userWeight! + targetWeight!) / 2;
-      final minWeight = centerWeight - maxDiff;
-      final maxWeight = centerWeight + maxDiff;
-
-      // ✅ CẢI THIỆN: Ensure clear visual difference
-      final chartHeight = size.height * 0.5; // Use 50% of chart height
-      final chartTop = size.height * 0.25; // Start at 25% from top
-
-      startY =
+      // Tính tỷ lệ vị trí
+      double startY =
           chartTop +
           chartHeight *
-              (1 - (userWeight! - minWeight) / (maxWeight - minWeight));
-      targetY =
+              (1 - (userWeight! - minWeight) / (maxWeight - minWeight + 1));
+      double targetY =
           chartTop +
           chartHeight *
-              (1 - (targetWeight! - minWeight) / (maxWeight - minWeight));
+              (1 - (targetWeight! - minWeight) / (maxWeight - minWeight + 1));
 
-      // ✅ CẢI THIỆN: Ensure minimum visual difference
+      // Đảm bảo khoảng cách tối thiểu
       if ((startY - targetY).abs() < 20) {
         if (userWeight! > targetWeight!) {
           startY = size.height * 0.65;
@@ -559,12 +549,7 @@ class _ChartPainter extends CustomPainter {
         }
       }
 
-      print(
-        '   📊 Chart positions: startY=${startY.toStringAsFixed(1)}, targetY=${targetY.toStringAsFixed(1)}',
-      );
-      print('   📊 Weight difference: ${weightDiff.toStringAsFixed(1)}kg');
-
-      // ✅ CẢI THIỆN: Better path calculation
+      // Vẽ đường biểu đồ FitTracker (từ userWeight đến targetWeight)
       pathGreen = Path()
         ..moveTo(0, startY)
         ..quadraticBezierTo(
@@ -580,21 +565,80 @@ class _ChartPainter extends CustomPainter {
           targetY,
         );
 
-      // Generic program (always performs worse)
-      final worstY = size.height * 0.8;
+      // Vẽ đường biểu đồ generic (tham khảo)
+      final worstY = chartTop + chartHeight * 0.9;
       pathGray = Path()
         ..moveTo(0, startY)
         ..quadraticBezierTo(
           size.width * 0.25,
-          startY + 20, // Gets slightly worse
+          startY + 20,
           size.width * 0.5,
           startY + 35,
         )
         ..quadraticBezierTo(size.width * 0.75, worstY - 15, size.width, worstY);
+
+      // Vẽ đường
+      canvas.drawPath(pathGray, grayPaint);
+      canvas.drawPath(pathGreen, greenPaint);
+
+      double labelOffset = 25;
+
+      // Nếu đường xanh hướng từ trên xuống
+      if (startY < targetY) {
+        // Start ở dưới trái, Target ở trên phải
+        _drawLabel(
+          canvas,
+          'Start: ${userWeight!.toStringAsFixed(0)}kg',
+          10,
+          startY + labelOffset,
+          Colors.green,
+        );
+        _drawLabel(
+          canvas,
+          'Target: ${targetWeight!.toStringAsFixed(0)}kg',
+          size.width - 120,
+          targetY - labelOffset,
+          Colors.green,
+        );
+      } else {
+        // Start ở trên trái, Target ở dưới phải
+        _drawLabel(
+          canvas,
+          'Start: ${userWeight!.toStringAsFixed(0)}kg',
+          10,
+          startY - labelOffset,
+          Colors.green,
+        );
+        _drawLabel(
+          canvas,
+          'Target: ${targetWeight!.toStringAsFixed(0)}kg',
+          size.width - 120,
+          targetY + labelOffset,
+          Colors.green,
+        );
+      }
+
+      final midX = size.width / 2;
+      final t = midX / size.width;
+      double grayY;
+      if (t < 0.5) {
+        grayY = startY + 20 * t * 2;
+      } else {
+        grayY = startY + 35 + (worstY - (startY + 35)) * (t - 0.5) * 2;
+      }
+      const labelWidth = 110;
+      const labelHeight = 22;
+
+      // Dịch label "Generic program" xuống dưới đường vẽ
+      _drawLabel(
+        canvas,
+        'Generic program',
+        midX - labelWidth / 2, // căn giữa ngang
+        grayY - labelHeight / 2, // căn giữa dọc
+        Colors.grey.shade500,
+      );
     } else {
       // Static fallback
-      print('🎨 Drawing static chart (no user data)');
-
       pathGreen = Path()
         ..moveTo(0, size.height * 0.6)
         ..quadraticBezierTo(
@@ -624,41 +668,11 @@ class _ChartPainter extends CustomPainter {
           size.width,
           size.height * 0.95,
         );
-    }
 
-    // Draw paths
-    canvas.drawPath(pathGray, grayPaint);
-    canvas.drawPath(pathGreen, greenPaint);
+      canvas.drawPath(pathGray, grayPaint);
+      canvas.drawPath(pathGreen, greenPaint);
 
-    // Dynamic labels
-    if (userWeight != null && targetWeight != null) {
-      // ✅ CẢI THIỆN: Better label positioning
-      _drawLabel(
-        canvas,
-        'Start: ${userWeight!.toStringAsFixed(0)}kg',
-        10,
-        startY - 25,
-        Colors.green,
-      );
-
-      _drawLabel(
-        canvas,
-        'Target: ${targetWeight!.toStringAsFixed(0)}kg',
-        size.width - 120,
-        targetY - 25,
-        Colors.green,
-      );
-
-      _drawLabel(
-        canvas,
-        'Generic program',
-        size.width - 110,
-        size.height * 0.8 - 30,
-        Colors.grey.shade500,
-      );
-    } else {
-      // Static labels
-      _drawLabel(canvas, 'Weight', 10, startY - 25, Colors.green);
+      _drawLabel(canvas, 'Weight', 10, size.height * 0.6 - 25, Colors.green);
       _drawLabel(
         canvas,
         'Generic program',
@@ -670,7 +684,7 @@ class _ChartPainter extends CustomPainter {
         canvas,
         'Your FitTracker program',
         size.width - 160,
-        targetY,
+        size.height * 0.4,
         Colors.green,
       );
     }
@@ -695,7 +709,6 @@ class _ChartPainter extends CustomPainter {
       textDirection: TextDirection.ltr,
     )..layout();
 
-    // ✅ CẢI THIỆN: Dynamic width based on text
     final rect = RRect.fromRectAndRadius(
       Rect.fromLTWH(x, y, textPainter.width + 12, 22),
       const Radius.circular(11),

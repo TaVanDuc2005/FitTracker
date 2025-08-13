@@ -19,16 +19,24 @@ class RangeProgressBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    double progress = ((currentValue - minValue) / (maxValue - minValue)).clamp(0.0, 1.0);
+    double progress = ((currentValue - minValue) / (maxValue - minValue)).clamp(
+      0.0,
+      1.0,
+    );
 
     final barWidth = MediaQuery.of(context).size.width - 48;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label,
-            style: const TextStyle(
-                fontWeight: FontWeight.bold, fontSize: 16, color: Colors.black87)),
+        Text(
+          label,
+          style: const TextStyle(
+            fontWeight: FontWeight.bold,
+            fontSize: 16,
+            color: Colors.black87,
+          ),
+        ),
         const SizedBox(height: 6),
         Stack(
           children: [
@@ -68,10 +76,14 @@ class RangeProgressBar extends StatelessWidget {
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Text(minValue.toStringAsFixed(1),
-                style: const TextStyle(color: Colors.grey, fontSize: 12)),
-            Text(maxValue.toStringAsFixed(1),
-                style: const TextStyle(color: Colors.grey, fontSize: 12)),
+            Text(
+              minValue.toStringAsFixed(1),
+              style: const TextStyle(color: Colors.grey, fontSize: 12),
+            ),
+            Text(
+              maxValue.toStringAsFixed(1),
+              style: const TextStyle(color: Colors.grey, fontSize: 12),
+            ),
           ],
         ),
       ],
@@ -151,8 +163,10 @@ class _Step5HealthGoalState extends State<Step5HealthGoal> {
   Widget _infoItem(String label, String value) {
     return Column(
       children: [
-        Text(label,
-            style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500)),
+        Text(
+          label,
+          style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
+        ),
         const SizedBox(height: 4),
         Text(value, style: const TextStyle(fontSize: 16)),
       ],
@@ -235,9 +249,13 @@ class _Step5HealthGoalState extends State<Step5HealthGoal> {
                     width: double.infinity,
                     margin: const EdgeInsets.only(bottom: 16),
                     padding: const EdgeInsets.symmetric(
-                        vertical: 16, horizontal: 20),
+                      vertical: 16,
+                      horizontal: 20,
+                    ),
                     decoration: BoxDecoration(
-                      color: isSelected ? const Color(0xFFFFF0D9) : const Color(0xFFF7F9FB),
+                      color: isSelected
+                          ? const Color(0xFFFFF0D9)
+                          : const Color(0xFFF7F9FB),
                       borderRadius: BorderRadius.circular(24),
                     ),
                     child: Row(
@@ -247,7 +265,9 @@ class _Step5HealthGoalState extends State<Step5HealthGoal> {
                             item,
                             style: TextStyle(
                               fontSize: 16,
-                              color: isSelected ? Colors.black : Colors.grey[800],
+                              color: isSelected
+                                  ? Colors.black
+                                  : Colors.grey[800],
                             ),
                           ),
                         ),
@@ -255,7 +275,9 @@ class _Step5HealthGoalState extends State<Step5HealthGoal> {
                           width: 20,
                           height: 20,
                           decoration: BoxDecoration(
-                            color: isSelected ? Colors.green : Colors.transparent,
+                            color: isSelected
+                                ? Colors.green
+                                : Colors.transparent,
                             border: Border.all(
                               color: isSelected ? Colors.green : Colors.grey,
                               width: 2,
@@ -263,7 +285,11 @@ class _Step5HealthGoalState extends State<Step5HealthGoal> {
                             borderRadius: BorderRadius.circular(4),
                           ),
                           child: isSelected
-                              ? const Icon(Icons.check, size: 14, color: Colors.white)
+                              ? const Icon(
+                                  Icons.check,
+                                  size: 14,
+                                  color: Colors.white,
+                                )
                               : null,
                         ),
                       ],
@@ -285,13 +311,19 @@ class _Step5HealthGoalState extends State<Step5HealthGoal> {
               ElevatedButton(
                 onPressed: widget.onBack,
                 style: ElevatedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 14),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 32,
+                    vertical: 14,
+                  ),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(30),
                   ),
                   backgroundColor: Colors.grey[200],
                 ),
-                child: const Text("Back", style: TextStyle(color: Colors.black)),
+                child: const Text(
+                  "Back",
+                  style: TextStyle(color: Colors.black),
+                ),
               ),
 
               // Next button
@@ -303,13 +335,18 @@ class _Step5HealthGoalState extends State<Step5HealthGoal> {
                   },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.black87,
-                    padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 14),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 32,
+                      vertical: 14,
+                    ),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(30),
                     ),
                   ),
-                  child: const Text("Next",
-                      style: TextStyle(color: Colors.white, fontSize: 16)),
+                  child: const Text(
+                    "Next",
+                    style: TextStyle(color: Colors.white, fontSize: 16),
+                  ),
                 ),
             ],
           ),
