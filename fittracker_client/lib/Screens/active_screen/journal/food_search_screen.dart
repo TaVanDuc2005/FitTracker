@@ -63,7 +63,7 @@ enum MealType { breakfast, lunch, dinner }
 class SearchFoodScreen extends StatefulWidget {
   final MealType mealType;
 
-  const SearchFoodScreen({Key? key, required this.mealType}) : super(key: key);
+  const SearchFoodScreen({super.key, required this.mealType});
 
   @override
   State<SearchFoodScreen> createState() => _SearchFoodScreenState();

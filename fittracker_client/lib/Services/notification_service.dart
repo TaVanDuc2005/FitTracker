@@ -1,17 +1,48 @@
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:flutter_native_timezone/flutter_native_timezone.dart';
 import 'package:timezone/data/latest.dart' as tzdata;
 import 'package:timezone/timezone.dart' as tz;
 
+
 class NotificationService {
   static final FlutterLocalNotificationsPlugin _plugin =
-      FlutterLocalNotificationsPlugin();
+      FlutterLocalNotificationsPlugin();  
 
   static Future<void> initialize() async {
+    // Initialize timezone data
     tzdata.initializeTimeZones();
-
+    final String timeZoneName = await FlutterNativeTimezone.getLocalTimezone();
+    tz.setLocalLocation(tz.getLocation(timeZoneName));
     const android = AndroidInitializationSettings('@mipmap/ic_launcher');
     const settings = InitializationSettings(android: android);
+
     await _plugin.initialize(settings);
+
+    // iOS permission request
+    final iosPlugin =
+        _plugin.resolvePlatformSpecificImplementation<IOSFlutterLocalNotificationsPlugin>();
+    await iosPlugin?.requestPermissions(alert: true, badge: true, sound: true);
+  }
+
+  static Future<void> showNotification({
+    required int id,
+    required String title,
+    required String body,
+  }) async {
+    await _plugin.show(
+      id,
+      title,
+      body,
+      const NotificationDetails(
+        android: AndroidNotificationDetails(
+          'default_channel_id',
+          'Default Notifications',
+          channelDescription: 'General notifications',
+          importance: Importance.max,
+          priority: Priority.high,
+        ),
+      ),
+    );
   }
 
   static tz.TZDateTime _nextInstance(int hour, int minute) {
@@ -44,8 +75,7 @@ class NotificationService {
           importance: Importance.max,
           priority: Priority.high,
         ),
-      ),
-      androidAllowWhileIdle: true,
+        ),
       uiLocalNotificationDateInterpretation:
           UILocalNotificationDateInterpretation.absoluteTime,
       matchDateTimeComponents: DateTimeComponents.time,

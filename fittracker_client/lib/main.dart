@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:timezone/data/latest.dart' as tz;
 import 'package:fittracker_source/services/notification_service.dart';
 import 'Screens/initial_screen/Welcome_Screen.dart';
 

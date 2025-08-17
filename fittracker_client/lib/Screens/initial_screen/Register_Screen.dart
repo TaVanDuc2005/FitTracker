@@ -51,8 +51,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   prefixIcon: Icon(Icons.person),
                 ),
                 validator: (v) {
-                  if (v == null || v.trim().isEmpty)
+                  if (v == null || v.trim().isEmpty) {
                     return 'Please enter a username';
+                  }
                   if (v.trim().length < 3) return 'Username too short';
                   return null;
                 },
@@ -73,8 +74,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   ),
                 ),
                 validator: (v) {
-                  if (v == null || v.length < 8)
+                  if (v == null || v.length < 8) {
                     return 'At least 8 characters required';
+                  }
                   return null;
                 },
               ),
@@ -94,8 +96,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   ),
                 ),
                 validator: (v) {
-                  if (v != _passwordController.text)
+                  if (v != _passwordController.text) {
                     return 'Passwords do not match';
+                  }
                   return null;
                 },
               ),

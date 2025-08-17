@@ -20,7 +20,7 @@ List<String> generateDateLabels(int days) {
 
 // ========== PROFILE SCREEN ==========
 class ProfileScreen extends StatefulWidget {
-  const ProfileScreen({Key? key}) : super(key: key);
+  const ProfileScreen({super.key});
 
   @override
   State<ProfileScreen> createState() => _ProfileScreenState();
@@ -72,7 +72,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
   // Load dữ liệu từ UserService
   Future<void> _loadUserData() async {
     try {
-      print('📊 Loading user data for Profile...');
+      setState(() {
+        _isLoading = true;
+      });
 
       // Lấy thông tin user cơ bản
       userInfo = await UserService.getUserInfo();
@@ -1055,8 +1057,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       getTitlesWidget: (value, meta) {
                         if (value % 1 != 0 || value < 0) return Container();
                         if (_selectedDayRange == 0) {
-                          if (value < 0 || value >= weightDates.length)
+                          if (value < 0 || value >= weightDates.length) {
                             return Container();
+                          }
                           return Text(
                             weightDates[value.toInt()],
                             style: const TextStyle(fontSize: 12),
@@ -1223,8 +1226,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       getTitlesWidget: (value, meta) {
                         if (value % 1 != 0 || value < 0) return Container();
                         if (_selectedDayRange == 0) {
-                          if (value < 0 || value >= calDates.length)
+                          if (value < 0 || value >= calDates.length) {
                             return Container();
+                          }
                           return Text(
                             calDates[value.toInt()],
                             style: const TextStyle(fontSize: 12),
@@ -1318,7 +1322,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     return Column(
       children: [
         Text(
-          value.toStringAsFixed(1) + " lbs",
+          "${value.toStringAsFixed(1)} lbs",
           style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w700),
         ),
         const SizedBox(height: 6),

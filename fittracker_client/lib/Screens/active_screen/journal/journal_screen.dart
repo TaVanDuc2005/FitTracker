@@ -1090,13 +1090,13 @@ class _GlassCupPainter extends CustomPainter {
       waterPath.close();
 
       final paintWater = Paint()
-        ..color = const Color.fromARGB(255, 120, 241, 241)!.withOpacity(0.7)
+        ..color = const Color.fromARGB(255, 120, 241, 241).withValues(alpha: 0.7)
         ..style = PaintingStyle.fill;
       canvas.drawPath(waterPath, paintWater);
     } else {
       // Vẽ nước màu xám phủ kín ly khi chưa đầy
       final paintGray = Paint()
-        ..color = const Color.fromARGB(255, 233, 231, 231)!.withOpacity(0.8)
+        ..color = const Color.fromARGB(255, 233, 231, 231).withValues(alpha: 0.7)
         ..style = PaintingStyle.fill;
       canvas.drawPath(cupPath, paintGray);
 
@@ -1104,7 +1104,7 @@ class _GlassCupPainter extends CustomPainter {
       final double centerX = size.width / 2;
       final double centerY = size.height * 0.5;
       final paintPlus = Paint()
-        ..color = const Color.fromARGB(255, 161, 161, 161)!
+        ..color = const Color.fromARGB(255, 161, 161, 161)
         ..strokeWidth = 2;
 
       canvas.drawLine(

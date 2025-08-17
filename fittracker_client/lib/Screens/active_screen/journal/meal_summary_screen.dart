@@ -126,7 +126,7 @@ class _MealSummaryScreenState extends State<MealSummaryScreen> {
             ),
             const SizedBox(height: 6),
             Text(
-              "${totalCalories} / ${widget.targetCalories} Cal",
+              "$totalCalories / ${widget.targetCalories} Cal",
               style: const TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.w400,
