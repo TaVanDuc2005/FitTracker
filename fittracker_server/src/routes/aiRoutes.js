@@ -1,8 +1,24 @@
-import express from "express";
-import { chatWithAI } from "fittracker_server\src\controllers\aiController.js";
+import dotenv from "dotenv";
+import { GoogleGenerativeAI } from "@google/generative-ai";
 
-const router = express.Router();
+dotenv.config();
 
-router.post("/chat", chatWithAI);
+const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
-export default router;
+// POST /ai/chat
+export const chatWithAI = async (req, res) => {
+  try {
+    const { message } = req.body;
+
+    if (!message) {
+      return res.status(400).json({ error: "Message is required" });
+    }
+
+    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+    const result = await model.generateContent(message);
+
+    res.json({ reply: result.response.text() });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
