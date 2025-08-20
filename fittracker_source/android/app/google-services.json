@@ -1,0 +1,30 @@
+{
+  "project_info": {
+    "project_number": "954660537034",
+    "firebase_url": "https://fittracker-e3411-default-rtdb.asia-southeast1.firebasedatabase.app",
+    "project_id": "fittracker-e3411",
+    "storage_bucket": "fittracker-e3411.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:954660537034:android:15fb6ca594c37c56c2aa33",
+        "android_client_info": {
+          "package_name": "com.example.fittracker_source"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBg4xA_6Q6oINW9xhSPZZ2JqqU3Kz5BkMU"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

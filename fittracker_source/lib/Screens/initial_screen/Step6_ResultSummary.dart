@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'Loading_Screen.dart';
 import '../../services/user_service.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class Step6IdealWeight extends StatefulWidget {
   final VoidCallback onNext;
@@ -24,45 +25,94 @@ class _Step6IdealWeightState extends State<Step6IdealWeight> {
   double? height;
   double? weight;
   String? goal;
+  String? _uid;
+  bool _loading = true;
+
   final TextEditingController _targetWeightController = TextEditingController();
 
   @override
   void initState() {
     super.initState();
-    _loadUserDataAndCalculate();
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (_uid == null) {
+      final args =
+          ModalRoute.of(context)!.settings.arguments as Map<String, dynamic>?;
+      _uid = args?['userid']; // 🔹 Lấy uid từ arguments
+      _loadUserDataAndCalculate();
+    }
   }
 
   Future<void> _loadUserDataAndCalculate() async {
-    height = await UserService.getHeight();
-    weight = await UserService.getWeight();
-    goal = await UserService.getGoal();
+    setState(() => _loading = true);
 
-    if (height != null && weight != null && height! > 0 && goal != null) {
-      double heightInMeters = height! / 100;
-      bmi = weight! / (heightInMeters * heightInMeters);
+    try {
+      // 🔹 Ưu tiên lấy dữ liệu từ Firebase
+      if (_uid != null && _uid!.isNotEmpty) {
+        final doc = await FirebaseFirestore.instance
+            .collection('users')
+            .doc(_uid)
+            .get();
 
-      minIdealWeight = 18.5 * heightInMeters * heightInMeters;
-      maxIdealWeight = 24.9 * heightInMeters * heightInMeters;
-
-      switch (goal!.toLowerCase()) {
-        case "weight gain":
-          suggestedWeight = maxIdealWeight! - 1;
-          break;
-        case "weight loss":
-          suggestedWeight = minIdealWeight! + 1;
-          break;
-        case "muscle building":
-          suggestedWeight = minIdealWeight! + 2;
-          break;
-        default:
-          suggestedWeight = (minIdealWeight! + maxIdealWeight!) / 2;
-          break;
+        if (doc.exists) {
+          final data = doc.data() ?? {};
+          height = (data['height'] != null)
+              ? double.tryParse(data['height'].toString())
+              : null;
+          weight = (data['weight'] != null)
+              ? double.tryParse(data['weight'].toString())
+              : null;
+          goal = data['goal'] as String?;
+        }
       }
 
-      suggestedWeight = double.parse(suggestedWeight!.toStringAsFixed(1));
+      // 🔹 Nếu Firebase không có thì fallback sang local UserService
+      if (height == null) {
+        final h = await UserService.getHeight();
+        height = h ?? height;
+      }
+      if (weight == null) {
+        final w = await UserService.getWeight();
+        weight = w ?? weight;
+      }
+      if (goal == null) {
+        final g = await UserService.getGoal();
+        goal = g ?? goal;
+      }
+
+      // 🔹 Tính toán BMI và Ideal Weight
+      if (height != null && weight != null && height! > 0 && goal != null) {
+        double heightInMeters = height! / 100;
+        bmi = weight! / (heightInMeters * heightInMeters);
+
+        minIdealWeight = 18.5 * heightInMeters * heightInMeters;
+        maxIdealWeight = 24.9 * heightInMeters * heightInMeters;
+
+        switch (goal!.toLowerCase()) {
+          case "weight gain":
+            suggestedWeight = maxIdealWeight! - 1;
+            break;
+          case "weight loss":
+            suggestedWeight = minIdealWeight! + 1;
+            break;
+          case "muscle building":
+            suggestedWeight = minIdealWeight! + 2;
+            break;
+          default:
+            suggestedWeight = (minIdealWeight! + maxIdealWeight!) / 2;
+            break;
+        }
+
+        suggestedWeight = double.parse(suggestedWeight!.toStringAsFixed(1));
+      }
+    } catch (e) {
+      print("❌ Error loading data in Step6: $e");
     }
 
-    setState(() {});
+    setState(() => _loading = false);
   }
 
   void _goToNext() {

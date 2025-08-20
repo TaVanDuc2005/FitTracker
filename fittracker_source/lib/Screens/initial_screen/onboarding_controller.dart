@@ -31,6 +31,8 @@ class StepProgressForm extends StatefulWidget {
 class _StepProgressFormState extends State<StepProgressForm> {
   StepScreen currentScreen = StepScreen.step1UserInfo;
 
+  bool _handledInitialArg = false;
+
   bool skipStep4 = false;
   static const int totalSteps = 6;
 
@@ -42,6 +44,23 @@ class _StepProgressFormState extends State<StepProgressForm> {
   void initState() {
     super.initState();
     _loadUserData();
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (!_handledInitialArg) {
+      final args = ModalRoute.of(context)?.settings.arguments;
+      if (args is Map && args['initialStep'] is int) {
+        final int step = args['initialStep'] as int;
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          try {
+            goToCustomStep(step);
+          } catch (_) {}
+        });
+      }
+      _handledInitialArg = true;
+    }
   }
 
   Future<void> _loadUserData() async {

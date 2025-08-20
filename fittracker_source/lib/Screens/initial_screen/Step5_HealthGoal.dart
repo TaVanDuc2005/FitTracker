@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../services/user_service.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class RangeProgressBar extends StatelessWidget {
   final double minValue;
@@ -112,6 +113,8 @@ class _Step5HealthGoalState extends State<Step5HealthGoal> {
   int? age;
   double? height;
   double? weight;
+  bool _loading = true;
+  String? _uid;
 
   final List<String> options = [
     "Weight loss",
@@ -123,30 +126,80 @@ class _Step5HealthGoalState extends State<Step5HealthGoal> {
   @override
   void initState() {
     super.initState();
-    _loadSavedData();
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (_uid == null) {
+      // tránh gọi nhiều lần
+      final args =
+          ModalRoute.of(context)!.settings.arguments as Map<String, dynamic>;
+      _uid = args['userid'];
+      _loadSavedData(); // gọi sau khi có uid
+    }
   }
 
   Future<void> _loadSavedData() async {
-    final savedGoal = await UserService.getGoal();
-    final savedGender = await UserService.getGender();
-    final savedAge = await UserService.getAge();
-    final savedHeight = await UserService.getHeight();
-    final savedWeight = await UserService.getWeight();
+    if (!mounted) return;
+    setState(() => _loading = true);
 
-    setState(() {
-      gender = savedGender;
-      age = savedAge;
-      height = savedHeight;
-      weight = savedWeight;
+    try {
+      if (_uid != null && _uid!.isNotEmpty) {
+        final docRef = FirebaseFirestore.instance.collection('users').doc(_uid);
+        final doc = await docRef.get();
+        if (doc.exists) {
+          final data = doc.data() ?? <String, dynamic>{};
 
-      if (savedHeight != null && savedWeight != null && savedHeight > 0) {
-        bmi = savedWeight / ((savedHeight / 100) * (savedHeight / 100));
+          gender = data['gender'] as String?;
+          age = (data['age'] != null)
+              ? int.tryParse(data['age'].toString())
+              : null;
+          height = (data['height'] != null)
+              ? double.tryParse(data['height'].toString())
+              : null;
+          weight = (data['weight'] != null)
+              ? double.tryParse(data['weight'].toString())
+              : null;
+        }
       }
 
-      if (savedGoal != null && savedGoal.isNotEmpty) {
-        selectedGoal = savedGoal.split(',').first.trim();
+      // Always attempt to fill missing fields from local UserService
+      if (gender == null) {
+        final g = await UserService.getGender();
+        gender = g ?? gender;
       }
-    });
+      if (age == null) {
+        final a = await UserService.getAge();
+        age = a ?? age;
+      }
+      if (height == null) {
+        final h = await UserService.getHeight();
+        height = h ?? height;
+      }
+      if (weight == null) {
+        final w = await UserService.getWeight();
+        weight = w ?? weight;
+      }
+
+      // Calculate BMI if possible
+      if (height != null && weight != null && height! > 0) {
+        bmi = weight! / ((height! / 100) * (height! / 100));
+      } else {
+        // try UserService.calculateBMI() which returns rounded value or null
+        final calc = await UserService.calculateBMI();
+
+        if (calc != null) bmi = calc;
+      }
+
+      if (!mounted) return;
+      setState(() {
+        // values already assigned above
+        _loading = false;
+      });
+    } catch (e) {
+      if (mounted) setState(() => _loading = false);
+    }
   }
 
   Future<void> _saveGoal() async {
@@ -183,6 +236,10 @@ class _Step5HealthGoalState extends State<Step5HealthGoal> {
   @override
   Widget build(BuildContext context) {
     final range = selectedGoal != null ? bmiRanges[selectedGoal!] : null;
+
+    if (_loading) {
+      return const Center(child: CircularProgressIndicator());
+    }
 
     return Column(
       children: [
@@ -308,7 +365,7 @@ class _Step5HealthGoalState extends State<Step5HealthGoal> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               // Back button
-              ElevatedButton(
+              /*ElevatedButton(
                 onPressed: widget.onBack,
                 style: ElevatedButton.styleFrom(
                   padding: const EdgeInsets.symmetric(
@@ -324,7 +381,7 @@ class _Step5HealthGoalState extends State<Step5HealthGoal> {
                   "Back",
                   style: TextStyle(color: Colors.black),
                 ),
-              ),
+              ),*/
 
               // Next button
               if (selectedGoal != null)
