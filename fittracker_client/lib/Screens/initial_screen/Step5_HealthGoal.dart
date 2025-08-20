@@ -94,11 +94,13 @@ class RangeProgressBar extends StatelessWidget {
 class Step5HealthGoal extends StatefulWidget {
   final VoidCallback onBack;
   final VoidCallback onNext;
+  final VoidCallback onSkip;
 
   const Step5HealthGoal({
     super.key,
     required this.onBack,
     required this.onNext,
+    required this.onSkip,
   });
 
   @override

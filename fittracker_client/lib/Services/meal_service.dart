@@ -1,6 +1,6 @@
 import 'package:sqflite/sqflite.dart';
-import 'package:fittracker_source/models/meal.dart';
-import 'package:fittracker_source/models/food.dart';
+import 'package:fittracker_client/models/meal.dart';
+import 'package:fittracker_client/models/food.dart';
 import 'Database_Service.dart';
 import 'Food_Service.dart';
 
@@ -22,10 +22,7 @@ class MealService {
     await db.delete('meal_foods', where: 'meal_id = ?', whereArgs: [meal.id]);
 
     for (var food in meal.foods) {
-      await db.insert('meal_foods', {
-        'meal_id': meal.id,
-        'food_id': food.id,
-      });
+      await db.insert('meal_foods', {'meal_id': meal.id, 'food_id': food.id});
     }
   }
 
@@ -64,7 +61,10 @@ class MealService {
     await db.delete('meals', where: 'id = ?', whereArgs: [mealId]);
   }
 
-  Future<List<Meal>> _buildMealListFromMaps(Database db, List<Map<String, dynamic>> mealMaps) async {
+  Future<List<Meal>> _buildMealListFromMaps(
+    Database db,
+    List<Map<String, dynamic>> mealMaps,
+  ) async {
     List<Meal> result = [];
 
     for (var mealMap in mealMaps) {

@@ -3,8 +3,8 @@ import 'food_search_screen.dart';
 import '../profile/profile_Screen.dart';
 import '../../../services/user_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:fittracker_source/Screens/initial_screen/Welcome_Screen.dart';
-import 'package:fittracker_source/Screens/initial_screen/AI_agent_screen.dart';
+import 'package:fittracker_client/Screens/initial_screen/Welcome_Screen.dart';
+import 'package:fittracker_client/Screens/initial_screen/AI_agent_screen.dart';
 
 // Tạo class MacroData để quản lý dữ liệu
 class MacroData {

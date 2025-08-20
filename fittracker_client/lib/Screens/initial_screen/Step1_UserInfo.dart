@@ -5,8 +5,14 @@ import 'Enter_Name_Screen.dart';
 class Step1UserInfo extends StatefulWidget {
   final VoidCallback onNext;
   final VoidCallback onBack;
+  final VoidCallback onSkip;
 
-  const Step1UserInfo({super.key, required this.onNext, required this.onBack});
+  const Step1UserInfo({
+    super.key,
+    required this.onNext,
+    required this.onBack,
+    required this.onSkip,
+  });
 
   @override
   State<Step1UserInfo> createState() => _Step1UserInfoState();

@@ -3,19 +3,20 @@ import 'package:flutter/material.dart';
 class Step3DietaryRestriction extends StatefulWidget {
   final VoidCallback onNext;
   final VoidCallback onBack;
-  final Function(int) onSkipToStep;
+  final VoidCallback onSkip;
   final Function(bool) onDecision;
 
   const Step3DietaryRestriction({
-    Key? key,
     required this.onNext,
     required this.onBack,
-    required this.onSkipToStep,
+    required this.onSkip,
     required this.onDecision,
-  }) : super(key: key);
+    super.key,
+  });
 
   @override
-  State<Step3DietaryRestriction> createState() => _Step3DietaryRestrictionState();
+  State<Step3DietaryRestriction> createState() =>
+      _Step3DietaryRestrictionState();
 }
 
 class _Step3DietaryRestrictionState extends State<Step3DietaryRestriction> {
@@ -97,7 +98,9 @@ class _Step3DietaryRestrictionState extends State<Step3DietaryRestriction> {
                   onPressed: widget.onBack,
                   style: ElevatedButton.styleFrom(
                     padding: const EdgeInsets.symmetric(
-                        horizontal: 28, vertical: 14),
+                      horizontal: 28,
+                      vertical: 14,
+                    ),
                     backgroundColor: Colors.grey[200],
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(30),
@@ -122,7 +125,9 @@ class _Step3DietaryRestrictionState extends State<Step3DietaryRestriction> {
                     },
                     style: ElevatedButton.styleFrom(
                       padding: const EdgeInsets.symmetric(
-                          horizontal: 28, vertical: 14),
+                        horizontal: 28,
+                        vertical: 14,
+                      ),
                       backgroundColor: Colors.black87,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(30),

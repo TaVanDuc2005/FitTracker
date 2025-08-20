@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:fittracker_source/models/food.dart';
-import 'package:fittracker_source/Screens/active_screen/journal/Meal_Summary_Screen.dart';
+import 'package:fittracker_client/models/food.dart';
+import 'package:fittracker_client/Screens/active_screen/journal/Meal_Summary_Screen.dart';
 import '../../../services/user_service.dart';
 
 // Map macro chỉ số cho từng bữa

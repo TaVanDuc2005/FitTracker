@@ -107,6 +107,7 @@ class _StepFlowState extends State<StepFlow> {
       case StepScreen.step1UserInfo:
         return Step1UserInfo(
           onNext: goToNextStep,
+          onBack: goToPreviousStep,
           onSkip: () => skipToStep(StepScreen.step6ResultSummary),
         );
       case StepScreen.step2Lifestyle:
@@ -116,13 +117,14 @@ class _StepFlowState extends State<StepFlow> {
           onSkip: () => skipToStep(StepScreen.step6ResultSummary),
         );
       case StepScreen.step3DietaryRestrictions:
-        return Step3DietaryRestrictions(
+        return Step3DietaryRestriction(
           onNext: goToNextStep,
           onBack: goToPreviousStep,
           onSkip: () => skipToStep(StepScreen.step6ResultSummary),
+          onDecision: (bool decision) {},
         );
       case StepScreen.step4ListDietaryRestriction:
-        return Step4ListDietaryRestriction(
+        return Step4ListDietaryRestrictions(
           onNext: goToNextStep,
           onBack: goToPreviousStep,
           onSkip: () => skipToStep(StepScreen.step6ResultSummary),
@@ -134,7 +136,10 @@ class _StepFlowState extends State<StepFlow> {
           onSkip: () => skipToStep(StepScreen.step6ResultSummary),
         );
       case StepScreen.step6ResultSummary:
-        return Step6ResultSummary(onBack: goToPreviousStep);
+        return Step6IdealWeight(
+          onNext: goToNextStep,
+          onPrevious: goToPreviousStep,
+        );
       default:
         return const Center(child: Text("Unknown step"));
     }
@@ -142,8 +147,6 @@ class _StepFlowState extends State<StepFlow> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: _buildStepScreen(),
-    );
+    return Scaffold(body: _buildStepScreen());
   }
 }

@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:fittracker_source/services/notification_service.dart';
+import 'package:fittracker_client/services/notification_service.dart';
 import 'Screens/initial_screen/Welcome_Screen.dart';
 
 void main() async {

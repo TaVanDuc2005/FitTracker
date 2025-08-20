@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:fittracker_source/Screens/active_screen/journal/journal_screen.dart';
+import 'package:fittracker_client/Screens/active_screen/journal/journal_screen.dart';
 import '../../services/user_service.dart';
 import 'Welcome_Screen.dart';
 

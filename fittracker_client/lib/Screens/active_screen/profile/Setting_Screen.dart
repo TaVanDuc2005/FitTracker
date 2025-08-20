@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-import 'package:fittracker_source/Services/notification_service.dart';
+import 'package:fittracker_client/Services/notification_service.dart';
 
-import 'package:fittracker_source/Screens/initial_screen/Welcome_Screen.dart';
+import 'package:fittracker_client/Screens/initial_screen/Welcome_Screen.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -42,7 +42,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
     if (value) {
       // 8 lần trong ngày
       final times = const [
-        [8, 0],[10, 0],[12, 0],[14, 0],[16, 0],[18, 0],[20, 0],[22, 0],
+        [8, 0],
+        [10, 0],
+        [12, 0],
+        [14, 0],
+        [16, 0],
+        [18, 0],
+        [20, 0],
+        [22, 0],
       ];
       for (int i = 0; i < times.length; i++) {
         await NotificationService.scheduleDailyNotification(
@@ -69,19 +76,22 @@ class _SettingsScreenState extends State<SettingsScreen> {
         id: 101,
         title: 'Log your breakfast',
         body: 'Have you recorded your breakfast today?',
-        hour: 8, minute: 0,
+        hour: 8,
+        minute: 0,
       );
       await NotificationService.scheduleDailyNotification(
         id: 102,
         title: 'Log your lunch',
         body: 'Don’t forget to log your lunch.',
-        hour: 12, minute: 0,
+        hour: 12,
+        minute: 0,
       );
       await NotificationService.scheduleDailyNotification(
         id: 103,
         title: 'Log your dinner',
         body: 'Remember to log your dinner before the day ends.',
-        hour: 18, minute: 0,
+        hour: 18,
+        minute: 0,
       );
     } else {
       await NotificationService.cancel(101);
@@ -97,8 +107,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
         title: const Text('Log Out'),
         content: const Text('Are you sure you want to log out?'),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancel')),
-          ElevatedButton(onPressed: () => Navigator.pop(context, true), child: const Text('Log Out')),
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Log Out'),
+          ),
         ],
       ),
     );
@@ -124,8 +140,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
-          const Text("Notification Preferences",
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+          const Text(
+            "Notification Preferences",
+            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+          ),
           const SizedBox(height: 16),
 
           SwitchListTile(

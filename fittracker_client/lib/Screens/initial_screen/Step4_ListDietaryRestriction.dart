@@ -4,11 +4,13 @@ import '../../services/user_service.dart';
 class Step4ListDietaryRestrictions extends StatefulWidget {
   final VoidCallback onNext;
   final VoidCallback onBack;
+  final VoidCallback onSkip;
 
   const Step4ListDietaryRestrictions({
     super.key,
     required this.onNext,
     required this.onBack,
+    required this.onSkip,
   });
 
   @override
@@ -55,8 +57,9 @@ class _Step4ListDietaryRestrictionsState
 
   Future<void> _saveRestrictions() async {
     final restrictionsString = selectedRestrictions.join(', ');
-    final success =
-        await UserService.updateDietaryRestrictionsList(restrictionsString);
+    final success = await UserService.updateDietaryRestrictionsList(
+      restrictionsString,
+    );
     if (success) {
       print('✅ Saved: $restrictionsString');
     }

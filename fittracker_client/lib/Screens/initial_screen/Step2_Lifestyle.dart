@@ -4,11 +4,13 @@ import '../../services/user_service.dart';
 class Step2Lifestyle extends StatefulWidget {
   final VoidCallback onNext;
   final VoidCallback onBack;
+  final VoidCallback onSkip;
 
   const Step2Lifestyle({
     super.key,
     required this.onNext,
     required this.onBack,
+    required this.onSkip,
   });
 
   @override
@@ -89,8 +91,7 @@ class _LifestyleScreenState extends State<Step2Lifestyle> {
                           item,
                           style: TextStyle(
                             fontSize: 16,
-                            color:
-                                isSelected ? Colors.black : Colors.grey[800],
+                            color: isSelected ? Colors.black : Colors.grey[800],
                           ),
                         ),
                       ),
@@ -105,10 +106,7 @@ class _LifestyleScreenState extends State<Step2Lifestyle> {
               children: [
                 TextButton(
                   onPressed: widget.onBack,
-                  child: const Text(
-                    "Back",
-                    style: TextStyle(fontSize: 16),
-                  ),
+                  child: const Text("Back", style: TextStyle(fontSize: 16)),
                 ),
                 const Spacer(),
                 if (isLifestyleSelected)
@@ -128,10 +126,7 @@ class _LifestyleScreenState extends State<Step2Lifestyle> {
                         horizontal: 24,
                       ),
                     ),
-                    child: const Text(
-                      "Next",
-                      style: TextStyle(fontSize: 16),
-                    ),
+                    child: const Text("Next", style: TextStyle(fontSize: 16)),
                   ),
               ],
             ),

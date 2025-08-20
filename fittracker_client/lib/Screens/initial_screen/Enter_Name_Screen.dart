@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'onboarding_controller.dart';
-import 'package:fittracker_source/services/user_service.dart'; // THÊM IMPORT
+import 'package:fittracker_client/services/user_service.dart'; // THÊM IMPORT
 
 class EnterNameScreen extends StatefulWidget {
   const EnterNameScreen({super.key});
@@ -52,14 +52,14 @@ class _EnterNameScreenState extends State<EnterNameScreen> {
         child: Stack(
           children: [
             Positioned(
-                    top: 40,
-                    left: 80,
-                    child: Image.asset(
-                      'Assets/Images/Enter_name.png',
-                      width: 250,
-                      height: 200,
-                    ),
-                  ),
+              top: 40,
+              left: 80,
+              child: Image.asset(
+                'Assets/Images/Enter_name.png',
+                width: 250,
+                height: 200,
+              ),
+            ),
             // Tiêu đề
             Positioned(
               top: 200,
@@ -138,11 +138,9 @@ class _EnterNameScreenState extends State<EnterNameScreen> {
 
                     Navigator.push(
                       context,
-                      MaterialPageRoute(
-                        builder: (context) => const StepProgressForm(),
-                      ),
+                      MaterialPageRoute(builder: (context) => const StepFlow()),
                     );
-                  },  
+                  },
                   style: ElevatedButton.styleFrom(
                     padding: const EdgeInsets.symmetric(
                       horizontal: 60,

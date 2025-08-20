@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
 import 'Login_Screen.dart';
-import 'package:fittracker_source/Screens/active_screen/Journal/journal_screen.dart';
+import 'package:fittracker_client/Screens/active_screen/Journal/journal_screen.dart';
 import 'On_Boarding_Screen.dart';
-
 
 class WelcomeScreen extends StatelessWidget {
   const WelcomeScreen({super.key});
@@ -129,43 +128,48 @@ class WelcomeScreen extends StatelessWidget {
 
                 const SizedBox(height: 16),
                 Row(
-  mainAxisAlignment: MainAxisAlignment.center,
-  children: [
-    const Text("Already have an account? "),
-    GestureDetector(
-      onTap: () {
-        Navigator.of(context).push(
-          MaterialPageRoute(
-            builder: (_) => LoginScreen(
-              onNext: () {
-                Navigator.of(context).pushReplacement(
-                  MaterialPageRoute(builder: (_) => const JournalScreen()),
-                );
-              },
-              onBack: () {
-                Navigator.pop(context); // Quay lại màn Welcome
-              },
-            ),
-          ),
-        );
-      },
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-        decoration: BoxDecoration(
-          color: Colors.grey[300],
-          borderRadius: BorderRadius.circular(4),
-        ),
-        child: const Text(
-          "Log in",
-          style: TextStyle(
-            fontWeight: FontWeight.bold,
-            color: Colors.black87,
-          ),
-        ),
-      ),
-    ),
-  ],
-),
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Text("Already have an account? "),
+                    GestureDetector(
+                      onTap: () {
+                        Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (_) => LoginScreen(
+                              onNext: () {
+                                Navigator.of(context).pushReplacement(
+                                  MaterialPageRoute(
+                                    builder: (_) => const JournalScreen(),
+                                  ),
+                                );
+                              },
+                              onBack: () {
+                                Navigator.pop(context); // Quay lại màn Welcome
+                              },
+                            ),
+                          ),
+                        );
+                      },
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 4,
+                        ),
+                        decoration: BoxDecoration(
+                          color: Colors.grey[300],
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                        child: const Text(
+                          "Log in",
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            color: Colors.black87,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
 
                 const SizedBox(height: 24),
               ],
