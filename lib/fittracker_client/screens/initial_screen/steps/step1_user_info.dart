@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../services/user/user_service.dart';
+import '../../../models/user.dart' as app_user;
 import '../enter_name_screen.dart';
 
 class Step1UserInfo extends StatefulWidget {
@@ -23,6 +24,9 @@ class _Step1UserInfoState extends State<Step1UserInfo> {
   final ageController = TextEditingController();
   final heightController = TextEditingController();
   final weightController = TextEditingController();
+  
+  final UserService _userService = UserService();
+  app_user.User? _tempUser;
 
   bool get isGenderSelected => gender.isNotEmpty;
   bool get isAgeEntered => ageController.text.isNotEmpty;
@@ -41,19 +45,59 @@ class _Step1UserInfoState extends State<Step1UserInfo> {
   }
 
   Future<void> _loadSavedData() async {
-    final savedGender = await UserService.getGender();
-    final savedAge = await UserService.getAge();
-    final savedHeight = await UserService.getHeight();
-    final savedWeight = await UserService.getWeight();
-
-    if (mounted) {
+    // Lấy tên đã lưu từ step trước
+    final savedName = await UserService.getName();
+    
+    // Tạo user tạm thời từ dữ liệu đã có
+    _tempUser = await _userService.createUserFromTempData();
+    
+    // Nếu chưa có user tạm thời, tạo mới với tên đã lưu
+    if (_tempUser == null && savedName != null) {
+      _tempUser = app_user.User(name: savedName);
+    }
+    
+    // Load dữ liệu vào UI nếu có
+    if (_tempUser != null && mounted) {
       setState(() {
-        if (savedGender != null) gender = savedGender;
-        if (savedAge != null) ageController.text = savedAge.toString();
-        if (savedHeight != null) heightController.text = savedHeight.toString();
-        if (savedWeight != null) weightController.text = savedWeight.toString();
+        gender = _tempUser!.gender;
+        ageController.text = _tempUser!.age.toString();
+        heightController.text = _tempUser!.height.toString();
+        weightController.text = _tempUser!.weight.toString();
       });
     }
+  }
+
+  Future<void> _saveTempData() async {
+    final age = int.tryParse(ageController.text);
+    final height = double.tryParse(heightController.text);
+    final weight = double.tryParse(weightController.text);
+
+    if (age == null || height == null || weight == null) {
+      throw Exception('Invalid input values');
+    }
+
+    // Cập nhật user tạm thời
+    if (_tempUser != null) {
+      _tempUser = _tempUser!.copyWith(
+        gender: gender,
+        age: age,
+        height: height,
+        weight: weight,
+      );
+    } else {
+      // Tạo user mới nếu chưa có
+      final savedName = await UserService.getName();
+      _tempUser = app_user.User(
+        name: savedName,
+        gender: gender,
+        age: age,
+        height: height,
+        weight: weight,
+      );
+    }
+
+    // Backup tạm thời vào local storage
+    await _userService.backupToLocal(_tempUser!);
   }
 
   @override
@@ -79,12 +123,14 @@ class _Step1UserInfoState extends State<Step1UserInfo> {
               ),
               const SizedBox(height: 10),
               Row(
-                children: ["Male", "Female", "Non binary"].map((value) {
+                children: ["male", "female", "non_binary"].map((value) {
                   final isSelected = gender == value;
+                  final displayName = value == "male" ? "Male" : 
+                                    value == "female" ? "Female" : "Non binary";
                   return Padding(
                     padding: const EdgeInsets.only(right: 10),
                     child: ChoiceChip(
-                      label: Text(value),
+                      label: Text(displayName),
                       selected: isSelected,
                       onSelected: (_) {
                         setState(() {
@@ -108,7 +154,10 @@ class _Step1UserInfoState extends State<Step1UserInfo> {
                   style: TextStyle(fontSize: 18),
                 ),
                 const SizedBox(height: 8),
-                _customInputField(controller: ageController),
+                _customInputField(
+                  controller: ageController,
+                  hintText: "Enter your age",
+                ),
               ],
               if (isGenderSelected && isAgeEntered) ...[
                 const SizedBox(height: 20),
@@ -117,7 +166,10 @@ class _Step1UserInfoState extends State<Step1UserInfo> {
                   style: TextStyle(fontSize: 18),
                 ),
                 const SizedBox(height: 8),
-                _customInputField(controller: heightController),
+                _customInputField(
+                  controller: heightController,
+                  hintText: "Enter your height",
+                ),
               ],
               if (isGenderSelected && isAgeEntered && isHeightEntered) ...[
                 const SizedBox(height: 20),
@@ -126,7 +178,10 @@ class _Step1UserInfoState extends State<Step1UserInfo> {
                   style: TextStyle(fontSize: 18),
                 ),
                 const SizedBox(height: 8),
-                _customInputField(controller: weightController),
+                _customInputField(
+                  controller: weightController,
+                  hintText: "Enter your weight",
+                ),
               ],
             ],
           ),
@@ -153,28 +208,19 @@ class _Step1UserInfoState extends State<Step1UserInfo> {
             right: 24,
             child: ElevatedButton(
               onPressed: () async {
-                final age = int.tryParse(ageController.text);
-                final height = double.tryParse(heightController.text);
-                final weight = double.tryParse(weightController.text);
-
-                if (age == null || height == null || weight == null) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Please enter valid numbers!'),
-                      backgroundColor: Colors.red,
-                    ),
-                  );
-                  return;
+                try {
+                  await _saveTempData();
+                  widget.onNext();
+                } catch (e) {
+                  if (mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text('Please enter valid numbers! Error: $e'),
+                        backgroundColor: Colors.red,
+                      ),
+                    );
+                  }
                 }
-
-                await Future.wait([
-                  UserService.updateGender(gender),
-                  UserService.updateAge(age),
-                  UserService.updateHeight(height),
-                  UserService.updateWeight(weight),
-                ]);
-
-                widget.onNext();
               },
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.black87,
@@ -196,11 +242,16 @@ class _Step1UserInfoState extends State<Step1UserInfo> {
     );
   }
 
-  Widget _customInputField({required TextEditingController controller}) {
+  Widget _customInputField({
+    required TextEditingController controller, 
+    String? hintText
+  }) {
     return TextFormField(
       controller: controller,
       keyboardType: TextInputType.number,
       decoration: InputDecoration(
+        hintText: hintText,
+        hintStyle: TextStyle(color: Colors.grey[600]),
         filled: true,
         fillColor: const Color(0xFFFFF0D9),
         contentPadding: const EdgeInsets.symmetric(

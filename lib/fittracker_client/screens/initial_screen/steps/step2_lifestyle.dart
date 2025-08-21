@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../services/user/user_service.dart';
+import '../../../models/user.dart' as app_user;
 
 class Step2Lifestyle extends StatefulWidget {
   final VoidCallback onNext;
@@ -19,10 +20,20 @@ class Step2Lifestyle extends StatefulWidget {
 
 class _LifestyleScreenState extends State<Step2Lifestyle> {
   String selectedLifestyle = "";
+  final UserService _userService = UserService();
+  app_user.User? _tempUser;
+
+  final Map<String, String> lifestyleMapping = {
+    "Student": "sedentary",
+    "Employed part-time": "lightly_active", 
+    "Employed full-time": "moderately_active",
+    "Not employed": "sedentary",
+    "Retired": "lightly_active",
+  };
 
   final List<String> options = [
     "Student",
-    "Employed part-time",
+    "Employed part-time", 
     "Employed full-time",
     "Not employed",
     "Retired",
@@ -33,16 +44,58 @@ class _LifestyleScreenState extends State<Step2Lifestyle> {
   @override
   void initState() {
     super.initState();
-    _loadSavedLifestyle();
+    _loadSavedData();
   }
 
-  Future<void> _loadSavedLifestyle() async {
-    final savedLifestyle = await UserService.getLifestyle();
-    if (savedLifestyle != null && savedLifestyle.isNotEmpty) {
-      setState(() {
-        selectedLifestyle = savedLifestyle;
-      });
+  Future<void> _loadSavedData() async {
+    try {
+      // Thử restore từ backup local trước
+      _tempUser = await _userService.restoreFromLocal();
+      
+      // Nếu không có backup, tạo từ temp data
+      if (_tempUser == null) {
+        _tempUser = await _userService.createUserFromTempData();
+      }
+      
+      // Nếu vẫn không có, tạo user mới với tên đã lưu
+      if (_tempUser == null) {
+        final savedName = await UserService.getName();
+        if (savedName != null) {
+          _tempUser = app_user.User(name: savedName);
+        }
+      }
+      
+      if (_tempUser != null && mounted) {
+        // Tìm lifestyle option phù hợp với giá trị đã lưu
+        final savedLifestyle = _tempUser!.lifestyle;
+        String? matchingOption;
+        
+        for (var entry in lifestyleMapping.entries) {
+          if (entry.value == savedLifestyle) {
+            matchingOption = entry.key;
+            break;
+          }
+        }
+        
+        setState(() {
+          selectedLifestyle = matchingOption ?? "";
+        });
+      }
+    } catch (e) {
+      print('Error loading saved data: $e');
     }
+  }
+
+  Future<void> _saveTempData() async {
+    if (_tempUser == null) return;
+    
+    // Map UI option to model value
+    final lifestyleValue = lifestyleMapping[selectedLifestyle] ?? "moderately_active";
+    
+    _tempUser = _tempUser!.copyWith(lifestyle: lifestyleValue);
+    
+    // Backup to local storage
+    await _userService.backupToLocal(_tempUser!);
   }
 
   @override
@@ -86,13 +139,29 @@ class _LifestyleScreenState extends State<Step2Lifestyle> {
                               ? const Color(0xFFFFF0D9)
                               : const Color(0xFFF7F9FB),
                           borderRadius: BorderRadius.circular(24),
+                          border: isSelected
+                              ? Border.all(color: Colors.orange.shade200, width: 1)
+                              : null,
                         ),
-                        child: Text(
-                          item,
-                          style: TextStyle(
-                            fontSize: 16,
-                            color: isSelected ? Colors.black : Colors.grey[800],
-                          ),
+                        child: Row(
+                          children: [
+                            Expanded(
+                              child: Text(
+                                item,
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: isSelected ? FontWeight.w500 : FontWeight.normal,
+                                  color: isSelected ? Colors.black : Colors.grey[800],
+                                ),
+                              ),
+                            ),
+                            if (isSelected)
+                              Icon(
+                                Icons.check_circle,
+                                color: Colors.orange.shade600,
+                                size: 20,
+                              ),
+                          ],
                         ),
                       ),
                     );
@@ -106,14 +175,31 @@ class _LifestyleScreenState extends State<Step2Lifestyle> {
               children: [
                 TextButton(
                   onPressed: widget.onBack,
-                  child: const Text("Back", style: TextStyle(fontSize: 16)),
+                  style: TextButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  ),
+                  child: const Text(
+                    "Back", 
+                    style: TextStyle(fontSize: 16, color: Colors.grey),
+                  ),
                 ),
                 const Spacer(),
                 if (isLifestyleSelected)
                   ElevatedButton(
                     onPressed: () async {
-                      await UserService.updateLifestyle(selectedLifestyle);
-                      widget.onNext();
+                      try {
+                        await _saveTempData();
+                        widget.onNext();
+                      } catch (e) {
+                        if (mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text('Error saving data: $e'),
+                              backgroundColor: Colors.red,
+                            ),
+                          );
+                        }
+                      }
                     },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.black87,
