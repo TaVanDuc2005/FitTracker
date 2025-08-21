@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../Loading_Screen.dart';
 import '../../../services/user/user_service.dart';
+import '../../../models/user.dart' as app_user;
 
 class Step6IdealWeight extends StatefulWidget {
   final VoidCallback onNext;
@@ -25,7 +26,7 @@ class _Step6IdealWeightState extends State<Step6IdealWeight> {
   double? weight;
   String? goal;
   final TextEditingController _targetWeightController = TextEditingController();
-
+  late app_user.User currentUser;
   @override
   void initState() {
     super.initState();
@@ -33,9 +34,13 @@ class _Step6IdealWeightState extends State<Step6IdealWeight> {
   }
 
   Future<void> _loadUserDataAndCalculate() async {
-    height = await UserService.getHeight();
-    weight = await UserService.getWeight();
-    goal = await UserService.getGoal();
+    currentUser = await UserService().restoreFromLocal() ??
+                  (await UserService().getUserProfile()) ??
+                  app_user.User();
+
+    height = currentUser.height;
+    weight = currentUser.weight;
+    goal = currentUser.goal;
 
     if (height != null && weight != null && height! > 0 && goal != null) {
       double heightInMeters = height! / 100;
@@ -60,12 +65,13 @@ class _Step6IdealWeightState extends State<Step6IdealWeight> {
       }
 
       suggestedWeight = double.parse(suggestedWeight!.toStringAsFixed(1));
+      _targetWeightController.text = currentUser.targetWeight.toString();
     }
 
     setState(() {});
   }
 
-  void _goToNext() {
+  Future<void> _goToNext() async {
     double? targetWeight = double.tryParse(_targetWeightController.text);
     if (targetWeight == null || targetWeight <= 0) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -73,6 +79,13 @@ class _Step6IdealWeightState extends State<Step6IdealWeight> {
       );
       return;
     }
+    // Update User object
+    currentUser = currentUser.copyWith(targetWeight: targetWeight);
+
+    // Backup local và lưu lên Firebase
+    await UserService().backupToLocal(currentUser);
+    await UserService().saveUserProfile(currentUser);
+
     widget.onNext();
   }
 
@@ -282,5 +295,10 @@ class _Step6IdealWeightState extends State<Step6IdealWeight> {
         ),
       ),
     );
+  }
+  @override
+  void dispose() {
+    _targetWeightController.dispose();
+    super.dispose();
   }
 }

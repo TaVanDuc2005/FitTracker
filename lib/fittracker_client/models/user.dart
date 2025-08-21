@@ -27,6 +27,18 @@ class User {
     this.profileImageUrl,
   });
 
+  bool get isSetupComplete {
+    return name != null &&
+        name!.isNotEmpty &&
+        gender != null &&
+        age != null &&
+        height != null &&
+        weight != null &&
+        lifestyle != null &&
+        goal != null &&
+        targetWeight != null;
+  }
+
   // Convert User object to JSON
   Map<String, dynamic> toJson() {
     return {
@@ -41,6 +53,17 @@ class User {
       'goal': goal,
       'targetWeight': targetWeight,
       'profileImageUrl': profileImageUrl,
+    };
+  }
+
+  Map<String, dynamic> toMap() {
+    return {
+      'name': name,
+      'gender': gender,
+      'age': age,
+      'height': height,
+      'weight': weight,
+      'isSetupComplete': isSetupComplete,
     };
   }
 

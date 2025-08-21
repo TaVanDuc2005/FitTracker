@@ -127,7 +127,7 @@ class _LoadingScreenState extends State<LoadingScreen> {
         _processingMessage = 'Determining your calorie needs...';
       });
       await Future.delayed(const Duration(milliseconds: 600));
-      final dailyCalories = await UserService.calculateDailyCalories();
+      final dailyCalories = await UserService.calculateTDEE();
 
       // Step 4: Calculate macro targets
       setState(() {
@@ -144,7 +144,7 @@ class _LoadingScreenState extends State<LoadingScreen> {
 
       // Create complete profile
       _userProfile = {
-        ...userInfo,
+        ...userInfo.toMap(),
         'bmi': bmi,
         'dailyCalories': dailyCalories,
         'macroTargets': macroTargets,

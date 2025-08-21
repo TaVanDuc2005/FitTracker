@@ -1,5 +1,3 @@
-// lib/fittracker_client/service/health/bmi_service.dart
-
 import '../../models/user.dart';
 
 class BMIService {
