@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'Loading_Screen.dart';
-import '../../services/user_service.dart';
+import '../loading_screen.dart';
+import '../../../services/user/user_service.dart';
 
 class Step6IdealWeight extends StatefulWidget {
   final VoidCallback onNext;

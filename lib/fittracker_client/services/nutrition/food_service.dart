@@ -1,13 +1,17 @@
 import 'package:sqflite/sqflite.dart';
-import 'package:fittracker_client/models/food.dart';
-import 'Database_Service.dart';
+import '../../models/food.dart';
+import '../core/database_service.dart';
 
 class FoodService {
   final DatabaseService _dbService = DatabaseService();
 
   Future<void> insertFood(Food food) async {
     final db = await _dbService.database;
-    await db.insert('foods', food.toMap(), conflictAlgorithm: ConflictAlgorithm.replace);
+    await db.insert(
+      'foods',
+      food.toMap(),
+      conflictAlgorithm: ConflictAlgorithm.replace,
+    );
   }
 
   Future<List<Food>> getAllFoods() async {
@@ -18,7 +22,12 @@ class FoodService {
 
   Future<void> updateFood(Food food) async {
     final db = await _dbService.database;
-    await db.update('foods', food.toMap(), where: 'id = ?', whereArgs: [food.id]);
+    await db.update(
+      'foods',
+      food.toMap(),
+      where: 'id = ?',
+      whereArgs: [food.id],
+    );
   }
 
   Future<void> deleteFood(String id) async {

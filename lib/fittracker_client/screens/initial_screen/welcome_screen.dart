@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'Login_Screen.dart';
-import 'package:fittracker_client/Screens/active_screen/Journal/journal_screen.dart';
-import 'On_Boarding_Screen.dart';
+import 'login_screen.dart';
+import '../../screens/active_screen/journal/journal_screen.dart';
+import 'onboarding/onboarding_screen.dart';
 
 class WelcomeScreen extends StatelessWidget {
   const WelcomeScreen({super.key});

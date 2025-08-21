@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:fittracker_client/models/food.dart';
-import 'package:fittracker_client/Screens/active_screen/journal/Journal_Screen.dart';
+import '../../../models/food.dart';
+import '../../../Screens/active_screen/journal/Journal_Screen.dart';
 
 class MealSummaryScreen extends StatefulWidget {
   final String mealName;

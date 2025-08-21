@@ -1,11 +1,6 @@
 import 'package:flutter/material.dart';
-<<<<<<< HEAD:fittracker_client/lib/Screens/initial_screen/Enter_Name_Screen.dart
-import 'onboarding_controller.dart';
-import 'package:fittracker_client/services/user_service.dart'; // THÊM IMPORT
-=======
 import 'onboarding/onboarding_controller.dart';
-import '../../services/user/user_service.dart';
->>>>>>> efb3b25 (Update file):lib/fittracker_client/screens/initial_screen/enter_name_screen.dart
+import '../../services/user/user_service.dart'; // THÊM IMPORT
 
 class EnterNameScreen extends StatefulWidget {
   const EnterNameScreen({super.key});

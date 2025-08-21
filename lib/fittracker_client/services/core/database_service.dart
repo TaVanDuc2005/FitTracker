@@ -19,7 +19,10 @@ class DatabaseService {
   }
 
   // Hàm POST
-  static Future<Map<String, dynamic>> postData(String endpoint, Map<String, dynamic> body) async {
+  static Future<Map<String, dynamic>> postData(
+    String endpoint,
+    Map<String, dynamic> body,
+  ) async {
     final url = Uri.parse('$baseUrl/$endpoint');
     final response = await http.post(
       url,
@@ -35,7 +38,11 @@ class DatabaseService {
   }
 
   // Hàm PUT
-  static Future<Map<String, dynamic>> putData(String endpoint, String id, Map<String, dynamic> body) async {
+  static Future<Map<String, dynamic>> putData(
+    String endpoint,
+    String id,
+    Map<String, dynamic> body,
+  ) async {
     final url = Uri.parse('$baseUrl/$endpoint/$id');
     final response = await http.put(
       url,

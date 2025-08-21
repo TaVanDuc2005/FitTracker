@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-import 'package:fittracker_client/Services/notification_service.dart';
+import '../../../services/user/notification_service.dart';
 
-import 'package:fittracker_client/Screens/initial_screen/Welcome_Screen.dart';
+import '../../initial_screen/Welcome_Screen.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});

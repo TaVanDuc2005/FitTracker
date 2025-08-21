@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'food_search_screen.dart';
 import '../profile/profile_Screen.dart';
-import '../../../services/user_service.dart';
+import '../../../services/user/user_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:fittracker_client/Screens/initial_screen/Welcome_Screen.dart';
-import 'package:fittracker_client/Screens/initial_screen/AI_agent_screen.dart';
+import '../../../Screens/initial_screen/Welcome_Screen.dart';
+import '../../../Screens/initial_screen/AI_agent_screen.dart';
 
 // Tạo class MacroData để quản lý dữ liệu
 class MacroData {
@@ -1090,13 +1090,23 @@ class _GlassCupPainter extends CustomPainter {
       waterPath.close();
 
       final paintWater = Paint()
-        ..color = const Color.fromARGB(255, 120, 241, 241).withValues(alpha: 0.7)
+        ..color = const Color.fromARGB(
+          255,
+          120,
+          241,
+          241,
+        ).withValues(alpha: 0.7)
         ..style = PaintingStyle.fill;
       canvas.drawPath(waterPath, paintWater);
     } else {
       // Vẽ nước màu xám phủ kín ly khi chưa đầy
       final paintGray = Paint()
-        ..color = const Color.fromARGB(255, 233, 231, 231).withValues(alpha: 0.7)
+        ..color = const Color.fromARGB(
+          255,
+          233,
+          231,
+          231,
+        ).withValues(alpha: 0.7)
         ..style = PaintingStyle.fill;
       canvas.drawPath(cupPath, paintGray);
 

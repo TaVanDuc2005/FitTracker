@@ -1,6 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
-import 'Enter_Name_Screen.dart';
+import '../enter_name_screen.dart';
 
 class OnboardingScreen extends StatefulWidget {
   const OnboardingScreen({super.key});
@@ -158,19 +158,22 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
               bottom: 30,
               right: 24,
               child: _currentIndex == _pages.length - 1
-                ? GestureDetector(
-                    onTap: _nextPage,
-                    child: Container(
-                      width: 56,
-                      height: 56,
-                      decoration: const BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: Colors.black,
+                  ? GestureDetector(
+                      onTap: _nextPage,
+                      child: Container(
+                        width: 56,
+                        height: 56,
+                        decoration: const BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: Colors.black,
+                        ),
+                        child: const Icon(
+                          Icons.arrow_forward,
+                          color: Colors.white,
+                        ),
                       ),
-                      child: const Icon(Icons.arrow_forward, color: Colors.white),
-                    ),
-                  )
-                : const SizedBox.shrink(),
+                    )
+                  : const SizedBox.shrink(),
             ),
           ],
         ),

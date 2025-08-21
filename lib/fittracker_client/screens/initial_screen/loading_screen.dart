@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:fittracker_client/Screens/active_screen/journal/journal_screen.dart';
-import '../../services/user_service.dart';
-import 'Welcome_Screen.dart';
+import '../../screens/active_screen/journal/journal_screen.dart';
+import '../../services/user/user_service.dart';
+import 'welcome_screen.dart';
 
 class LoadingScreen extends StatefulWidget {
   const LoadingScreen({super.key});

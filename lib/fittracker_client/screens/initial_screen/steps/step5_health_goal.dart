@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../services/user_service.dart';
+import '../../../services/user/user_service.dart';
 
 class RangeProgressBar extends StatelessWidget {
   final double minValue;
