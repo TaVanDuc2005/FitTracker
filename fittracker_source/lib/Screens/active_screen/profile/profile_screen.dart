@@ -6,6 +6,7 @@ import 'package:fittracker_source/Screens/active_screen/journal/journal_screen.d
 import '../../../services/user_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:fittracker_source/Screens/active_screen/profile/Setting_Screen.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 // ====== Hàm sinh ngày "chuẩn lịch" ======
 List<String> generateDateLabels(int days) {
@@ -69,13 +70,27 @@ class _ProfileScreenState extends State<ProfileScreen> {
     _loadUserData();
   }
 
-  // Load dữ liệu từ UserService
+  // Load dữ liệu từ Firebase thay vì UserService
   Future<void> _loadUserData() async {
     try {
       print('📊 Loading user data for Profile...');
 
-      // Lấy thông tin user cơ bản
-      userInfo = await UserService.getUserInfo();
+      // Lấy uid từ SharedPreferences
+      final prefs = await SharedPreferences.getInstance();
+      final uid = prefs.getString('userid');
+      if (uid == null || uid.isEmpty) {
+        setState(() {
+          _isLoading = false;
+        });
+        return;
+      }
+
+      // Lấy dữ liệu user từ Firebase
+      final doc = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(uid)
+          .get();
+      userInfo = doc.data();
       if (userInfo == null) {
         setState(() {
           _isLoading = false;
@@ -83,77 +98,78 @@ class _ProfileScreenState extends State<ProfileScreen> {
         return;
       }
 
-      // Tính toán calories và BMI
-      final dailyCalories = await UserService.calculateDailyCalories();
-      final bmi = await UserService.calculateBMI(); // Thêm BMI
+      // Tính toán calories và BMI từ dữ liệu Firebase
+      double? height = (userInfo!['height'] as num?)?.toDouble();
+      double? weight = (userInfo!['weight'] as num?)?.toDouble();
+      int? age = (userInfo!['age'] as num?)?.toInt();
+      String? gender = userInfo!['gender']?.toString().toLowerCase();
 
-      // Load persistent data từ SharedPreferences
-      final prefs = await SharedPreferences.getInstance();
+      double bmi = 0;
+      if (height != null && weight != null && height > 0) {
+        bmi = weight / ((height / 100) * (height / 100));
+      }
+
+      double dailyCalories = 2000;
+      if (height != null && weight != null && age != null && gender != null) {
+        double bmr;
+        if (gender == 'male') {
+          bmr = 10 * weight + 6.25 * height - 5 * age + 5;
+        } else {
+          bmr = 10 * weight + 6.25 * height - 5 * age - 161;
+        }
+        String? lifestyle = userInfo!['lifestyle']?.toString().toLowerCase();
+        double activityFactor;
+        switch (lifestyle) {
+          case 'student':
+          case 'not employed':
+          case 'retired':
+            activityFactor = 1.2;
+            break;
+          case 'employed part-time':
+            activityFactor = 1.375;
+            break;
+          case 'employed full-time':
+            activityFactor = 1.55;
+            break;
+          default:
+            activityFactor = 1.2;
+        }
+        dailyCalories = bmr * activityFactor;
+      }
 
       setState(() {
-        // Basic info từ UserService
+        // Basic info từ Firebase
         userName = userInfo!['name'] ?? 'User';
-        goal = _getGoalText(userInfo!['goal'] ?? 'maintain weight');
-        caloriesPerDay = dailyCalories?.toInt() ?? 2000;
-        currentBMI = bmi; // Set BMI
+        goal = _getGoalText(
+          userInfo!['healthGoal'] ?? userInfo!['goal'] ?? 'maintain weight',
+        );
+        caloriesPerDay = dailyCalories.toInt();
+        currentBMI = bmi;
 
-        // Weight info - convert kg to lbs for display
-        double weightInKg = (userInfo!['weight'] ?? 70.0).toDouble();
-        currentWeight = _kgToLbs(weightInKg);
+        // Weight info - lấy từ Firebase
+        double weightInKg = weight ?? 70.0;
+        startWeight = _kgToLbs(weightInKg); // startWeight là weight từ Firebase
+        currentWeight = startWeight; // currentWeight ban đầu = startWeight
 
-        // Load startWeight từ SharedPreferences
-        double? savedStartWeight = prefs.getDouble('profile_start_weight');
-        if (savedStartWeight == null) {
-          // Lần đầu tiên, set start weight = current weight
-          startWeight = currentWeight;
-          prefs.setDouble('profile_start_weight', startWeight);
-          print(
-            '🆕 First time: Set start weight = ${startWeight.toStringAsFixed(1)} lbs',
-          );
-        } else {
-          // Sử dụng giá trị đã lưu
-          startWeight = savedStartWeight;
-          print(
-            '🔄 Loaded persistent start weight = ${startWeight.toStringAsFixed(1)} lbs',
-          );
-        }
+        // Goal weight là targetWeight từ Firebase
+        double? targetWeightKg = (userInfo!['targetWeight'] as num?)
+            ?.toDouble();
+        goalWeight = targetWeightKg != null
+            ? _kgToLbs(targetWeightKg)
+            : startWeight;
 
-        // Load goalWeight từ SharedPreferences
-        double? savedGoalWeight = prefs.getDouble('profile_goal_weight');
-        if (savedGoalWeight == null) {
-          // Lần đầu tiên, tính goal weight dựa trên goal
-          String userGoal = userInfo!['goal'] ?? 'maintain weight';
-          goalWeight = _calculateGoalWeight(currentWeight, userGoal);
-          prefs.setDouble('profile_goal_weight', goalWeight);
-          print(
-            '🆕 First time: Calculated goal weight = ${goalWeight.toStringAsFixed(1)} lbs',
-          );
-        } else {
-          // Sử dụng giá trị đã lưu
-          goalWeight = savedGoalWeight;
-          print(
-            '🔄 Loaded persistent goal weight = ${goalWeight.toStringAsFixed(1)} lbs',
-          );
-        }
-
-        // Generate mock history data based on UserService data
         _generateHistoryData();
-
         _isLoading = false;
       });
 
-      print('✅ Profile data loaded successfully:');
+      print('✅ Profile data loaded from Firebase:');
       print('   Name: $userName');
       print('   Goal: $goal');
       print('   Calories: $caloriesPerDay');
       print('   BMI: ${currentBMI?.toStringAsFixed(1) ?? 'N/A'}');
       print('   Current Weight: ${currentWeight.toStringAsFixed(1)} lbs');
-      print(
-        '   Start Weight: ${startWeight.toStringAsFixed(1)} lbs (persistent)',
-      );
-      print(
-        '   Goal Weight: ${goalWeight.toStringAsFixed(1)} lbs (persistent)',
-      );
+      print('   Start Weight: ${startWeight.toStringAsFixed(1)} lbs');
+      print('   Goal Weight: ${goalWeight.toStringAsFixed(1)} lbs');
     } catch (e) {
       print('❌ Error loading profile data: $e');
       setState(() {
@@ -183,14 +199,16 @@ class _ProfileScreenState extends State<ProfileScreen> {
   // Get goal text in English
   String _getGoalText(String goal) {
     switch (goal.toLowerCase()) {
-      case 'lose weight':
-        return 'Lose weight';
-      case 'gain weight':
-        return 'Gain weight';
+      case 'weight loss':
+        return 'Weight Loss';
+      case 'weight gain':
+        return 'Weight Gain';
+      case 'muscle building':
+        return 'Muscle Building';
       case 'maintain weight':
-      case 'maintain':
+        return 'Maintain Weight';
       default:
-        return 'Maintain weight';
+        return 'Maintain Weight';
     }
   }
 

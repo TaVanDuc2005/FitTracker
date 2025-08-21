@@ -2,11 +2,15 @@ import 'package:flutter/material.dart';
 import 'package:fittracker_source/models/food.dart';
 import 'package:fittracker_source/Screens/active_screen/journal/Meal_Summary_Screen.dart';
 import '../../../services/user_service.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
-// Map macro chỉ số cho từng bữa
-Future<Map<String, Map<String, int>>> getMealMacroTarget() async {
-  final macroTargets = await UserService.calculateMacroTargets();
-  if (macroTargets == null) {
+// Map macro chỉ số cho từng bữa từ dữ liệu Firebase
+Future<Map<String, Map<String, int>>> getMealMacroTargetFromFirebase() async {
+  // Lấy uid từ SharedPreferences
+  final prefs = await SharedPreferences.getInstance();
+  final uid = prefs.getString('userid');
+  if (uid == null || uid.isEmpty) {
     // fallback nếu chưa có dữ liệu
     return {
       "Breakfast": {
@@ -32,28 +36,101 @@ Future<Map<String, Map<String, int>>> getMealMacroTarget() async {
       },
     };
   }
-  // Chia macro cho từng bữa (30% sáng, 40% trưa, 30% tối)
+
+  // Lấy dữ liệu user từ Firebase
+  final doc = await FirebaseFirestore.instance
+      .collection('users')
+      .doc(uid)
+      .get();
+  final userInfo = doc.data();
+  if (userInfo == null) {
+    // fallback nếu chưa có dữ liệu
+    return {
+      "Breakfast": {
+        "calories": 600,
+        "protein": 40,
+        "fat": 20,
+        "carbs": 60,
+        "fiber": 6,
+      },
+      "Lunch": {
+        "calories": 800,
+        "protein": 50,
+        "fat": 25,
+        "carbs": 100,
+        "fiber": 8,
+      },
+      "Dinner": {
+        "calories": 600,
+        "protein": 40,
+        "fat": 18,
+        "carbs": 80,
+        "fiber": 7,
+      },
+    };
+  }
+
+  // Tính toán macro từ dữ liệu Firebase
+  double? height = (userInfo['height'] as num?)?.toDouble();
+  double? weight = (userInfo['weight'] as num?)?.toDouble();
+  int? age = (userInfo['age'] as num?)?.toInt();
+  String? gender = userInfo['gender']?.toString().toLowerCase();
+  String? lifestyle = userInfo['lifestyle']?.toString().toLowerCase();
+
+  double bmr = 0;
+  if (height != null && weight != null && age != null && gender != null) {
+    if (gender == 'male') {
+      bmr = 10 * weight + 6.25 * height - 5 * age + 5;
+    } else {
+      bmr = 10 * weight + 6.25 * height - 5 * age - 161;
+    }
+  }
+
+  double activityFactor = 1.2;
+  switch (lifestyle) {
+    case 'student':
+    case 'not employed':
+    case 'retired':
+      activityFactor = 1.2;
+      break;
+    case 'employed part-time':
+      activityFactor = 1.375;
+      break;
+    case 'employed full-time':
+      activityFactor = 1.55;
+      break;
+    default:
+      activityFactor = 1.2;
+  }
+
+  double dailyCalories = bmr * activityFactor;
+  int calories = dailyCalories.round();
+  int protein = (dailyCalories * 0.15 / 4).round();
+  int fat = (dailyCalories * 0.25 / 9).round();
+  int carbs = (dailyCalories * 0.60 / 4).round();
+  int fiber = 25;
+
   return {
     "Breakfast": {
-      "calories": (macroTargets['calories']! * 0.3).round(),
-      "protein": (macroTargets['protein']! * 0.3).round(),
-      "fat": (macroTargets['fat']! * 0.3).round(),
-      "carbs": (macroTargets['carbs']! * 0.3).round(),
-      "fiber": (macroTargets['fiber']! * 0.3).round(),
+      "calories": (calories * 0.3).round(),
+      "protein": (protein * 0.3).round(),
+      "fat": (fat * 0.3).round(),
+      "carbs": (carbs * 0.3).round(),
+      "fiber": (fiber * 0.3).round(),
     },
     "Lunch": {
-      "calories": (macroTargets['calories']! * 0.4).round(),
-      "protein": (macroTargets['protein']! * 0.4).round(),
-      "fat": (macroTargets['fat']! * 0.4).round(),
-      "carbs": (macroTargets['carbs']! * 0.4).round(),
-      "fiber": (macroTargets['fiber']! * 0.4).round(),
+      "calories": (calories * 0.4).round(),
+      "protein": (protein * 0.4).round(),
+      "fat": (fat * 0.4).round(),
+      "carbs": (carbs * 0.4).round(),
+      "fiber": (fiber * 0.4).round(),
     },
     "Dinner": {
-      "calories": (macroTargets['calories']! * 0.3).round(),
-      "protein": (macroTargets['protein']! * 0.3).round(),
-      "fat": (macroTargets['fat']! * 0.3).round(),
-      "carbs": (macroTargets['carbs']! * 0.3).round(),
-      "fiber": (macroTargets['fiber']! * 0.3).round(),
+      "calories": (calories * 0.3).round(),
+      "protein": (protein * 0.3).round(),
+      "fat": (fat * 0.3).round(),
+      "carbs": (carbs * 0.3).round(),
+      "fiber": (fiber * 0.3).round(),
     },
   };
 }
@@ -79,7 +156,7 @@ class _SearchFoodScreenState extends State<SearchFoodScreen> {
   @override
   void initState() {
     super.initState();
-    _mealMacroFuture = getMealMacroTarget();
+    _mealMacroFuture = getMealMacroTargetFromFirebase();
   }
 
   String get _mealTitle {
@@ -276,7 +353,7 @@ class _SearchFoodScreenState extends State<SearchFoodScreen> {
             ),
           ),
           onPressed: () async {
-            final mealMacroTarget = await getMealMacroTarget();
+            final mealMacroTarget = await getMealMacroTargetFromFirebase();
             Navigator.push(
               context,
               MaterialPageRoute(
