@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:fittracker_source/Screens/active_screen/journal/journal_screen.dart';
 import '../../services/user_service.dart';
 import 'Welcome_Screen.dart';
+import '../../services/user_service.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class LoadingScreen extends StatefulWidget {
   const LoadingScreen({super.key});
@@ -13,12 +16,88 @@ class LoadingScreen extends StatefulWidget {
 class _LoadingScreenState extends State<LoadingScreen> {
   bool _isProcessing = true;
   Map<String, dynamic>? _userProfile;
+  String? _uid;
   String _processingMessage = 'Analyzing your data...';
 
   @override
   void initState() {
     super.initState();
-    _processUserData();
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (_uid == null) {
+      final args =
+          ModalRoute.of(context)!.settings.arguments as Map<String, dynamic>?;
+      _uid = args?['userid']; // 🔹 Lấy uid từ arguments
+      _syncUserData();
+      _processUserData();
+    }
+  }
+
+  Future<void> _syncUserData() async {
+    // Lấy uid từ SharedPreferences
+    final prefs = await SharedPreferences.getInstance();
+    final uid = prefs.getString('userid');
+    if (uid == null || uid.isEmpty) {
+      _isProcessing = false;
+      _processingMessage = 'Error: No UID found.';
+      return;
+    }
+
+    // Lấy các field đã lưu từ SharedPreferences
+    final username = await UserService.getName();
+    final gender = await UserService.getGender();
+    final age = await UserService.getAge();
+    final height = await UserService.getHeight();
+    final weight = await UserService.getWeight();
+    final lifestyle = await UserService.getLifestyle();
+    final hasDietaryRestrictions =
+        await UserService.getHasDietaryRestrictions();
+    String? dietaryRestrictionsList;
+    if (hasDietaryRestrictions != null && hasDietaryRestrictions == 'Yes') {
+      dietaryRestrictionsList = await UserService.getDietaryRestrictionsList();
+    }
+    final goal = await UserService.getGoal();
+    final targetWeight = await UserService.getTargetWeight();
+
+    // Map dữ liệu chỉ lưu field nào khác null
+    final Map<String, dynamic> dataToUpdate = {};
+    if (username != null && username.isNotEmpty)
+      dataToUpdate['name'] = username;
+    if (gender != null && gender.isNotEmpty) dataToUpdate['gender'] = gender;
+    if (age != null) dataToUpdate['age'] = age;
+    if (height != null) dataToUpdate['height'] = height;
+    if (weight != null) dataToUpdate['weight'] = weight;
+    if (lifestyle != null && lifestyle.isNotEmpty)
+      dataToUpdate['lifestyle'] = lifestyle;
+    if (hasDietaryRestrictions != null)
+      dataToUpdate['hasDietaryRestrictions'] = hasDietaryRestrictions;
+    if (dietaryRestrictionsList != null && dietaryRestrictionsList.isNotEmpty)
+      dataToUpdate['dietaryRestrictionsList'] = dietaryRestrictionsList;
+    if (goal != null && goal.isNotEmpty) dataToUpdate['healthGoal'] = goal;
+    if (targetWeight != null) dataToUpdate['targetWeight'] = targetWeight;
+
+    // Nếu có dữ liệu thì chỉ update vào document uid (KHÔNG tạo uid mới)
+    if (dataToUpdate.isNotEmpty) {
+      await FirebaseFirestore.instance
+          .collection('users')
+          .doc(uid) // dùng đúng uid làm document ID
+          .set(
+            dataToUpdate,
+            SetOptions(merge: true),
+          ); // chỉ cập nhật các field có dữ liệu
+      // Đánh dấu setup đã hoàn thành trên Firebase
+      await FirebaseFirestore.instance.collection('users').doc(uid).update({
+        'isSetupComplete': true,
+      });
+    }
+
+    // XÓA HẾT DỮ LIỆU LOCAL
+    await UserService.clearUserInfo();
+
+    setState(() {});
   }
 
   // THÊM: Debug method để kiểm tra từng field
@@ -86,24 +165,35 @@ class _LoadingScreenState extends State<LoadingScreen> {
       // Step 0: Debug check
       await _debugUserData();
 
-      // Step 1: Load user info
+      // Step 1: Load user info từ Firebase (KHÔNG dùng local nữa)
       setState(() {
         _processingMessage = 'Loading your profile...';
       });
       await Future.delayed(const Duration(milliseconds: 800));
 
-      final userInfo = await UserService.getUserInfo();
-      if (userInfo == null) {
-        print('❌ No user data found - redirecting to setup');
+      // Lấy uid từ SharedPreferences
+      final prefs = await SharedPreferences.getInstance();
+      final uid = prefs.getString('userid');
+      if (uid == null || uid.isEmpty) {
+        setState(() {
+          _processingMessage = 'Error: No UID found.';
+          _isProcessing = false;
+        });
+        return;
+      }
 
+      // Lấy dữ liệu user từ Firebase
+      final doc = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(uid)
+          .get();
+      if (!doc.exists) {
+        print('❌ No user data found on Firebase - redirecting to setup');
         setState(() {
           _processingMessage = 'Redirecting to setup...';
           _isProcessing = false;
         });
-
-        // Navigate back to welcome screen after 2 seconds
         await Future.delayed(const Duration(seconds: 2));
-
         if (mounted) {
           Navigator.pushReplacement(
             context,
@@ -113,28 +203,73 @@ class _LoadingScreenState extends State<LoadingScreen> {
         return;
       }
 
-      print('✅ User data found! Processing...');
+      final userInfo = doc.data();
+      print('✅ User data found on Firebase! Processing...');
 
       // Step 2: Calculate BMI
       setState(() {
         _processingMessage = 'Calculating your BMI...';
       });
       await Future.delayed(const Duration(milliseconds: 600));
-      final bmi = await UserService.calculateBMI();
+      final height = (userInfo?['height'] as num?)?.toDouble();
+      final weight = (userInfo?['weight'] as num?)?.toDouble();
+      double? bmi;
+      if (height != null && weight != null && height > 0) {
+        bmi = weight / ((height / 100) * (height / 100));
+      }
 
       // Step 3: Calculate daily calories
       setState(() {
         _processingMessage = 'Determining your calorie needs...';
       });
       await Future.delayed(const Duration(milliseconds: 600));
-      final dailyCalories = await UserService.calculateDailyCalories();
+      int? dailyCalories;
+      {
+        final gender = userInfo?['gender']?.toString().toLowerCase();
+        final age = (userInfo?['age'] as num?)?.toInt();
+        final lifestyle = userInfo?['lifestyle']?.toString().toLowerCase();
+        if (gender != null && age != null && height != null && weight != null) {
+          double bmr;
+          if (gender == 'male') {
+            bmr = 10 * weight + 6.25 * height - 5 * age + 5;
+          } else {
+            bmr = 10 * weight + 6.25 * height - 5 * age - 161;
+          }
+          double activityFactor;
+          switch (lifestyle) {
+            case 'student':
+            case 'not employed':
+            case 'retired':
+              activityFactor = 1.2;
+              break;
+            case 'employed part-time':
+              activityFactor = 1.375;
+              break;
+            case 'employed full-time':
+              activityFactor = 1.55;
+              break;
+            default:
+              activityFactor = 1.2;
+          }
+          dailyCalories = (bmr * activityFactor).round();
+        }
+      }
 
       // Step 4: Calculate macro targets
       setState(() {
         _processingMessage = 'Creating your macro targets...';
       });
       await Future.delayed(const Duration(milliseconds: 600));
-      final macroTargets = await UserService.calculateMacroTargets();
+      Map<String, int>? macroTargets;
+      if (dailyCalories != null) {
+        macroTargets = {
+          'calories': dailyCalories,
+          'protein': (dailyCalories * 0.15 / 4).round(),
+          'fat': (dailyCalories * 0.25 / 9).round(),
+          'carbs': (dailyCalories * 0.60 / 4).round(),
+          'fiber': 25,
+        };
+      }
 
       // Step 5: Finalize
       setState(() {
@@ -144,14 +279,11 @@ class _LoadingScreenState extends State<LoadingScreen> {
 
       // Create complete profile
       _userProfile = {
-        ...userInfo,
+        ...?userInfo,
         'bmi': bmi,
         'dailyCalories': dailyCalories,
         'macroTargets': macroTargets,
       };
-
-      // Debug output
-      await UserService.printUserInfo();
 
       print('✅ Loading Screen: User data processed successfully!');
       print('   📊 BMI: ${bmi?.toStringAsFixed(1)}');

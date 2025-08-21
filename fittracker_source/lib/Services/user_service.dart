@@ -68,6 +68,16 @@ class UserService {
     print('✅ All user data cleared');
   }
 
+  static Future<bool> setSetupComplete(bool value) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      return await prefs.setBool(_keyIsSetupComplete, value);
+    } catch (e) {
+      print('Error setting setup complete: $e');
+      return false;
+    }
+  }
+
   // Lưu name riêng lẻ
   static Future<bool> saveName(String name) async {
     try {
@@ -344,9 +354,9 @@ class UserService {
   static Future<bool> updateGoal(String goal) async {
     try {
       final prefs = await SharedPreferences.getInstance();
-      return await prefs.setString(_keyGoal, goal);
+      final result = await prefs.setString(_keyGoal, goal);
+      return result;
     } catch (e) {
-      print('Error updating goal: $e');
       return false;
     }
   }

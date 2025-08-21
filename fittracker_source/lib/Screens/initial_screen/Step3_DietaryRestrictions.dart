@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../services/user_service.dart';
 
 class Step3DietaryRestriction extends StatefulWidget {
   final VoidCallback onNext;
@@ -15,13 +16,35 @@ class Step3DietaryRestriction extends StatefulWidget {
   }) : super(key: key);
 
   @override
-  State<Step3DietaryRestriction> createState() => _Step3DietaryRestrictionState();
+  State<Step3DietaryRestriction> createState() =>
+      _Step3DietaryRestrictionState();
 }
 
 class _Step3DietaryRestrictionState extends State<Step3DietaryRestriction> {
   String? selectedOption;
 
   bool get isOptionSelected => selectedOption != null;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadSelectedOption();
+  }
+
+  Future<void> _loadSelectedOption() async {
+    final saved = await UserService.getHasDietaryRestrictions();
+    if (saved != null && (saved == 'Yes' || saved == 'No')) {
+      setState(() {
+        selectedOption = saved;
+      });
+    }
+  }
+
+  Future<void> _saveSelectedOption() async {
+    if (selectedOption != null) {
+      await UserService.updateHasDietaryRestrictions(selectedOption!);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -97,7 +120,9 @@ class _Step3DietaryRestrictionState extends State<Step3DietaryRestriction> {
                   onPressed: widget.onBack,
                   style: ElevatedButton.styleFrom(
                     padding: const EdgeInsets.symmetric(
-                        horizontal: 28, vertical: 14),
+                      horizontal: 28,
+                      vertical: 14,
+                    ),
                     backgroundColor: Colors.grey[200],
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(30),
@@ -115,14 +140,17 @@ class _Step3DietaryRestrictionState extends State<Step3DietaryRestriction> {
                   bottom: 20,
                   right: 0,
                   child: ElevatedButton(
-                    onPressed: () {
+                    onPressed: () async {
+                      await _saveSelectedOption(); // Lưu vào user_service khi ấn Next
                       final shouldSkip = selectedOption == 'No';
                       widget.onDecision(shouldSkip);
                       widget.onNext();
                     },
                     style: ElevatedButton.styleFrom(
                       padding: const EdgeInsets.symmetric(
-                          horizontal: 28, vertical: 14),
+                        horizontal: 28,
+                        vertical: 14,
+                      ),
                       backgroundColor: Colors.black87,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(30),

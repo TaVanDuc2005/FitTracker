@@ -7,6 +7,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:fittracker_source/Screens/active_screen/journal/journal_screen.dart';
 
 import 'Register_Screen.dart';
 import '../../services/user_service.dart';
@@ -116,6 +117,7 @@ class _LoginScreenState extends State<LoginScreen> {
         final prefs = await SharedPreferences.getInstance();
         await prefs.setBool('hasLoggedOnce', true);
         await prefs.setString('lastUsername', usernameInput);
+        await prefs.setString('userid', uid); // Lưu uid vào pref
       } catch (_) {}
 
       // Danh sách các field cần kiểm tra
@@ -143,7 +145,22 @@ class _LoginScreenState extends State<LoginScreen> {
       }
 
       if (firstMissing == null) {
-        // tất cả đầy -> vào main/journal
+        // tất cả đầy -> kiểm tra isSetupComplete
+        final isSetupComplete = userData['isSetupComplete'] == true;
+        if (isSetupComplete) {
+          if (!mounted) return;
+          setState(() => _isLoading = false);
+          Navigator.of(context).pushReplacement(
+            MaterialPageRoute(
+              builder: (_) => const JournalScreen(),
+              settings: RouteSettings(
+                arguments: {'username': usernameInput, 'userid': uid},
+              ),
+            ),
+          );
+          return;
+        }
+        // Nếu chưa complete thì vào main/journal như cũ
         if (!mounted) return;
         setState(() => _isLoading = false);
         widget.onNext();

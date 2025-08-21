@@ -5,6 +5,7 @@ import '../../../services/user_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:fittracker_source/Screens/initial_screen/Welcome_Screen.dart';
 import 'package:fittracker_source/Screens/initial_screen/AI_agent_screen.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 // Tạo class MacroData để quản lý dữ liệu
 class MacroData {
@@ -57,79 +58,126 @@ class _JournalScreenState extends State<JournalScreen> {
     try {
       print('📊 Loading user data for Journal...');
 
-      // Lấy thông tin user
-      final userInfo = await UserService.getUserInfo();
-      if (userInfo == null) {
-        print('❌ No user data found');
+      // Lấy uid từ SharedPreferences
+      final prefs = await SharedPreferences.getInstance();
+      final uid = prefs.getString('userid');
+      if (uid == null || uid.isEmpty) {
+        print('❌ No UID found');
         setState(() {
           _isLoading = false;
         });
         return;
       }
 
-      // Tính toán calories và macros từ UserService
-      final dailyCalories = await UserService.calculateDailyCalories();
-      final macroTargets = await UserService.calculateMacroTargets();
-
-      if (dailyCalories != null && macroTargets != null) {
-        setState(() {
-          _targetCalories = dailyCalories.toDouble();
-
-          // Chia calories cho các bữa ăn (30% breakfast, 40% lunch, 30% dinner)
-          _targetBreakfast = _targetCalories * 0.30;
-          _targetLunch = _targetCalories * 0.40;
-          _targetDinner = _targetCalories * 0.30;
-
-          // Tạo macro data từ calculated targets
-          macroData = [
-            MacroData(
-              label: "Fat",
-              currentValue: 0.0, // Sẽ được cập nhật từ food tracking
-              targetValue: macroTargets['fat']!.toDouble(),
-              unit: "g",
-              color: Color(0xFFFFC107),
-            ),
-            MacroData(
-              label: "Protein",
-              currentValue: 0.0,
-              targetValue: macroTargets['protein']!.toDouble(),
-              unit: "g",
-              color: Color(0xFF8FD5C7),
-            ),
-            MacroData(
-              label: "Carbs",
-              currentValue: 0.0,
-              targetValue: macroTargets['carbs']!.toDouble(),
-              unit: "g",
-              color: Color(0xFF9C27B0),
-            ),
-            MacroData(
-              label: "Fiber",
-              currentValue: 0.0,
-              targetValue: macroTargets['fiber']!.toDouble(),
-              unit: "g",
-              color: Color(0xFFFF9800),
-            ),
-          ];
-
-          _isLoading = false;
-        });
-
-        print('✅ User data loaded successfully:');
-        print('   Target Calories: ${_targetCalories.toInt()}');
-        print('   Breakfast: ${_targetBreakfast.toInt()} cal');
-        print('   Lunch: ${_targetLunch.toInt()} cal');
-        print('   Dinner: ${_targetDinner.toInt()} cal');
-        print('   Protein: ${macroTargets['protein']}g');
-        print('   Fat: ${macroTargets['fat']}g');
-        print('   Carbs: ${macroTargets['carbs']}g');
-        print('   Fiber: ${macroTargets['fiber']}g');
-      } else {
-        print('❌ Failed to calculate targets');
+      // Tải dữ liệu user từ Firebase
+      final doc = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(uid)
+          .get();
+      if (!doc.exists) {
+        print('❌ No user data found on Firebase');
         setState(() {
           _isLoading = false;
         });
+        return;
       }
+      final userInfo = doc.data();
+
+      // TÍNH TOÁN TRỰC TIẾP TỪ DỮ LIỆU FIREBASE
+      double? height = (userInfo?['height'] as num?)?.toDouble();
+      double? weight = (userInfo?['weight'] as num?)?.toDouble();
+      int? age = (userInfo?['age'] as num?)?.toInt();
+      String? gender = userInfo?['gender']?.toString().toLowerCase();
+      String? lifestyle = userInfo?['lifestyle']?.toString().toLowerCase();
+
+      // Tính BMR
+      double bmr = 0;
+      if (height != null && weight != null && age != null && gender != null) {
+        if (gender == 'male') {
+          bmr = 10 * weight + 6.25 * height - 5 * age + 5;
+        } else {
+          bmr = 10 * weight + 6.25 * height - 5 * age - 161;
+        }
+      }
+
+      // Tính hệ số hoạt động
+      double activityFactor = 1.2;
+      switch (lifestyle) {
+        case 'student':
+        case 'not employed':
+        case 'retired':
+          activityFactor = 1.2;
+          break;
+        case 'employed part-time':
+          activityFactor = 1.375;
+          break;
+        case 'employed full-time':
+          activityFactor = 1.55;
+          break;
+        default:
+          activityFactor = 1.2;
+      }
+
+      // Tính calories
+      double dailyCalories = bmr * activityFactor;
+
+      // Tính macro targets
+      Map<String, double> macroTargets = {
+        'protein': dailyCalories * 0.15 / 4,
+        'fat': dailyCalories * 0.25 / 9,
+        'carbs': dailyCalories * 0.60 / 4,
+        'fiber': 25,
+      };
+
+      setState(() {
+        _targetCalories = dailyCalories;
+        _targetBreakfast = _targetCalories * 0.30;
+        _targetLunch = _targetCalories * 0.40;
+        _targetDinner = _targetCalories * 0.30;
+
+        macroData = [
+          MacroData(
+            label: "Fat",
+            currentValue: 0.0,
+            targetValue: macroTargets['fat'] ?? 0,
+            unit: "g",
+            color: Color(0xFFFFC107),
+          ),
+          MacroData(
+            label: "Protein",
+            currentValue: 0.0,
+            targetValue: macroTargets['protein'] ?? 0,
+            unit: "g",
+            color: Color(0xFF8FD5C7),
+          ),
+          MacroData(
+            label: "Carbs",
+            currentValue: 0.0,
+            targetValue: macroTargets['carbs'] ?? 0,
+            unit: "g",
+            color: Color(0xFF9C27B0),
+          ),
+          MacroData(
+            label: "Fiber",
+            currentValue: 0.0,
+            targetValue: macroTargets['fiber'] ?? 0,
+            unit: "g",
+            color: Color(0xFFFF9800),
+          ),
+        ];
+
+        _isLoading = false;
+      });
+
+      print('✅ User data loaded from Firebase and calculated:');
+      print('   Target Calories: ${_targetCalories.toInt()}');
+      print('   Breakfast: ${_targetBreakfast.toInt()} cal');
+      print('   Lunch: ${_targetLunch.toInt()} cal');
+      print('   Dinner: ${_targetDinner.toInt()} cal');
+      print('   Protein: ${macroTargets['protein']?.toStringAsFixed(0)}g');
+      print('   Fat: ${macroTargets['fat']?.toStringAsFixed(0)}g');
+      print('   Carbs: ${macroTargets['carbs']?.toStringAsFixed(0)}g');
+      print('   Fiber: ${macroTargets['fiber']?.toStringAsFixed(0)}g');
     } catch (e) {
       print('❌ Error loading user data: $e');
       setState(() {

@@ -68,6 +68,22 @@ class _RegisterScreenState extends State<RegisterScreen> {
     try {
       final users = FirebaseFirestore.instance.collection('users');
 
+      // KHAI BÁO username TRƯỚC KHI DÙNG
+      final username = (userInfo['username'] as String).trim();
+
+      // Kiểm tra username có trùng không
+      final query = await users
+          .where('username', isEqualTo: username)
+          .limit(1)
+          .get();
+      if (query.docs.isNotEmpty) {
+        setState(() => _isLoading = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Username already exists!')),
+        );
+        return;
+      }
+
       // ✅ Lấy danh sách userid hiện có
       final snapshot = await users.get();
       final existingIds = snapshot.docs.map((d) => d.id).toList();
@@ -79,9 +95,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
         i++;
       }
       final docId = i.toString().padLeft(3, '0');
-
-      // Chọn docId
-      final username = (userInfo['username'] as String).trim();
 
       // Làm sạch dữ liệu trước khi lưu
       final Map<String, dynamic> cleaned = {};
@@ -196,6 +209,34 @@ class _RegisterScreenState extends State<RegisterScreen> {
       dataToSave['isSetupComplete'] = complete;
       dataToSave['registeredAt'] = FieldValue.serverTimestamp();
       // ---- end compute ----
+
+      final name = await UserService.getName();
+      final gender = await UserService.getGender();
+      final age = await UserService.getAge();
+      final height = await UserService.getHeight();
+      final weight = await UserService.getWeight();
+      final lifestyle = await UserService.getLifestyle();
+      final hasDietaryRestrictions =
+          await UserService.getHasDietaryRestrictions();
+      final dietaryRestrictionsList =
+          await UserService.getDietaryRestrictionsList();
+      final goal = await UserService.getGoal();
+      final targetWeight = await UserService.getTargetWeight();
+
+      // Gộp vào dataToSave nếu có giá trị
+      if (name != null && name.isNotEmpty) dataToSave['name'] = name;
+      if (gender != null && gender.isNotEmpty) dataToSave['gender'] = gender;
+      if (age != null) dataToSave['age'] = age;
+      if (height != null) dataToSave['height'] = height;
+      if (weight != null) dataToSave['weight'] = weight;
+      if (lifestyle != null && lifestyle.isNotEmpty)
+        dataToSave['lifestyle'] = lifestyle;
+      if (hasDietaryRestrictions != null)
+        dataToSave['hasDietaryRestrictions'] = hasDietaryRestrictions;
+      if (dietaryRestrictionsList != null && dietaryRestrictionsList.isNotEmpty)
+        dataToSave['dietaryRestrictionsList'] = dietaryRestrictionsList;
+      if (goal != null && goal.isNotEmpty) dataToSave['healthGoal'] = goal;
+      if (targetWeight != null) dataToSave['targetWeight'] = targetWeight;
 
       // Lưu Firestore
       await users.doc(docId).set(dataToSave);

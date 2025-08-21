@@ -182,6 +182,12 @@ class _Step5HealthGoalState extends State<Step5HealthGoal> {
         weight = w ?? weight;
       }
 
+      // LẤY GOAL TỪ USER_SERVICE VÀ GÁN selectedGoal NGAY KHI VÀO TRANG
+      final savedGoal = await UserService.getGoal();
+      if (savedGoal != null && savedGoal.isNotEmpty) {
+        selectedGoal = savedGoal;
+      }
+
       // Calculate BMI if possible
       if (height != null && weight != null && height! > 0) {
         bmi = weight! / ((height! / 100) * (height! / 100));

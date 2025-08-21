@@ -83,6 +83,12 @@ class _Step6IdealWeightState extends State<Step6IdealWeight> {
         goal = g ?? goal;
       }
 
+      // 🔹 Kiểm tra nếu có targetWeight trong UserService thì lấy luôn
+      final localTargetWeight = await UserService.getTargetWeight();
+      if (localTargetWeight != null && localTargetWeight > 0) {
+        _targetWeightController.text = localTargetWeight.toString();
+      }
+
       // 🔹 Tính toán BMI và Ideal Weight
       if (height != null && weight != null && height! > 0 && goal != null) {
         double heightInMeters = height! / 100;
@@ -115,7 +121,7 @@ class _Step6IdealWeightState extends State<Step6IdealWeight> {
     setState(() => _loading = false);
   }
 
-  void _goToNext() {
+  void _goToNext() async {
     double? targetWeight = double.tryParse(_targetWeightController.text);
     if (targetWeight == null || targetWeight <= 0) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -123,6 +129,8 @@ class _Step6IdealWeightState extends State<Step6IdealWeight> {
       );
       return;
     }
+    // Lưu targetWeight vào UserService
+    await UserService.updateTargetWeight(targetWeight);
     widget.onNext();
   }
 

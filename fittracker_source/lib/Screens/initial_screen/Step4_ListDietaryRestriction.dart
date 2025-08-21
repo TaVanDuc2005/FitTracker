@@ -55,8 +55,9 @@ class _Step4ListDietaryRestrictionsState
 
   Future<void> _saveRestrictions() async {
     final restrictionsString = selectedRestrictions.join(', ');
-    final success =
-        await UserService.updateDietaryRestrictionsList(restrictionsString);
+    final success = await UserService.updateDietaryRestrictionsList(
+      restrictionsString,
+    );
     if (success) {
       print('✅ Saved: $restrictionsString');
     }
