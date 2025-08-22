@@ -33,68 +33,28 @@ Future<Map<String, Map<String, int>>> getMealMacroTarget() async {
       },
     };
   }
-
-  // Tính toán macro từ dữ liệu Firebase
-  double? height = (userInfo['height'] as num?)?.toDouble();
-  double? weight = (userInfo['weight'] as num?)?.toDouble();
-  int? age = (userInfo['age'] as num?)?.toInt();
-  String? gender = userInfo['gender']?.toString().toLowerCase();
-  String? lifestyle = userInfo['lifestyle']?.toString().toLowerCase();
-
-  double bmr = 0;
-  if (height != null && weight != null && age != null && gender != null) {
-    if (gender == 'male') {
-      bmr = 10 * weight + 6.25 * height - 5 * age + 5;
-    } else {
-      bmr = 10 * weight + 6.25 * height - 5 * age - 161;
-    }
-  }
-
-  double activityFactor = 1.2;
-  switch (lifestyle) {
-    case 'student':
-    case 'not employed':
-    case 'retired':
-      activityFactor = 1.2;
-      break;
-    case 'employed part-time':
-      activityFactor = 1.375;
-      break;
-    case 'employed full-time':
-      activityFactor = 1.55;
-      break;
-    default:
-      activityFactor = 1.2;
-  }
-
-  double dailyCalories = bmr * activityFactor;
-  int calories = dailyCalories.round();
-  int protein = (dailyCalories * 0.15 / 4).round();
-  int fat = (dailyCalories * 0.25 / 9).round();
-  int carbs = (dailyCalories * 0.60 / 4).round();
-  int fiber = 25;
-
+  // Chia macro cho từng bữa (30% sáng, 40% trưa, 30% tối)
   return {
     "Breakfast": {
-      "calories": (calories * 0.3).round(),
-      "protein": (protein * 0.3).round(),
-      "fat": (fat * 0.3).round(),
-      "carbs": (carbs * 0.3).round(),
-      "fiber": (fiber * 0.3).round(),
+      "calories": (macroTargets['calories']! * 0.3).round(),
+      "protein": (macroTargets['protein']! * 0.3).round(),
+      "fat": (macroTargets['fat']! * 0.3).round(),
+      "carbs": (macroTargets['carbs']! * 0.3).round(),
+      "fiber": (macroTargets['fiber']! * 0.3).round(),
     },
     "Lunch": {
-      "calories": (calories * 0.4).round(),
-      "protein": (protein * 0.4).round(),
-      "fat": (fat * 0.4).round(),
-      "carbs": (carbs * 0.4).round(),
-      "fiber": (fiber * 0.4).round(),
+      "calories": (macroTargets['calories']! * 0.4).round(),
+      "protein": (macroTargets['protein']! * 0.4).round(),
+      "fat": (macroTargets['fat']! * 0.4).round(),
+      "carbs": (macroTargets['carbs']! * 0.4).round(),
+      "fiber": (macroTargets['fiber']! * 0.4).round(),
     },
     "Dinner": {
-      "calories": (calories * 0.3).round(),
-      "protein": (protein * 0.3).round(),
-      "fat": (fat * 0.3).round(),
-      "carbs": (carbs * 0.3).round(),
-      "fiber": (fiber * 0.3).round(),
+      "calories": (macroTargets['calories']! * 0.3).round(),
+      "protein": (macroTargets['protein']! * 0.3).round(),
+      "fat": (macroTargets['fat']! * 0.3).round(),
+      "carbs": (macroTargets['carbs']! * 0.3).round(),
+      "fiber": (macroTargets['fiber']! * 0.3).round(),
     },
   };
 }
@@ -152,7 +112,7 @@ class _SearchFoodScreenState extends State<SearchFoodScreen> {
   @override
   void initState() {
     super.initState();
-    _mealMacroFuture = getMealMacroTargetFromFirebase();
+    _mealMacroFuture = getMealMacroTarget();
   }
 
   String get _mealTitle {
@@ -349,7 +309,7 @@ class _SearchFoodScreenState extends State<SearchFoodScreen> {
             ),
           ),
           onPressed: () async {
-            final mealMacroTarget = await getMealMacroTargetFromFirebase();
+            final mealMacroTarget = await getMealMacroTarget();
             Navigator.push(
               context,
               MaterialPageRoute(
