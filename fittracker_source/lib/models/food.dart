@@ -1,22 +1,20 @@
-import 'Food_Bast.dart';
-
-/// Các loại món ăn
-enum CategoryType { monNuoc, monKho, monXao, monChien }
-
-class Food extends FoodBase {
-  final CategoryType category;
+class Food {
+  final String id;
+  final String name;
+  final int calories;
+  final String imageUrl;
+  final String description;
   final double protein;
   final double fat;
   final double carb;
   final double fiber;
   
   Food({
-    required super.id,
-    required super.name,
-    required super.calories,
-    required super.imageUrl,
-    required super.description,
-    required this.category,
+    required this.id,
+    required this.name,
+    required this.calories,
+    required this.imageUrl,
+    required this.description,
     required this.protein,
     required this.fat,
     required this.carb,
@@ -25,18 +23,30 @@ class Food extends FoodBase {
 
   factory Food.fromMap(Map<String, dynamic> map) {
     return Food(
-      id: map['id'],   
-      name: map['name'],
-      calories: map['calories'],
-      imageUrl: map['imageUrl'],
-      description: map['description'],
-      category: CategoryType.values[map['category']],
-      protein: (map['protein'] as num).toDouble(),
-      fat: (map['fat'] as num).toDouble(),
-      carb: (map['carb'] as num).toDouble(),
-      fiber: (map['fiber'] as num).toDouble(),
+      id: map['id']?.toString() ?? '',
+      name: map['name']?.toString() ?? '',
+      calories: map['calories'] is int
+          ? map['calories'] as int
+          : int.tryParse(map['calories'].toString()) ?? 0,
+      imageUrl: map['imageUrl']?.toString() ?? '',
+      description: map['description']?.toString() ?? '',
+      protein: map['protein'] is double
+          ? map['protein'] as double
+          : double.tryParse(map['protein'].toString()) ?? 0.0,
+      fat: map['fat'] is double
+          ? map['fat'] as double
+          : double.tryParse(map['fat'].toString()) ?? 0.0,
+      carb: map['carb'] is double
+          ? map['carb'] as double
+          : double.tryParse(map['carb'].toString()) ?? 0.0,
+      fiber: map['fiber'] is double
+          ? map['fiber'] as double
+          : double.tryParse(map['fiber'].toString()) ?? 0.0,
     );
   }
+
+
+
 
   @override
   Map<String, dynamic> toMap() {
@@ -46,7 +56,6 @@ class Food extends FoodBase {
       'calories': calories,
       'imageUrl': imageUrl,
       'description': description,
-      'category': category.index,
       'protein': protein,
       'fat': fat,
       'carb': carb,
@@ -60,7 +69,6 @@ class Food extends FoodBase {
     int? calories,
     String? imageUrl,
     String? description,
-    CategoryType? category,
     double? protein,
     double? fat,
     double? carb,
@@ -72,7 +80,6 @@ class Food extends FoodBase {
       calories: calories ?? this.calories,
       imageUrl: imageUrl ?? this.imageUrl,
       description: description ?? this.description,
-      category: category ?? this.category,
       protein: protein ?? this.protein,
       fat: fat ?? this.fat,
       carb: carb ?? this.carb,

@@ -25,18 +25,25 @@ class User {
 
   factory User.fromMap(Map<String, dynamic> map) {
     return User(
-      name: map['name'],
-      gender: map['gender'] ?? '',
-      age: map['age'] ?? 0,
-      height: map['height']?.toDouble() ?? 0,
-      weight: map['weight']?.toDouble() ?? 0,
-      lifestyle: map['lifestyle'] ?? '',
-      hasDietaryRestrictions: map['hasDietaryRestrictions'] ?? 'No',
-      dietaryRestrictionsList: map['dietaryRestrictionsList'] ?? '',
-      goal: map['goal'] ?? '',
-      targetWeight: map['targetWeight']?.toDouble() ?? 0,
+      name: map['name'] is String ? map['name'] as String : null,
+      gender: map['gender']?.toString() ?? '',
+      age: map['age'] is int ? map['age'] as int : int.tryParse(map['age'].toString()) ?? 0,
+      height: map['height'] is double
+          ? map['height'] as double
+          : double.tryParse(map['height'].toString()) ?? 0.0,
+      weight: map['weight'] is double
+          ? map['weight'] as double
+          : double.tryParse(map['weight'].toString()) ?? 0.0,
+      lifestyle: map['lifestyle']?.toString() ?? '',
+      hasDietaryRestrictions: map['hasDietaryRestrictions']?.toString() ?? 'No',
+      dietaryRestrictionsList: map['dietaryRestrictionsList']?.toString() ?? '',
+      goal: map['goal']?.toString() ?? '',
+      targetWeight: map['targetWeight'] is double
+          ? map['targetWeight'] as double
+          : double.tryParse(map['targetWeight'].toString()) ?? 0.0,
     );
   }
+
 
   Map<String, dynamic> toMap() {
     return {

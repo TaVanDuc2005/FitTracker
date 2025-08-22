@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:fittracker_source/models/food.dart';
 import 'package:fittracker_source/Screens/active_screen/journal/Meal_Summary_Screen.dart';
 import '../../../services/user_service.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 // Map macro chỉ số cho từng bữa
 Future<Map<String, Map<String, int>>> getMealMacroTarget() async {
@@ -71,10 +72,42 @@ class SearchFoodScreen extends StatefulWidget {
 
 class _SearchFoodScreenState extends State<SearchFoodScreen> {
   bool isSearchSelected = true;
-  List<Food> selectedFoods = []; // Dùng để truyền qua màn tổng kết
+  Map<Food, int> selectedFoodsWithQuantity = {};
+  List<Food> _searchResults = [];
+  bool _isLoading = false;
+  String _searchKeyword = '';
 
   // Thêm vào class _SearchFoodScreenState:
   Future<Map<String, Map<String, int>>>? _mealMacroFuture;
+
+  Future<void> _searchFoods(String keyword) async {
+    setState(() {
+      _isLoading = true;
+      _searchKeyword = keyword;
+    });
+
+    try {
+      final snapshot = await FirebaseFirestore.instance.collection('list_food').get();
+
+      final results = snapshot.docs.map((doc) => Food.fromMap(doc.data())).where((food) {
+        final lowerKeyword = keyword.toLowerCase();
+        return food.name.toLowerCase().contains(lowerKeyword) ||
+              food.description.toLowerCase().contains(lowerKeyword);
+      }).toList();
+
+      setState(() {
+        _searchResults = results;
+        _isLoading = false;
+      });
+    } catch (e) {
+      print("Lỗi khi tìm kiếm: $e");
+      setState(() {
+        _searchResults = [];
+        _isLoading = false;
+      });
+    }
+  }
+
 
   @override
   void initState() {
@@ -287,7 +320,7 @@ class _SearchFoodScreenState extends State<SearchFoodScreen> {
                   targetFat: mealMacroTarget[_mealTitle]!["fat"]!,
                   targetCarbs: mealMacroTarget[_mealTitle]!["carbs"]!,
                   targetFiber: mealMacroTarget[_mealTitle]!["fiber"]!,
-                  foods: selectedFoods,
+                  foodsWithQuantity: selectedFoodsWithQuantity,
                   onAddMore: () => Navigator.pop(context),
                   onExit: () => Navigator.popUntil(context, (r) => r.isFirst),
                 ),
@@ -300,46 +333,100 @@ class _SearchFoodScreenState extends State<SearchFoodScreen> {
   }
 
   Widget _buildSearchContent() {
-    return Column(
-      children: [
-        TextField(
-          decoration: InputDecoration(
-            hintText: "Search for a food",
-            hintStyle: const TextStyle(color: Colors.grey, fontSize: 16),
-            prefixIcon: const Icon(Icons.search, color: Colors.grey),
-            filled: true,
-            fillColor: Colors.grey[100],
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(30),
-              borderSide: BorderSide(color: Colors.grey[300]!),
-            ),
-            enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(30),
-              borderSide: BorderSide(color: Colors.grey[300]!),
-            ),
-            focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(30),
-              borderSide: const BorderSide(color: Color(0xFF8FD5C7)),
-            ),
-            contentPadding: const EdgeInsets.symmetric(
-              horizontal: 20,
-              vertical: 15,
-            ),
+    List<Widget> content = [
+      TextField(
+        decoration: InputDecoration(
+          hintText: "Search for a food",
+          hintStyle: const TextStyle(color: Colors.grey, fontSize: 16),
+          prefixIcon: const Icon(Icons.search, color: Colors.grey),
+          filled: true,
+          fillColor: Colors.grey[100],
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(30),
+            borderSide: BorderSide(color: Colors.grey[300]!),
           ),
-          onChanged: (value) {
-            // TODO: Implement search functionality
-          },
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(30),
+            borderSide: BorderSide(color: Colors.grey[300]!),
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(30),
+            borderSide: const BorderSide(color: Color(0xFF8FD5C7)),
+          ),
+          contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
         ),
-        const SizedBox(height: 30),
-        Image.asset(
+        onChanged: (value) {
+          if (value.trim().isNotEmpty) {
+            _searchFoods(value.trim());
+          } else {
+            setState(() {
+              _searchResults = [];
+              _searchKeyword = '';
+            });
+          }
+        },
+      ),
+      const SizedBox(height: 30),
+    ];
+
+    // Hiển thị ảnh minh họa nếu chưa có kết quả
+    if (_searchKeyword.isEmpty && !_isLoading) {
+      content.add(Center(
+        child: Image.asset(
           'Assets/Images/imagePageSearch_2.png',
           width: 200,
           height: 300,
           fit: BoxFit.contain,
         ),
-      ],
+      ),
+    );
+      content.add(const SizedBox(height: 20));
+    }
+
+    // Loading
+    if (_isLoading) {
+      content.add(const Center(child: CircularProgressIndicator()));
+    }
+
+    // Không tìm thấy kết quả
+    else if (_searchKeyword.isNotEmpty && _searchResults.isEmpty) {
+      content.add(const Center(child: Text("Không tìm thấy món ăn nào")));
+    }
+
+    // Có kết quả
+    else if (_searchResults.isNotEmpty) {
+      content.addAll(_searchResults.map((food) {
+        return ListTile(
+          leading: Image.network(food.imageUrl, width: 50, height: 50, fit: BoxFit.cover),
+          title: Text(food.name),
+          subtitle: Text(
+            "${food.calories} Cal" +
+            (selectedFoodsWithQuantity.containsKey(food)
+              ? " × ${selectedFoodsWithQuantity[food]}"
+              : ""),
+          ),
+          trailing: IconButton(
+            icon: const Icon(Icons.add_circle, color: Color(0xFF8FD5C7)),
+            onPressed: () {
+              setState(() {
+                if (selectedFoodsWithQuantity.containsKey(food)) {
+                  selectedFoodsWithQuantity[food] = selectedFoodsWithQuantity[food]! + 1;
+                } else {
+                  selectedFoodsWithQuantity[food] = 1;
+                }
+              });
+            },
+          ),
+        );
+      }));
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: content,
     );
   }
+
 
   Widget _buildProposalContent() {
     return Center(
