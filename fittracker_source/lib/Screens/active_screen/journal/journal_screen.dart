@@ -1,9 +1,7 @@
 import 'package:flutter/material.dart';
 import 'food_search_screen.dart';
 import '../profile/profile_Screen.dart';
-import '../../../services/user_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:fittracker_source/Screens/initial_screen/Welcome_Screen.dart';
 import 'package:fittracker_source/Screens/initial_screen/AI_agent_screen.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
@@ -893,12 +891,57 @@ class WaterChallengeCard extends StatefulWidget {
 }
 
 class _WaterChallengeCardState extends State<WaterChallengeCard> {
-  int totalCups = 7;
+  double goalLit = 3.0;
+  int get totalCups => (goalLit / cupVolume).ceil();
   int cupsDrank = 0;
   double cupVolume = 0.21; // Mỗi cốc là 0.21L mặc định
   double get goalWater => totalCups * cupVolume;
 
   List<double> fillPercents = [];
+
+  void _showGoalLitSelector(BuildContext context) {
+    if (goalLit > 3.0) {
+      setState(() {
+        goalLit = 3.0;
+      });
+    }
+    showModalBottomSheet(
+      context: context,
+      builder: (_) {
+        double tempGoal = goalLit;
+        return StatefulBuilder(
+          builder: (context, setModalState) {
+            return Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Slider(
+                  value: tempGoal,
+                  min: 1.0,
+                  max: 3.0,
+                  divisions: 20,
+                  label: "${tempGoal.toStringAsFixed(2)} L",
+                  onChanged: (value) {
+                    setModalState(() => tempGoal = value);
+                  },
+                ),
+                ElevatedButton(
+                  onPressed: () {
+                    Navigator.pop(context);
+                    setState(() {
+                      goalLit = tempGoal;
+                      fillPercents = List.filled(totalCups, 0.0);
+                      if (cupsDrank > totalCups) cupsDrank = totalCups;
+                    });
+                  },
+                  child: const Text("Xác nhận"),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+  }
 
   @override
   void initState() {
@@ -991,23 +1034,7 @@ class _WaterChallengeCardState extends State<WaterChallengeCard> {
                     ),
                   ),
                   GestureDetector(
-                    onTap: () {
-                      _showWaterCupSelector(context, totalCups, (selected) {
-                        setState(() {
-                          totalCups = selected;
-                          // Cập nhật lại fillPercents đúng số lượng cốc
-                          List<double> newPercents = List.filled(
-                            totalCups,
-                            0.0,
-                          );
-                          for (int i = 0; i < cupsDrank && i < totalCups; i++) {
-                            newPercents[i] = 1.0;
-                          }
-                          fillPercents = newPercents;
-                          if (cupsDrank > totalCups) cupsDrank = totalCups;
-                        });
-                      });
-                    },
+                    onTap: () => _showGoalLitSelector(context),
                     child: const Icon(Icons.more_horiz),
                   ),
                 ],
@@ -1048,14 +1075,24 @@ class _WaterChallengeCardState extends State<WaterChallengeCard> {
                     onTap: () {
                       _fillCup(index, isFilled);
                     },
-                    child: Column(
-                      children: [
-                        GlassCupWidget(
-                          isFilled: isFilled,
-                          fillPercent: fillPercents[index],
+                    child: Container(
+                      decoration: BoxDecoration(
+                        border: Border.all(
+                          color: isFilled ? Colors.blueAccent : Colors.grey.shade300,
+                          width: 1.5,
                         ),
-                        const SizedBox(height: 4),
-                      ],
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      padding: const EdgeInsets.all(4),
+                      child: Column(
+                        children: [
+                          GlassCupWidget(
+                            isFilled: isFilled,
+                            fillPercent: fillPercents[index],
+                          ),
+                          const SizedBox(height: 4),
+                        ],
+                      ),
                     ),
                   );
                 }),
