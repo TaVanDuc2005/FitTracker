@@ -42,6 +42,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   double? currentBMI; // Thêm BMI
   Map<String, dynamic>? userInfo;
   bool _isLoading = true;
+  DateTime? accountCreatedDate;
 
   File? _avatarFile;
 
@@ -96,6 +97,16 @@ class _ProfileScreenState extends State<ProfileScreen> {
           _isLoading = false;
         });
         return;
+      }
+
+      // Thêm đoạn này ngay sau khi lấy userInfo
+      if (userInfo!['registeredAt'] != null) {
+        final ts = userInfo!['registeredAt'];
+        if (ts is Timestamp) {
+          accountCreatedDate = ts.toDate();
+        } else if (ts is String) {
+          accountCreatedDate = DateTime.tryParse(ts);
+        }
       }
 
       // Tính toán calories và BMI từ dữ liệu Firebase
@@ -268,69 +279,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
       DateTime date = now.subtract(Duration(days: 90 - 1 - i));
       String dateKey =
           "${date.day.toString().padLeft(2, '0')}/${date.month.toString().padLeft(2, '0')}";
-
-      // Chỉ generate nếu chưa có data cho ngày này
-      if (!weightHistoryMap.containsKey(dateKey)) {
-        double progress = i / 89.0; // 0.0 (90 ngày trước) → 1.0 (hôm nay)
-        double generatedWeight;
-
-        switch (userGoal.toLowerCase()) {
-          case 'lose weight':
-            // Từ startWeight (90 ngày trước) → currentWeight (hôm nay)
-            // Logic: User bắt đầu từ startWeight và giảm cân đến currentWeight
-            double weightDifference = startWeight - currentWeight;
-            generatedWeight =
-                startWeight -
-                (weightDifference * progress) +
-                (i % 7 == 0
-                    ? 0.8
-                    : i % 7 == 1
-                    ? -0.6
-                    : 0.2); // Daily fluctuation
-            break;
-
-          case 'gain weight':
-            // Từ startWeight (90 ngày trước) → currentWeight (hôm nay)
-            // Logic: User bắt đầu từ startWeight và tăng cân đến currentWeight
-            double weightDifference = currentWeight - startWeight;
-            generatedWeight =
-                startWeight +
-                (weightDifference * progress) +
-                (i % 7 == 0
-                    ? 0.3
-                    : i % 7 == 1
-                    ? -0.3
-                    : 0.1); // Daily fluctuation
-            break;
-
-          default: // maintain weight
-            // Fluctuate around startWeight với slow trend toward currentWeight
-            double baseWeight =
-                startWeight +
-                (currentWeight - startWeight) * progress * 0.3; // Slow trend
-            generatedWeight =
-                baseWeight +
-                (i % 10 == 0
-                    ? 1.0
-                    : i % 10 == 1
-                    ? -0.8
-                    : i % 10 == 2
-                    ? 0.5
-                    : 0.3);
-            break;
-        }
-
-        // Ensure generated weight is reasonable (không âm hoặc quá cao)
-        generatedWeight = generatedWeight.clamp(
-          startWeight - 20.0, // Min: startWeight - 20 lbs
-          startWeight + 20.0, // Max: startWeight + 20 lbs
-        );
-
-        weightHistoryMap[dateKey] = generatedWeight;
-        print(
-          '📝 Generated weight for $dateKey: ${generatedWeight.toStringAsFixed(1)} lbs',
-        );
-      }
     }
 
     // Update ngày hôm nay với current weight (luôn accurate)
@@ -386,75 +334,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
     // Generate arrays từ map cho UI
     _generateArraysFromMap();
 
-    // Generate calories history with more realistic patterns
-    double baseCalories = caloriesPerDay.toDouble();
-
-    // 7-day pattern: Weekdays vs weekends
-    calHistory7 = List.generate(7, (i) {
-      DateTime date = now.subtract(Duration(days: 6 - i));
-      bool isWeekend =
-          date.weekday == DateTime.saturday || date.weekday == DateTime.sunday;
-
-      double variation;
-      if (isWeekend) {
-        variation =
-            150 + (i % 2 == 0 ? 50 : -30); // Higher calories on weekends
-      } else {
-        variation = (i % 3 == 0
-            ? 100
-            : i % 3 == 1
-            ? -150
-            : 50); // Weekday pattern
-      }
-
-      return (baseCalories + variation).clamp(
-        baseCalories * 0.6,
-        baseCalories * 1.4,
-      );
-    });
-
-    // 30-day pattern: Weekly cycles
-    calHistory30 = List.generate(30, (i) {
-      DateTime date = now.subtract(Duration(days: 29 - i));
-      bool isWeekend =
-          date.weekday == DateTime.saturday || date.weekday == DateTime.sunday;
-
-      double variation;
-      if (isWeekend) {
-        variation = (i % 4) * 100.0 - 100; // Weekend variation
-      } else {
-        variation = (i % 5) * 80.0 - 160; // Weekday variation
-      }
-
-      return (baseCalories + variation).clamp(
-        baseCalories * 0.7,
-        baseCalories * 1.3,
-      );
-    });
-
-    // 90-day pattern: Long-term trends
-    calHistory90 = List.generate(90, (i) {
-      DateTime date = now.subtract(Duration(days: 89 - i));
-      bool isWeekend =
-          date.weekday == DateTime.saturday || date.weekday == DateTime.sunday;
-
-      // Add seasonal trend (slight increase over time)
-      double seasonalTrend =
-          (i / 89.0) * 100; // Up to +100 calories over 90 days
-
-      double variation;
-      if (isWeekend) {
-        variation = (i % 7) * 80.0 - 120 + seasonalTrend;
-      } else {
-        variation = (i % 7) * 60.0 - 180 + seasonalTrend;
-      }
-
-      return (baseCalories + variation).clamp(
-        baseCalories * 0.8,
-        baseCalories * 1.2,
-      );
-    });
-
     print('✅ History data loaded: Map has ${weightHistoryMap.length} entries');
     print('   Start Weight: ${startWeight.toStringAsFixed(1)} lbs');
     print('   Current Weight: ${currentWeight.toStringAsFixed(1)} lbs');
@@ -465,42 +344,54 @@ class _ProfileScreenState extends State<ProfileScreen> {
   // Generate arrays từ map dựa trên current date
   void _generateArraysFromMap() {
     DateTime now = DateTime.now();
+    DateTime? firstEntryDate = accountCreatedDate;
 
-    // Generate 7-day array
+    // 7 ngày
     weightHistory7 = [];
+    calHistory7 = [];
     for (int i = 0; i < 7; i++) {
       DateTime date = now.subtract(Duration(days: 6 - i));
       String dateKey =
           "${date.day.toString().padLeft(2, '0')}/${date.month.toString().padLeft(2, '0')}";
-      weightHistory7.add(weightHistoryMap[dateKey] ?? currentWeight);
-    }
-    // Nếu weightHistory7 rỗng, fill bằng currentWeight
-    if (weightHistory7.isEmpty) {
-      weightHistory7 = List.filled(7, currentWeight);
+      if (firstEntryDate != null && date.isBefore(firstEntryDate)) {
+        weightHistory7.add(0);
+        calHistory7.add(0);
+      } else {
+        weightHistory7.add(weightHistoryMap[dateKey] ?? startWeight);
+        calHistory7.add(caloriesPerDay.toDouble());
+      }
     }
 
-    // Generate 30-day array
+    // 30 ngày
     weightHistory30 = [];
+    calHistory30 = [];
     for (int i = 0; i < 30; i++) {
       DateTime date = now.subtract(Duration(days: 29 - i));
       String dateKey =
           "${date.day.toString().padLeft(2, '0')}/${date.month.toString().padLeft(2, '0')}";
-      weightHistory30.add(weightHistoryMap[dateKey] ?? currentWeight);
-    }
-    if (weightHistory30.isEmpty) {
-      weightHistory30 = List.filled(30, currentWeight);
+      if (firstEntryDate != null && date.isBefore(firstEntryDate)) {
+        weightHistory30.add(0);
+        calHistory30.add(0);
+      } else {
+        weightHistory30.add(weightHistoryMap[dateKey] ?? startWeight);
+        calHistory30.add(caloriesPerDay.toDouble());
+      }
     }
 
-    // Generate 90-day array
+    // 90 ngày
     weightHistory90 = [];
+    calHistory90 = [];
     for (int i = 0; i < 90; i++) {
       DateTime date = now.subtract(Duration(days: 89 - i));
       String dateKey =
           "${date.day.toString().padLeft(2, '0')}/${date.month.toString().padLeft(2, '0')}";
-      weightHistory90.add(weightHistoryMap[dateKey] ?? currentWeight);
-    }
-    if (weightHistory90.isEmpty) {
-      weightHistory90 = List.filled(90, currentWeight);
+      if (firstEntryDate != null && date.isBefore(firstEntryDate)) {
+        weightHistory90.add(0);
+        calHistory90.add(0);
+      } else {
+        weightHistory90.add(weightHistoryMap[dateKey] ?? startWeight);
+        calHistory90.add(caloriesPerDay.toDouble());
+      }
     }
 
     print(
@@ -1022,14 +913,32 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 ),
                 lineBarsData: [
                   LineChartBarData(
-                    spots: List.generate(
-                      weightHistory.length,
-                      (i) => FlSpot(i.toDouble(), weightHistory[i]),
-                    ),
-                    isCurved: true,
+                    spots: [
+                      for (int i = 0; i < weightHistory.length; i++)
+                        FlSpot(i.toDouble(), weightHistory[i]),
+                    ],
+                    isCurved: false, // Đường thẳng nối các điểm, kể cả điểm 0
                     barWidth: 3,
                     color: Colors.teal[700],
-                    dotData: FlDotData(show: true),
+                    dotData: FlDotData(
+                      show: true,
+                      getDotPainter: (spot, percent, barData, index) {
+                        if (spot.y == 0) {
+                          return FlDotCirclePainter(
+                            radius: 0,
+                            color: Colors.transparent,
+                            strokeWidth: 0,
+                            strokeColor: Colors.transparent,
+                          );
+                        }
+                        return FlDotCirclePainter(
+                          radius: 4,
+                          color: Colors.teal[700]!,
+                          strokeWidth: 0,
+                          strokeColor: Colors.transparent,
+                        );
+                      },
+                    ),
                     belowBarData: BarAreaData(
                       show: true,
                       color: Colors.teal.withOpacity(0.12),
@@ -1190,14 +1099,32 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 ),
                 lineBarsData: [
                   LineChartBarData(
-                    spots: List.generate(
-                      calHistory.length,
-                      (i) => FlSpot(i.toDouble(), calHistory[i]),
-                    ),
-                    isCurved: true,
+                    spots: [
+                      for (int i = 0; i < calHistory.length; i++)
+                        FlSpot(i.toDouble(), calHistory[i]),
+                    ],
+                    isCurved: false, // Đường thẳng nối các điểm, kể cả điểm 0
                     barWidth: 3,
                     color: Colors.teal[700],
-                    dotData: FlDotData(show: true),
+                    dotData: FlDotData(
+                      show: true,
+                      getDotPainter: (spot, percent, barData, index) {
+                        if (spot.y == 0) {
+                          return FlDotCirclePainter(
+                            radius: 0,
+                            color: Colors.transparent,
+                            strokeWidth: 0,
+                            strokeColor: Colors.transparent,
+                          );
+                        }
+                        return FlDotCirclePainter(
+                          radius: 4,
+                          color: Colors.teal[700]!,
+                          strokeWidth: 0,
+                          strokeColor: Colors.transparent,
+                        );
+                      },
+                    ),
                     belowBarData: BarAreaData(
                       show: true,
                       color: Colors.teal.withOpacity(0.12),
@@ -1411,24 +1338,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       .join('|');
                   await prefs.setString('weight_history_map_json', mapJson);
 
-                  // Regenerate calHistory
-                  double baseCalories = caloriesPerDay.toDouble();
-                  calHistory7 = List.generate(7, (i) {
-                    double variation = (i % 3 == 0
-                        ? 100
-                        : i % 3 == 1
-                        ? -150
-                        : 50);
-                    return baseCalories + variation;
-                  });
-                  calHistory30 = List.generate(30, (i) {
-                    double variation = (i % 5) * 80.0 - 160;
-                    return baseCalories + variation;
-                  });
-                  calHistory90 = List.generate(90, (i) {
-                    double variation = (i % 7) * 60.0 - 180;
-                    return baseCalories + variation;
-                  });
+                  _generateArraysFromMap();
 
                   Navigator.pop(context);
                   print(
