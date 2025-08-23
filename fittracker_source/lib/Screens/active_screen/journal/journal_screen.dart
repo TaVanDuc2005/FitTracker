@@ -836,7 +836,7 @@ void _showWaterCupSelector(
     context: context,
     builder: (ctx) {
       int tempCups = selectedCups;
-      double cupVolume = 0.21; // hoặc lấy từ state
+      double cupVolume = 0.21;
       return StatefulBuilder(
         builder: (context, setState) {
           return AlertDialog(
@@ -933,7 +933,7 @@ class _WaterChallengeCardState extends State<WaterChallengeCard> {
                       if (cupsDrank > totalCups) cupsDrank = totalCups;
                     });
                   },
-                  child: const Text("Xác nhận"),
+                  child: const Text("Confirm"),
                 ),
               ],
             );
