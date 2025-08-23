@@ -6,6 +6,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:fittracker_source/Screens/initial_screen/Welcome_Screen.dart';
 import 'package:fittracker_source/Screens/initial_screen/AI_agent_screen.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:fittracker_source/models/food.dart';
 
 // Tạo class MacroData để quản lý dữ liệu
 class MacroData {
@@ -47,6 +48,19 @@ class _JournalScreenState extends State<JournalScreen> {
   double _targetDinner = 0.0;
   List<MacroData> macroData = [];
   bool _isLoading = true;
+
+  Map<MealType, List<String>> mealFoodNames = {
+    MealType.breakfast: [],
+    MealType.lunch: [],
+    MealType.dinner: [],
+  };
+
+  // Thêm biến này để lưu calories đã ăn cho từng bữa
+  Map<MealType, int> mealCaloriesEaten = {
+    MealType.breakfast: 0,
+    MealType.lunch: 0,
+    MealType.dinner: 0,
+  };
 
   @override
   void initState() {
@@ -129,6 +143,92 @@ class _JournalScreenState extends State<JournalScreen> {
         'fiber': 25,
       };
 
+      // Lấy tên món ăn từng bữa từ Firebase
+      final meals = userInfo?['meals'] as Map<String, dynamic>? ?? {};
+      final foodSnapshot = await FirebaseFirestore.instance
+          .collection('list_food')
+          .get();
+      final allFoods = foodSnapshot.docs
+          .map((doc) => Food.fromMap(doc.data()))
+          .toList();
+
+      mealFoodNames = {
+        MealType.breakfast: [],
+        MealType.lunch: [],
+        MealType.dinner: [],
+      };
+
+      for (final mealKey in ['breakfast', 'lunch', 'dinner']) {
+        final mealFoods = meals[mealKey] as Map<String, dynamic>? ?? {};
+        final names = <String>[];
+        mealFoods.forEach((foodId, qty) {
+          final found = allFoods.where((f) => f.id == foodId);
+          if (found.isNotEmpty) {
+            names.add("${found.first.name} x$qty");
+          }
+        });
+        switch (mealKey) {
+          case 'breakfast':
+            mealFoodNames[MealType.breakfast] = names;
+            break;
+          case 'lunch':
+            mealFoodNames[MealType.lunch] = names;
+            break;
+          case 'dinner':
+            mealFoodNames[MealType.dinner] = names;
+            break;
+        }
+      }
+
+      Map<MealType, int> mealCaloriesEaten = {
+        MealType.breakfast: 0,
+        MealType.lunch: 0,
+        MealType.dinner: 0,
+      };
+
+      for (final mealKey in ['breakfast', 'lunch', 'dinner']) {
+        final mealFoods = meals[mealKey] as Map<String, dynamic>? ?? {};
+        int totalCal = 0;
+        mealFoods.forEach((foodId, qty) {
+          final found = allFoods.where((f) => f.id == foodId);
+          if (found.isNotEmpty) {
+            totalCal += (found.first.calories ?? 0) * (qty as int);
+          }
+        });
+        switch (mealKey) {
+          case 'breakfast':
+            mealCaloriesEaten[MealType.breakfast] = totalCal;
+            break;
+          case 'lunch':
+            mealCaloriesEaten[MealType.lunch] = totalCal;
+            break;
+          case 'dinner':
+            mealCaloriesEaten[MealType.dinner] = totalCal;
+            break;
+        }
+      }
+
+      // Tính tổng macro đã ăn
+      double totalFat = 0.0;
+      double totalProtein = 0.0;
+      double totalCarbs = 0.0;
+      double totalFiber = 0.0;
+
+      for (final mealKey in ['breakfast', 'lunch', 'dinner']) {
+        final mealFoods = meals[mealKey] as Map<String, dynamic>? ?? {};
+        mealFoods.forEach((foodId, qty) {
+          final found = allFoods.where((f) => f.id == foodId);
+          if (found.isNotEmpty) {
+            final food = found.first;
+            final quantity = qty as int;
+            totalFat += (food.fat ?? 0) * quantity;
+            totalProtein += (food.protein ?? 0) * quantity;
+            totalCarbs += (food.carb ?? 0) * quantity;
+            totalFiber += (food.fiber ?? 0) * quantity;
+          }
+        });
+      }
+
       setState(() {
         _targetCalories = dailyCalories;
         _targetBreakfast = _targetCalories * 0.30;
@@ -138,34 +238,35 @@ class _JournalScreenState extends State<JournalScreen> {
         macroData = [
           MacroData(
             label: "Fat",
-            currentValue: 0.0,
+            currentValue: totalFat,
             targetValue: macroTargets['fat'] ?? 0,
             unit: "g",
             color: Color(0xFFFFC107),
           ),
           MacroData(
             label: "Protein",
-            currentValue: 0.0,
+            currentValue: totalProtein,
             targetValue: macroTargets['protein'] ?? 0,
             unit: "g",
             color: Color(0xFF8FD5C7),
           ),
           MacroData(
             label: "Carbs",
-            currentValue: 0.0,
+            currentValue: totalCarbs,
             targetValue: macroTargets['carbs'] ?? 0,
             unit: "g",
             color: Color(0xFF9C27B0),
           ),
           MacroData(
             label: "Fiber",
-            currentValue: 0.0,
+            currentValue: totalFiber,
             targetValue: macroTargets['fiber'] ?? 0,
             unit: "g",
             color: Color(0xFFFF9800),
           ),
         ];
 
+        this.mealCaloriesEaten = mealCaloriesEaten; // Đúng!
         _isLoading = false;
       });
 
@@ -257,22 +358,34 @@ class _JournalScreenState extends State<JournalScreen> {
       Meal(
         icon: Icons.free_breakfast,
         name: 'Breakfast',
-        calories: '0 / ${_targetBreakfast.toInt()} Cal',
+        calories:
+            '${mealCaloriesEaten[MealType.breakfast] ?? 0} / ${_targetBreakfast.toInt()} Cal',
         mealType: MealType.breakfast,
+        foodNames: mealFoodNames[MealType.breakfast] ?? [],
       ),
       Meal(
         icon: Icons.lunch_dining,
         name: 'Lunch',
-        calories: '0 / ${_targetLunch.toInt()} Cal',
+        calories:
+            '${mealCaloriesEaten[MealType.lunch] ?? 0} / ${_targetLunch.toInt()} Cal',
         mealType: MealType.lunch,
+        foodNames: mealFoodNames[MealType.lunch] ?? [],
       ),
       Meal(
         icon: Icons.dinner_dining,
         name: 'Dinner',
-        calories: '0 / ${_targetDinner.toInt()} Cal',
+        calories:
+            '${mealCaloriesEaten[MealType.dinner] ?? 0} / ${_targetDinner.toInt()} Cal',
         mealType: MealType.dinner,
+        foodNames: mealFoodNames[MealType.dinner] ?? [],
       ),
     ];
+
+    // TÍNH TỔNG CALORIES ĐÃ ĂN
+    final int totalCaloriesEaten = mealCaloriesEaten.values.fold(
+      0,
+      (a, b) => a + b,
+    );
 
     return Scaffold(
       backgroundColor: const Color.fromARGB(255, 193, 225, 218),
@@ -307,17 +420,17 @@ class _JournalScreenState extends State<JournalScreen> {
                 children: [
                   // Calories Eaten
                   Column(
-                    children: const [
+                    children: [
                       Text(
-                        "0",
-                        style: TextStyle(
+                        "$totalCaloriesEaten",
+                        style: const TextStyle(
                           fontSize: 20,
                           fontWeight: FontWeight.bold,
                           color: Colors.white,
                         ),
                       ),
-                      SizedBox(height: 4),
-                      Text(
+                      const SizedBox(height: 4),
+                      const Text(
                         "Eaten",
                         style: TextStyle(
                           fontSize: 16,
@@ -337,28 +450,70 @@ class _JournalScreenState extends State<JournalScreen> {
                         child: Column(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            Text(
-                              "${_targetCalories.toInt()}",
-                              style: TextStyle(
-                                fontSize: 24,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.white,
-                              ),
-                            ),
-                            Text(
-                              "Cal",
-                              style: TextStyle(
-                                fontSize: 18,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.black87,
-                              ),
-                            ),
-                            Text(
-                              "left",
-                              style: TextStyle(
-                                fontSize: 14,
-                                color: Colors.black54,
-                              ),
+                            Builder(
+                              builder: (context) {
+                                final calLeft =
+                                    (_targetCalories - totalCaloriesEaten)
+                                        .toInt();
+                                if (calLeft >= 0) {
+                                  return Column(
+                                    children: [
+                                      Text(
+                                        "$calLeft",
+                                        style: const TextStyle(
+                                          fontSize: 24,
+                                          fontWeight: FontWeight.bold,
+                                          color: Colors.white,
+                                        ),
+                                      ),
+                                      Text(
+                                        "Cal",
+                                        style: TextStyle(
+                                          fontSize: 18,
+                                          fontWeight: FontWeight.bold,
+                                          color: Colors.black87,
+                                        ),
+                                      ),
+                                      Text(
+                                        "left",
+                                        style: TextStyle(
+                                          fontSize: 14,
+                                          color: Colors.black54,
+                                        ),
+                                      ),
+                                    ],
+                                  );
+                                } else {
+                                  return Column(
+                                    children: [
+                                      Text(
+                                        "${calLeft.abs()}",
+                                        style: const TextStyle(
+                                          fontSize: 24,
+                                          fontWeight: FontWeight.bold,
+                                          color: Colors.redAccent,
+                                        ),
+                                      ),
+                                      Text(
+                                        "Cal",
+                                        style: TextStyle(
+                                          fontSize: 18,
+                                          fontWeight: FontWeight.bold,
+                                          color: Colors.redAccent,
+                                        ),
+                                      ),
+                                      Text(
+                                        "In Excess",
+                                        style: TextStyle(
+                                          fontSize: 14,
+                                          color: Colors.redAccent,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                    ],
+                                  );
+                                }
+                              },
                             ),
                           ],
                         ),
@@ -556,6 +711,7 @@ class _JournalScreenState extends State<JournalScreen> {
                               mealName: meal.name,
                               calories: meal.calories,
                               mealType: meal.mealType,
+                              foodNames: meal.foodNames,
                             ),
                           )
                           .toList(),
@@ -747,12 +903,14 @@ class Meal {
   final String name;
   final String calories;
   final MealType mealType;
+  final List<String> foodNames;
 
   Meal({
     required this.icon,
     required this.name,
     required this.calories,
     required this.mealType,
+    required this.foodNames,
   });
 }
 
@@ -761,6 +919,7 @@ class MealItem extends StatelessWidget {
   final String mealName;
   final String calories;
   final MealType mealType;
+  final List<String> foodNames;
 
   const MealItem({
     super.key,
@@ -768,6 +927,7 @@ class MealItem extends StatelessWidget {
     required this.mealName,
     required this.calories,
     required this.mealType,
+    required this.foodNames,
   });
 
   @override
@@ -804,18 +964,51 @@ class MealItem extends StatelessWidget {
                     calories,
                     style: const TextStyle(fontSize: 14, color: Colors.black54),
                   ),
+                  if (foodNames.isNotEmpty) ...[
+                    const SizedBox(height: 4),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: foodNames
+                          .map(
+                            (name) => Text(
+                              name,
+                              style: const TextStyle(
+                                fontSize: 13,
+                                color: Colors.teal,
+                              ),
+                            ),
+                          )
+                          .toList(),
+                    ),
+                  ],
                 ],
               ),
             ],
           ),
           GestureDetector(
-            onTap: () {
-              Navigator.push(
+            onTap: () async {
+              final result = await Navigator.push(
                 context,
                 MaterialPageRoute(
                   builder: (context) => SearchFoodScreen(mealType: mealType),
                 ),
               );
+              // Sau khi trở về từ SearchFoodScreen, cập nhật lại dữ liệu
+              if (result != null) {
+                // Gọi lại hàm load dữ liệu
+                if (context.mounted) {
+                  final state = context
+                      .findAncestorStateOfType<_JournalScreenState>();
+                  state?._loadUserData();
+                }
+              } else {
+                // Nếu không trả về gì vẫn reload để đảm bảo dữ liệu mới nhất
+                if (context.mounted) {
+                  final state = context
+                      .findAncestorStateOfType<_JournalScreenState>();
+                  state?._loadUserData();
+                }
+              }
             },
             child: const CircleAvatar(
               radius: 16,
