@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:fittracker_source/models/food.dart';
 import 'package:fittracker_source/Screens/active_screen/journal/Journal_Screen.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class MealSummaryScreen extends StatefulWidget {
   final String mealName;
@@ -39,6 +41,39 @@ class _MealSummaryScreenState extends State<MealSummaryScreen> {
     foodsWithQuantity = Map.from(widget.foodsWithQuantity);
   }
 
+  Future<void> updateFoodQuantityOnFirebase(Food food, int? quantity) async {
+    final prefs = await SharedPreferences.getInstance();
+    final uid = prefs.getString('userid');
+    if (uid == null || uid.isEmpty) return;
+
+    String mealKey = widget.mealName.toLowerCase();
+
+    final userDoc = FirebaseFirestore.instance.collection('users').doc(uid);
+    final snapshot = await userDoc.get();
+    Map<String, dynamic> meals = Map<String, dynamic>.from(
+      snapshot.data()?['meals'] ?? {},
+    );
+    Map<String, dynamic> mealFoods = Map<String, dynamic>.from(
+      meals[mealKey] ?? {},
+    );
+
+    if (quantity == null || quantity < 1) {
+      mealFoods.remove(food.id);
+    } else {
+      mealFoods[food.id] = quantity;
+    }
+
+    // Nếu mealFoods rỗng thì xóa luôn mealKey khỏi meals
+    if (mealFoods.isEmpty) {
+      meals.remove(mealKey);
+    } else {
+      meals[mealKey] = mealFoods;
+    }
+
+    // Ghi đè toàn bộ map meals, KHÔNG dùng merge
+    await userDoc.update({"meals": meals});
+  }
+
   int get totalCalories => foodsWithQuantity.entries
       .map((e) => e.key.calories * e.value)
       .fold(0, (a, b) => a + b);
@@ -47,13 +82,14 @@ class _MealSummaryScreenState extends State<MealSummaryScreen> {
   int get totalFat => (totalCalories * 0.25 ~/ 9);
   int get totalCarbs => (totalCalories * 0.55 ~/ 4);
   int get totalFiber => foodsWithQuantity.entries
-    .map((e) => (e.key.fiber * e.value).toInt())
-    .fold<int>(0, (a, b) => a + b);
+      .map((e) => (e.key.fiber * e.value).toInt())
+      .fold<int>(0, (a, b) => a + b);
 
   void increaseQuantity(Food food) {
     setState(() {
       foodsWithQuantity[food] = (foodsWithQuantity[food] ?? 0) + 1;
     });
+    updateFoodQuantityOnFirebase(food, foodsWithQuantity[food]);
   }
 
   void decreaseQuantity(Food food) {
@@ -61,8 +97,10 @@ class _MealSummaryScreenState extends State<MealSummaryScreen> {
       final current = foodsWithQuantity[food] ?? 0;
       if (current > 1) {
         foodsWithQuantity[food] = current - 1;
+        updateFoodQuantityOnFirebase(food, foodsWithQuantity[food]);
       } else {
         foodsWithQuantity.remove(food);
+        updateFoodQuantityOnFirebase(food, null);
       }
     });
   }
@@ -83,19 +121,33 @@ class _MealSummaryScreenState extends State<MealSummaryScreen> {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   GestureDetector(
-                    onTap: widget.onAddMore ?? () => Navigator.of(context).pop(),
+                    onTap:
+                        widget.onAddMore ?? () => Navigator.of(context).pop(),
                     child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 8,
+                      ),
                       decoration: BoxDecoration(
                         color: const Color(0xFF22313F),
                         borderRadius: BorderRadius.circular(22),
                       ),
                       child: Row(
                         children: const [
-                          Icon(Icons.keyboard_arrow_up, color: Colors.white, size: 22),
+                          Icon(
+                            Icons.keyboard_arrow_up,
+                            color: Colors.white,
+                            size: 22,
+                          ),
                           SizedBox(width: 6),
-                          Text("Add more food",
-                              style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600, fontSize: 16)),
+                          Text(
+                            "Add more food",
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.w600,
+                              fontSize: 16,
+                            ),
+                          ),
                         ],
                       ),
                     ),
@@ -114,11 +166,23 @@ class _MealSummaryScreenState extends State<MealSummaryScreen> {
               ),
             ),
             const SizedBox(height: 12),
-            Text(widget.mealName,
-                style: const TextStyle(fontSize: 24, fontWeight: FontWeight.w700, color: Color(0xFF22313F))),
+            Text(
+              widget.mealName,
+              style: const TextStyle(
+                fontSize: 24,
+                fontWeight: FontWeight.w700,
+                color: Color(0xFF22313F),
+              ),
+            ),
             const SizedBox(height: 6),
-            Text("${totalCalories} / ${widget.targetCalories} Cal",
-                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w400, color: Colors.black54)),
+            Text(
+              "${totalCalories} / ${widget.targetCalories} Cal",
+              style: const TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w400,
+                color: Colors.black54,
+              ),
+            ),
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 60, vertical: 8),
               child: LinearProgressIndicator(
@@ -131,14 +195,32 @@ class _MealSummaryScreenState extends State<MealSummaryScreen> {
               ),
             ),
             Padding(
-              padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 12),
+              padding: const EdgeInsets.symmetric(
+                vertical: 8.0,
+                horizontal: 12,
+              ),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: [
-                  _macroCircle("Protein", totalProtein, widget.targetProtein, Colors.redAccent),
+                  _macroCircle(
+                    "Protein",
+                    totalProtein,
+                    widget.targetProtein,
+                    Colors.redAccent,
+                  ),
                   _macroCircle("Fat", totalFat, widget.targetFat, Colors.amber),
-                  _macroCircle("Carbs", totalCarbs, widget.targetCarbs, Colors.blueAccent),
-                  _macroCircle("Fiber", totalFiber, widget.targetFiber, Colors.orange),
+                  _macroCircle(
+                    "Carbs",
+                    totalCarbs,
+                    widget.targetCarbs,
+                    Colors.blueAccent,
+                  ),
+                  _macroCircle(
+                    "Fiber",
+                    totalFiber,
+                    widget.targetFiber,
+                    Colors.orange,
+                  ),
                 ],
               ),
             ),
@@ -149,18 +231,30 @@ class _MealSummaryScreenState extends State<MealSummaryScreen> {
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         const SizedBox(height: 20),
-                        const Text("There is nothing here yet! Try to add some food",
-                            style: TextStyle(fontSize: 17, fontWeight: FontWeight.w500, color: Colors.black45),
-                            textAlign: TextAlign.center),
+                        const Text(
+                          "There is nothing here yet! Try to add some food",
+                          style: TextStyle(
+                            fontSize: 17,
+                            fontWeight: FontWeight.w500,
+                            color: Colors.black45,
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
                         const SizedBox(height: 24),
-                        Image.asset('Assets/Images/imagePageSearch_2.png', width: 180, height: 180),
+                        Image.asset(
+                          'Assets/Images/imagePageSearch_2.png',
+                          width: 180,
+                          height: 180,
+                        ),
                       ],
                     )
                   : ListView.separated(
                       itemCount: foodsWithQuantity.length,
                       separatorBuilder: (_, __) => const Divider(height: 1),
                       itemBuilder: (context, index) {
-                        final entry = foodsWithQuantity.entries.elementAt(index);
+                        final entry = foodsWithQuantity.entries.elementAt(
+                          index,
+                        );
                         final food = entry.key;
                         final quantity = entry.value;
 
@@ -168,20 +262,40 @@ class _MealSummaryScreenState extends State<MealSummaryScreen> {
                           leading: ClipRRect(
                             borderRadius: BorderRadius.circular(8),
                             child: food.imageUrl.isNotEmpty
-                                ? Image.network(food.imageUrl, width: 48, height: 48, fit: BoxFit.cover)
-                                : Container(width: 48, height: 48, color: Colors.grey[200]),
+                                ? Image.network(
+                                    food.imageUrl,
+                                    width: 48,
+                                    height: 48,
+                                    fit: BoxFit.cover,
+                                  )
+                                : Container(
+                                    width: 48,
+                                    height: 48,
+                                    color: Colors.grey[200],
+                                  ),
                           ),
-                          title: Text(food.name, style: const TextStyle(fontWeight: FontWeight.bold)),
-                          subtitle: Text("${food.calories} Cal × $quantity • ${food.description}"),
+                          title: Text(
+                            food.name,
+                            style: const TextStyle(fontWeight: FontWeight.bold),
+                          ),
+                          subtitle: Text(
+                            "${food.calories} Cal × $quantity • ${food.description}",
+                          ),
                           trailing: Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
                               IconButton(
-                                icon: const Icon(Icons.remove_circle_outline, color: Colors.redAccent),
+                                icon: const Icon(
+                                  Icons.remove_circle_outline,
+                                  color: Colors.redAccent,
+                                ),
                                 onPressed: () => decreaseQuantity(food),
                               ),
                               IconButton(
-                                icon: const Icon(Icons.add_circle_outline, color: Color(0xFF8FD5C7)),
+                                icon: const Icon(
+                                  Icons.add_circle_outline,
+                                  color: Color(0xFF8FD5C7),
+                                ),
                                 onPressed: () => increaseQuantity(food),
                               ),
                             ],
@@ -214,8 +328,18 @@ class _MealSummaryScreenState extends State<MealSummaryScreen> {
             ),
             Column(
               children: [
-                Text("$value", style: TextStyle(color: color, fontSize: 16, fontWeight: FontWeight.bold)),
-                Text("/$target g", style: const TextStyle(fontSize: 10, color: Colors.grey)),
+                Text(
+                  "$value",
+                  style: TextStyle(
+                    color: color,
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                Text(
+                  "/$target g",
+                  style: const TextStyle(fontSize: 10, color: Colors.grey),
+                ),
               ],
             ),
           ],

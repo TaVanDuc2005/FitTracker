@@ -1,13 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:fittracker_source/models/food.dart';
-import 'package:fittracker_source/Screens/active_screen/journal/Meal_Summary_Screen.dart';
+import 'package:fittracker_source/Screens/active_screen/journal/meal_summary_screen.dart';
 import '../../../services/user_service.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 // Map macro chỉ số cho từng bữa
 Future<Map<String, Map<String, int>>> getMealMacroTarget() async {
-  final macroTargets = await UserService.calculateMacroTargets();
-  if (macroTargets == null) {
+  // Lấy uid từ SharedPreferences
+  final prefs = await SharedPreferences.getInstance();
+  final uid = prefs.getString('userid');
+  if (uid == null || uid.isEmpty) {
     // fallback nếu chưa có dữ liệu
     return {
       "Breakfast": {
@@ -33,28 +36,101 @@ Future<Map<String, Map<String, int>>> getMealMacroTarget() async {
       },
     };
   }
-  // Chia macro cho từng bữa (30% sáng, 40% trưa, 30% tối)
+
+  // Lấy dữ liệu user từ Firebase
+  final doc = await FirebaseFirestore.instance
+      .collection('users')
+      .doc(uid)
+      .get();
+  final userInfo = doc.data();
+  if (userInfo == null) {
+    // fallback nếu chưa có dữ liệu
+    return {
+      "Breakfast": {
+        "calories": 600,
+        "protein": 40,
+        "fat": 20,
+        "carbs": 60,
+        "fiber": 6,
+      },
+      "Lunch": {
+        "calories": 800,
+        "protein": 50,
+        "fat": 25,
+        "carbs": 100,
+        "fiber": 8,
+      },
+      "Dinner": {
+        "calories": 600,
+        "protein": 40,
+        "fat": 18,
+        "carbs": 80,
+        "fiber": 7,
+      },
+    };
+  }
+
+  // Tính toán macro từ dữ liệu Firebase
+  double? height = (userInfo['height'] as num?)?.toDouble();
+  double? weight = (userInfo['weight'] as num?)?.toDouble();
+  int? age = (userInfo['age'] as num?)?.toInt();
+  String? gender = userInfo['gender']?.toString().toLowerCase();
+  String? lifestyle = userInfo['lifestyle']?.toString().toLowerCase();
+
+  double bmr = 0;
+  if (height != null && weight != null && age != null && gender != null) {
+    if (gender == 'male') {
+      bmr = 10 * weight + 6.25 * height - 5 * age + 5;
+    } else {
+      bmr = 10 * weight + 6.25 * height - 5 * age - 161;
+    }
+  }
+
+  double activityFactor = 1.2;
+  switch (lifestyle) {
+    case 'student':
+    case 'not employed':
+    case 'retired':
+      activityFactor = 1.2;
+      break;
+    case 'employed part-time':
+      activityFactor = 1.375;
+      break;
+    case 'employed full-time':
+      activityFactor = 1.55;
+      break;
+    default:
+      activityFactor = 1.2;
+  }
+
+  double dailyCalories = bmr * activityFactor;
+  int calories = dailyCalories.round();
+  int protein = (dailyCalories * 0.15 / 4).round();
+  int fat = (dailyCalories * 0.25 / 9).round();
+  int carbs = (dailyCalories * 0.60 / 4).round();
+  int fiber = 25;
+
   return {
     "Breakfast": {
-      "calories": (macroTargets['calories']! * 0.3).round(),
-      "protein": (macroTargets['protein']! * 0.3).round(),
-      "fat": (macroTargets['fat']! * 0.3).round(),
-      "carbs": (macroTargets['carbs']! * 0.3).round(),
-      "fiber": (macroTargets['fiber']! * 0.3).round(),
+      "calories": (calories * 0.3).round(),
+      "protein": (protein * 0.3).round(),
+      "fat": (fat * 0.3).round(),
+      "carbs": (carbs * 0.3).round(),
+      "fiber": (fiber * 0.3).round(),
     },
     "Lunch": {
-      "calories": (macroTargets['calories']! * 0.4).round(),
-      "protein": (macroTargets['protein']! * 0.4).round(),
-      "fat": (macroTargets['fat']! * 0.4).round(),
-      "carbs": (macroTargets['carbs']! * 0.4).round(),
-      "fiber": (macroTargets['fiber']! * 0.4).round(),
+      "calories": (calories * 0.4).round(),
+      "protein": (protein * 0.4).round(),
+      "fat": (fat * 0.4).round(),
+      "carbs": (carbs * 0.4).round(),
+      "fiber": (fiber * 0.4).round(),
     },
     "Dinner": {
-      "calories": (macroTargets['calories']! * 0.3).round(),
-      "protein": (macroTargets['protein']! * 0.3).round(),
-      "fat": (macroTargets['fat']! * 0.3).round(),
-      "carbs": (macroTargets['carbs']! * 0.3).round(),
-      "fiber": (macroTargets['fiber']! * 0.3).round(),
+      "calories": (calories * 0.3).round(),
+      "protein": (protein * 0.3).round(),
+      "fat": (fat * 0.3).round(),
+      "carbs": (carbs * 0.3).round(),
+      "fiber": (fiber * 0.3).round(),
     },
   };
 }
@@ -87,13 +163,19 @@ class _SearchFoodScreenState extends State<SearchFoodScreen> {
     });
 
     try {
-      final snapshot = await FirebaseFirestore.instance.collection('list_food').get();
+      final snapshot = await FirebaseFirestore.instance
+          .collection('list_food')
+          .get();
 
-      final results = snapshot.docs.map((doc) => Food.fromMap(doc.data())).where((food) {
-        final lowerKeyword = keyword.toLowerCase();
-        return food.name.toLowerCase().contains(lowerKeyword) ||
-              food.description.toLowerCase().contains(lowerKeyword);
-      }).toList();
+      final results = snapshot.docs
+          .map((doc) => Food.fromMap(doc.data()))
+          .where((food) {
+            final lowerKeyword = keyword.toLowerCase();
+            // Chỉ khớp khi tên hoặc mô tả chứa đúng chuỗi ký tự nhập vào
+            return food.name.toLowerCase().contains(lowerKeyword) ||
+                food.description.toLowerCase().contains(lowerKeyword);
+          })
+          .toList();
 
       setState(() {
         _searchResults = results;
@@ -108,11 +190,61 @@ class _SearchFoodScreenState extends State<SearchFoodScreen> {
     }
   }
 
+  Future<void> _loadSelectedFoodsFromFirebase() async {
+    final prefs = await SharedPreferences.getInstance();
+    final uid = prefs.getString('userid');
+    if (uid == null || uid.isEmpty) return;
+
+    String mealKey;
+    switch (widget.mealType) {
+      case MealType.breakfast:
+        mealKey = "breakfast";
+        break;
+      case MealType.lunch:
+        mealKey = "lunch";
+        break;
+      case MealType.dinner:
+        mealKey = "dinner";
+        break;
+    }
+
+    final userDoc = FirebaseFirestore.instance.collection('users').doc(uid);
+    final snapshot = await userDoc.get();
+    Map<String, dynamic> meals = snapshot.data()?['meals'] ?? {};
+    Map<String, dynamic> mealFoods = meals[mealKey] ?? {};
+
+    if (mealFoods.isNotEmpty) {
+      // Lấy thông tin món ăn từ collection list_food
+      final foodSnapshot = await FirebaseFirestore.instance
+          .collection('list_food')
+          .get();
+      final allFoods = foodSnapshot.docs
+          .map((doc) => Food.fromMap(doc.data()))
+          .toList();
+
+      setState(() {
+        selectedFoodsWithQuantity.clear();
+        mealFoods.forEach((foodId, qty) {
+          final foundFoods = allFoods.where((f) => f.id == foodId);
+          if (foundFoods.isNotEmpty) {
+            selectedFoodsWithQuantity[foundFoods.first] = qty as int;
+          }
+        });
+      });
+    }
+  }
 
   @override
   void initState() {
     super.initState();
     _mealMacroFuture = getMealMacroTarget();
+    _loadSelectedFoodsFromFirebase();
+  }
+
+  int get _totalSelectedCalories {
+    return selectedFoodsWithQuantity.entries
+        .map((e) => e.key.calories * e.value)
+        .fold(0, (a, b) => a + b);
   }
 
   String get _mealTitle {
@@ -200,7 +332,7 @@ class _SearchFoodScreenState extends State<SearchFoodScreen> {
                             final target =
                                 snapshot.data?[_mealTitle]?["calories"];
                             return Text(
-                              "0 / ${target ?? "..."} Cal",
+                              "${_totalSelectedCalories} / ${target ?? "..."} Cal",
                               style: const TextStyle(
                                 color: Colors.white70,
                                 fontSize: 16,
@@ -214,7 +346,7 @@ class _SearchFoodScreenState extends State<SearchFoodScreen> {
                   // ...existing code...
                   // Nút X để quay lại màn hình trước đó Journal
                   GestureDetector(
-                    onTap: () => Navigator.pop(context),
+                    onTap: () => Navigator.pop(context, true),
                     child: const Icon(
                       Icons.close,
                       color: Colors.white,
@@ -228,10 +360,21 @@ class _SearchFoodScreenState extends State<SearchFoodScreen> {
             // ===== PROGRESS BAR =====
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 20),
-              child: LinearProgressIndicator(
-                value: 0.0,
-                backgroundColor: Colors.white30,
-                valueColor: const AlwaysStoppedAnimation<Color>(Colors.white),
+              child: FutureBuilder<Map<String, Map<String, int>>>(
+                future: _mealMacroFuture,
+                builder: (context, snapshot) {
+                  final target = snapshot.data?[_mealTitle]?["calories"] ?? 0;
+                  final progress = target > 0
+                      ? (_totalSelectedCalories / target).clamp(0.0, 1.0)
+                      : 0.0;
+                  return LinearProgressIndicator(
+                    value: progress,
+                    backgroundColor: Colors.white30,
+                    valueColor: const AlwaysStoppedAnimation<Color>(
+                      Colors.white,
+                    ),
+                  );
+                },
               ),
             ),
 
@@ -353,7 +496,10 @@ class _SearchFoodScreenState extends State<SearchFoodScreen> {
             borderRadius: BorderRadius.circular(30),
             borderSide: const BorderSide(color: Color(0xFF8FD5C7)),
           ),
-          contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: 20,
+            vertical: 15,
+          ),
         ),
         onChanged: (value) {
           if (value.trim().isNotEmpty) {
@@ -371,54 +517,156 @@ class _SearchFoodScreenState extends State<SearchFoodScreen> {
 
     // Hiển thị ảnh minh họa nếu chưa có kết quả
     if (_searchKeyword.isEmpty && !_isLoading) {
-      content.add(Center(
-        child: Image.asset(
-          'Assets/Images/imagePageSearch_2.png',
-          width: 200,
-          height: 300,
-          fit: BoxFit.contain,
-        ),
-      ),
-    );
-      content.add(const SizedBox(height: 20));
+      if (selectedFoodsWithQuantity.isNotEmpty) {
+        // Hiển thị danh sách món ăn đã chọn từ Firebase
+        content.addAll(
+          selectedFoodsWithQuantity.entries.map((entry) {
+            final food = entry.key;
+            final qty = entry.value;
+            return ListTile(
+              leading: Image.network(
+                food.imageUrl,
+                width: 50,
+                height: 50,
+                fit: BoxFit.cover,
+              ),
+              title: Text(food.name),
+              subtitle: Text("${food.calories} Cal × $qty"),
+              trailing: IconButton(
+                icon: const Icon(Icons.add_circle, color: Color(0xFF8FD5C7)),
+                onPressed: () async {
+                  setState(() {
+                    selectedFoodsWithQuantity[food] = qty + 1;
+                  });
+                  // Cập nhật lên Firebase như hướng dẫn ở trên
+                  final prefs = await SharedPreferences.getInstance();
+                  final uid = prefs.getString('userid');
+                  if (uid == null || uid.isEmpty) return;
+
+                  String mealKey;
+                  switch (widget.mealType) {
+                    case MealType.breakfast:
+                      mealKey = "breakfast";
+                      break;
+                    case MealType.lunch:
+                      mealKey = "lunch";
+                      break;
+                    case MealType.dinner:
+                      mealKey = "dinner";
+                      break;
+                  }
+
+                  final userDoc = FirebaseFirestore.instance
+                      .collection('users')
+                      .doc(uid);
+                  final snapshot = await userDoc.get();
+                  Map<String, dynamic> meals = snapshot.data()?['meals'] ?? {};
+                  Map<String, dynamic> mealFoods = meals[mealKey] ?? {};
+
+                  final currentQty = (mealFoods[food.id] ?? 0) as int;
+                  mealFoods[food.id] = currentQty + 1;
+
+                  await userDoc.set({
+                    "meals": {mealKey: mealFoods},
+                  }, SetOptions(merge: true));
+                },
+              ),
+            );
+          }),
+        );
+      } else {
+        // Nếu không có món ăn đã chọn thì hiển thị ảnh minh họa
+        content.add(
+          Center(
+            child: Image.asset(
+              'Assets/Images/imagePageSearch_2.png',
+              width: 200,
+              height: 300,
+              fit: BoxFit.contain,
+            ),
+          ),
+        );
+        content.add(const SizedBox(height: 20));
+      }
     }
 
     // Loading
     if (_isLoading) {
       content.add(const Center(child: CircularProgressIndicator()));
     }
-
     // Không tìm thấy kết quả
     else if (_searchKeyword.isNotEmpty && _searchResults.isEmpty) {
       content.add(const Center(child: Text("Không tìm thấy món ăn nào")));
     }
-
     // Có kết quả
     else if (_searchResults.isNotEmpty) {
-      content.addAll(_searchResults.map((food) {
-        return ListTile(
-          leading: Image.network(food.imageUrl, width: 50, height: 50, fit: BoxFit.cover),
-          title: Text(food.name),
-          subtitle: Text(
-            "${food.calories} Cal" +
-            (selectedFoodsWithQuantity.containsKey(food)
-              ? " × ${selectedFoodsWithQuantity[food]}"
-              : ""),
-          ),
-          trailing: IconButton(
-            icon: const Icon(Icons.add_circle, color: Color(0xFF8FD5C7)),
-            onPressed: () {
-              setState(() {
-                if (selectedFoodsWithQuantity.containsKey(food)) {
-                  selectedFoodsWithQuantity[food] = selectedFoodsWithQuantity[food]! + 1;
-                } else {
-                  selectedFoodsWithQuantity[food] = 1;
+      content.addAll(
+        _searchResults.map((food) {
+          return ListTile(
+            leading: Image.network(
+              food.imageUrl,
+              width: 50,
+              height: 50,
+              fit: BoxFit.cover,
+            ),
+            title: Text(food.name),
+            subtitle: Text(
+              "${food.calories} Cal" +
+                  (selectedFoodsWithQuantity.containsKey(food)
+                      ? " × ${selectedFoodsWithQuantity[food]}"
+                      : ""),
+            ),
+            trailing: IconButton(
+              icon: const Icon(Icons.add_circle, color: Color(0xFF8FD5C7)),
+              onPressed: () async {
+                setState(() {
+                  if (selectedFoodsWithQuantity.containsKey(food)) {
+                    selectedFoodsWithQuantity[food] =
+                        selectedFoodsWithQuantity[food]! + 1;
+                  } else {
+                    selectedFoodsWithQuantity[food] = 1;
+                  }
+                });
+
+                // Cập nhật lên Firebase
+                final prefs = await SharedPreferences.getInstance();
+                final uid = prefs.getString('userid');
+                if (uid == null || uid.isEmpty) return;
+
+                String mealKey;
+                switch (widget.mealType) {
+                  case MealType.breakfast:
+                    mealKey = "breakfast";
+                    break;
+                  case MealType.lunch:
+                    mealKey = "lunch";
+                    break;
+                  case MealType.dinner:
+                    mealKey = "dinner";
+                    break;
                 }
-              });
-            },
-          ),
-        );
-      }));
+
+                final userDoc = FirebaseFirestore.instance
+                    .collection('users')
+                    .doc(uid);
+
+                // Đọc số lượng hiện tại trên Firebase
+                final snapshot = await userDoc.get();
+                Map<String, dynamic> meals = snapshot.data()?['meals'] ?? {};
+                Map<String, dynamic> mealFoods = meals[mealKey] ?? {};
+
+                final currentQty = (mealFoods[food.id] ?? 0) as int;
+                mealFoods[food.id] = currentQty + 1;
+
+                // Ghi lại lên Firebase
+                await userDoc.set({
+                  "meals": {mealKey: mealFoods},
+                }, SetOptions(merge: true));
+              },
+            ),
+          );
+        }),
+      );
     }
 
     return Column(
@@ -426,7 +674,6 @@ class _SearchFoodScreenState extends State<SearchFoodScreen> {
       children: content,
     );
   }
-
 
   Widget _buildProposalContent() {
     return Center(
