@@ -1271,7 +1271,9 @@ class _WaterChallengeCardState extends State<WaterChallengeCard> {
                     child: Container(
                       decoration: BoxDecoration(
                         border: Border.all(
-                          color: isFilled ? Colors.blueAccent : Colors.grey.shade300,
+                          color: isFilled
+                              ? Colors.blueAccent
+                              : Colors.grey.shade300,
                           width: 1.5,
                         ),
                         borderRadius: BorderRadius.circular(8),
