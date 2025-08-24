@@ -213,25 +213,24 @@ class _SearchFoodScreenState extends State<SearchFoodScreen> {
     Map<String, dynamic> meals = snapshot.data()?['meals'] ?? {};
     Map<String, dynamic> mealFoods = meals[mealKey] ?? {};
 
-    if (mealFoods.isNotEmpty) {
-      // Lấy thông tin món ăn từ collection list_food
-      final foodSnapshot = await FirebaseFirestore.instance
-          .collection('list_food')
-          .get();
-      final allFoods = foodSnapshot.docs
-          .map((doc) => Food.fromMap(doc.data()))
-          .toList();
+    final foodSnapshot = await FirebaseFirestore.instance
+        .collection('list_food')
+        .get();
+    final allFoods = foodSnapshot.docs
+        .map((doc) => Food.fromMap(doc.data()))
+        .toList();
 
-      setState(() {
-        selectedFoodsWithQuantity.clear();
+    setState(() {
+      selectedFoodsWithQuantity.clear();
+      if (mealFoods.isNotEmpty) {
         mealFoods.forEach((foodId, qty) {
           final foundFoods = allFoods.where((f) => f.id == foodId);
           if (foundFoods.isNotEmpty) {
             selectedFoodsWithQuantity[foundFoods.first] = qty as int;
           }
         });
-      });
-    }
+      }
+    });
   }
 
   @override
@@ -453,7 +452,7 @@ class _SearchFoodScreenState extends State<SearchFoodScreen> {
           ),
           onPressed: () async {
             final mealMacroTarget = await getMealMacroTarget();
-            Navigator.push(
+            await Navigator.push(
               context,
               MaterialPageRoute(
                 builder: (_) => MealSummaryScreen(
@@ -464,11 +463,13 @@ class _SearchFoodScreenState extends State<SearchFoodScreen> {
                   targetCarbs: mealMacroTarget[_mealTitle]!["carbs"]!,
                   targetFiber: mealMacroTarget[_mealTitle]!["fiber"]!,
                   foodsWithQuantity: selectedFoodsWithQuantity,
-                  onAddMore: () => Navigator.pop(context),
+                  onAddMore: () => Navigator.pop(context, true),
                   onExit: () => Navigator.popUntil(context, (r) => r.isFirst),
                 ),
               ),
             );
+            await _loadSelectedFoodsFromFirebase();
+            setState(() {});
           },
         ),
       ),
