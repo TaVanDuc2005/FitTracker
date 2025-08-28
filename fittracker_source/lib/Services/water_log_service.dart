@@ -1,5 +1,5 @@
 import 'package:sqflite/sqflite.dart';
-import 'package:fittracker_source/models/Water_Log.dart';
+import '../models/water_log.dart';
 import 'Database_Service.dart';
 
 class WaterLogService {
@@ -22,7 +22,11 @@ class WaterLogService {
 
   Future<WaterLog?> getWaterLogById(String id) async {
     final db = await dbService.database;
-    final result = await db.query('water_logs', where: 'id = ?', whereArgs: [id]);
+    final result = await db.query(
+      'water_logs',
+      where: 'id = ?',
+      whereArgs: [id],
+    );
     if (result.isNotEmpty) {
       return WaterLog.fromMap(result.first);
     }
